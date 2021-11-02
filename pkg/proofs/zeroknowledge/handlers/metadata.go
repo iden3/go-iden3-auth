@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	IdentifierAttribute string = "user_identifier"
-	ChallengeAttribute  string = "challenge"
+	identifierAttribute string = "user_identifier"
+	challengeAttribute  string = "challenge"
 )
 
 // MetadataProofHandler is handler to extract metadata of the provided proof
 type MetadataProofHandler struct {
-	next proofHandler
+	next ProofHandler
 }
 
 // Process applies handler logic on provided message
@@ -32,11 +32,11 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 	if err != nil {
 		return err
 	}
-	identifierIndex, ok := metaData[IdentifierAttribute]
+	identifierIndex, ok := metaData[identifierAttribute]
 	if !ok {
 		return errors.New("no user identifier attribute in provided proof")
 	}
-	challengeIndex, ok := metaData[ChallengeAttribute]
+	challengeIndex, ok := metaData[challengeAttribute]
 	if !ok {
 		return errors.New("no user challenge attribute in provided proof")
 	}
@@ -46,7 +46,7 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 	// load schema fields and indexes
 
 	for k, v := range metaData {
-		if k != IdentifierAttribute && k != ChallengeAttribute {
+		if k != identifierAttribute && k != challengeAttribute {
 			proofMetadata.AdditionalData[k] = m.PubSignals[v].String()
 		}
 	}
@@ -61,7 +61,7 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 }
 
 // SetNext sets next handler to the chain of handlers
-func (h *MetadataProofHandler) SetNext(next proofHandler) proofHandler {
+func (h *MetadataProofHandler) SetNext(next ProofHandler) ProofHandler {
 	h.next = next
 	return h
 }

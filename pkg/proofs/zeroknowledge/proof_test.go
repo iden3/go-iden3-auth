@@ -54,6 +54,7 @@ func TestVerifyProof(t *testing.T) {
 	assert.Nil(t, err)
 
 	err = ExtractMetadata(proofMessage)
+	assert.Nil(t, err)
 	assert.NotNil(t, proofMessage.AuthData)
 
 }

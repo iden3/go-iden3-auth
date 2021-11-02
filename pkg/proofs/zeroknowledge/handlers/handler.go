@@ -2,7 +2,8 @@ package handlers
 
 import "github.com/iden3/go-auth/pkg/types"
 
-type proofHandler interface {
+// ProofHandler is a handler for proof processing
+type ProofHandler interface {
 	Process(p *types.ZeroKnowledgeProof) (err error)
-	SetNext(proofHandler) proofHandler
+	SetNext(ProofHandler) ProofHandler
 }

@@ -13,7 +13,7 @@ type Message interface {
 	GetData() interface{}
 }
 
-// BasicMessage
+// BasicMessage is structure for message with unknown data format
 type BasicMessage struct {
 	Type ProtocolMessage `json:"type"`
 	Data interface{}
@@ -73,7 +73,7 @@ func (m *AuthorizationMessageRequest) WithZeroKnowledgeProofRequest(proof ZeroKn
 func (m *AuthorizationMessageRequest) WithDefaultAuth(challenge int64) error {
 
 	authRules := AuthenticationRules{
-		Challenge: 0,
+		Challenge: challenge,
 		Audience:  m.Data.Audience,
 	}
 	var rules map[string]interface{}

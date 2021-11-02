@@ -7,7 +7,7 @@ import (
 
 // ZeroKnowledgeProofHandler is handler to check message type
 type ZeroKnowledgeProofHandler struct {
-	next proofHandler
+	next ProofHandler
 }
 
 // Process applies handler logic on provided message
@@ -23,7 +23,7 @@ func (h *ZeroKnowledgeProofHandler) Process(m *types.ZeroKnowledgeProof) (err er
 }
 
 // SetNext sets next handler to the chain of handlers
-func (h *ZeroKnowledgeProofHandler) SetNext(next proofHandler) proofHandler {
+func (h *ZeroKnowledgeProofHandler) SetNext(next ProofHandler) ProofHandler {
 	h.next = next
 	return h
 }

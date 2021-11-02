@@ -143,6 +143,7 @@ func TestExtractData(t *testing.T) {
 		"18",
 	}
 	signalsBigInt, err := utils.ArrayStringToBigInt(signalsString)
+	assert.Nil(t, err)
 
 	zkpProof := types.ZeroKnowledgeProof{
 		Type:      types.ZeroKnowledgeProofType,

@@ -8,7 +8,7 @@ import (
 
 // VerificationHandler is handler to check verification of the provided proof
 type VerificationHandler struct {
-	next proofHandler
+	next ProofHandler
 }
 
 // Process applies handler logic on provided message
@@ -30,7 +30,7 @@ func (h *VerificationHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 }
 
 // SetNext sets next handler to the chain of handlers
-func (h *VerificationHandler) SetNext(next proofHandler) proofHandler {
+func (h *VerificationHandler) SetNext(next ProofHandler) ProofHandler {
 	h.next = next
 	return h
 }

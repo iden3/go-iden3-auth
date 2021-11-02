@@ -8,7 +8,7 @@ import (
 // CircuitHandler is handler to verify circuit information of provided proof
 type CircuitHandler struct {
 	SupportedCircuits map[types.CircuitID]types.CircuitData
-	next              proofHandler
+	next              ProofHandler
 }
 
 // Process applies handler logic on provided message
@@ -27,7 +27,7 @@ func (h *CircuitHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 }
 
 // SetNext sets next handler to the chain of handlers
-func (h *CircuitHandler) SetNext(next proofHandler) proofHandler {
+func (h *CircuitHandler) SetNext(next ProofHandler) ProofHandler {
 	h.next = next
 	return h
 }

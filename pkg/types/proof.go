@@ -75,7 +75,7 @@ type KYCBySignatureRules struct {
 
 // AuthenticationRules represents structure rules for zkp authentication  proof
 type AuthenticationRules struct {
-	Challenge int    `json:"challenge"`
+	Challenge int64  `json:"challenge"`
 	Audience  string `json:"audience"`
 }
 

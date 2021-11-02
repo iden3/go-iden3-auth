@@ -28,6 +28,7 @@ func TestPlainMessagePacker_Pack(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, msgBytes)
 	m, err := packer.Unpack(msgBytes)
+	assert.Nil(t, err)
 	assert.NotEmpty(t, m)
 
 }
