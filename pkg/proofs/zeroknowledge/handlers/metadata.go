@@ -40,14 +40,14 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 	if !ok {
 		return errors.New("no user challenge attribute in provided proof")
 	}
-	proofMetadata.AuthData.UserIdentifier = m.PubSignals[identifierIndex].String()
-	proofMetadata.AuthData.AuthenticationChallenge = m.PubSignals[challengeIndex].String()
+	proofMetadata.AuthData.UserIdentifier = m.PubSignals[identifierIndex]
+	proofMetadata.AuthData.AuthenticationChallenge = m.PubSignals[challengeIndex]
 
 	// load schema fields and indexes
 
 	for k, v := range metaData {
 		if k != identifierAttribute && k != challengeAttribute {
-			proofMetadata.AdditionalData[k] = m.PubSignals[v].String()
+			proofMetadata.AdditionalData[k] = m.PubSignals[v]
 		}
 	}
 

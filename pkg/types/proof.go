@@ -1,9 +1,5 @@
 package types
 
-import (
-	"math/big"
-)
-
 // ProofType is a type that must be used for proof definition
 type ProofType string
 
@@ -28,7 +24,7 @@ type ProofMetadata struct {
 type ZeroKnowledgeProof struct {
 	Type        ProofType `json:"type"`
 	CircuitID   CircuitID `json:"circuit_id"`
-	PubSignals  []*big.Int
+	PubSignals  []string  `json:"pub_signals"`
 	ProofData   *ProofData
 	CircuitData *CircuitData
 	ProofMetadata
@@ -43,9 +39,10 @@ type AuthenticationMetadata struct {
 
 // ProofData describes three components of zkp proof
 type ProofData struct {
-	A string `json:"pi_a"`
-	B string `json:"pi_b"`
-	C string `json:"pi_c"`
+	A        []string   `json:"pi_a"`
+	B        [][]string `json:"pi_b"`
+	C        []string   `json:"pi_c"`
+	Protocol string     `json:"protocol"`
 }
 
 // VerificationKeyJSON describes type verification key in JSON format
@@ -93,5 +90,6 @@ type SignatureProofRequest struct {
 	KeyType string                 `json:"keyType,omitempty"`
 	Format  string                 `json:"format,omitempty"`
 	Message int                    `json:"message,omitempty"`
+	Type    ProofType              `json:"type"`
 	TypedScope
 }

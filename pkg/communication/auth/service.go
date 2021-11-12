@@ -50,7 +50,7 @@ func Verify(message types.Message) (err error) {
 				return fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
 		}
-
+		// TODO: throw error on unknown proof
 	}
 	return nil
 }
@@ -87,6 +87,8 @@ func ExtractMetadata(message types.Message) (token *UserToken, err error) {
 				return nil, fmt.Errorf("can't provide user token %s", err.Error())
 			}
 		}
+
+		// TODO: throw error on unknown proof
 
 	}
 	return token, nil

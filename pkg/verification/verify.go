@@ -13,7 +13,7 @@ import (
 )
 
 // Verify performs a verification of zkp  based on verification key and public inputs
-func Verify(proof types.ProofData, publicInputs []*big.Int, verificationKey []byte) error {
+func Verify(proof types.ProofData, publicInputs []string, verificationKey []byte) error {
 
 	// 1. parse proofs to proofs object with big integers (circom type)
 
@@ -21,8 +21,7 @@ func Verify(proof types.ProofData, publicInputs []*big.Int, verificationKey []by
 	if err != nil {
 		return err
 	}
-	var p circomTypes.Proof
-	err = p.UnmarshalJSON(proofBytes)
+	p, err := parsers.ParseProof(proofBytes)
 	if err != nil {
 		return err
 	}
@@ -34,7 +33,19 @@ func Verify(proof types.ProofData, publicInputs []*big.Int, verificationKey []by
 		return err
 	}
 
-	return verify(vkKey, &p, publicInputs)
+	// 3. parse inputs
+
+	pusSignalsBytes, err := json.Marshal(publicInputs)
+	if err != nil {
+		return err
+	}
+
+	pubSignals, err := parsers.ParsePublicSignals(pusSignalsBytes)
+	if err != nil {
+		return err
+	}
+
+	return verify(vkKey, p, pubSignals)
 }
 
 // verify performs the verification the Groth16 zkSNARK proofs

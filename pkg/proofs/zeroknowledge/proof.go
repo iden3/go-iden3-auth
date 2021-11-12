@@ -13,6 +13,12 @@ var supportedCircuits = map[types.CircuitID]types.CircuitData{
 		VerificationKey: circuits.KYCBySignatureVerificationKey,
 		Metadata:        circuits.KYCBySignaturePublicSignalsSchema,
 	},
+	types.AuthCircuitID: {
+		ID:              types.AuthCircuitID,
+		Description:     "circuit for verification of  basic authentication",
+		VerificationKey: circuits.AuthenticationVerificationKey,
+		Metadata:        circuits.AuthenticationPublicSignalsSchema,
+	},
 }
 
 // VerifyProof performs groth16 verification
