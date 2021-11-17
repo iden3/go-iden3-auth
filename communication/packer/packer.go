@@ -1,7 +1,7 @@
 package packer
 
 import (
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 )
 
 // Packer converts message to encrypted or encoded form

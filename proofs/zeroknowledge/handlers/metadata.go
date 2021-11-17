@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 )
 
 const (

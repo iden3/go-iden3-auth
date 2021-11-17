@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 )
 
 // UserToken is token that can be used for user authorization

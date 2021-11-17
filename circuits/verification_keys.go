@@ -1,6 +1,8 @@
 package circuits
 
-import "github.com/iden3/go-auth/pkg/types"
+import (
+	"github.com/iden3/go-auth/types"
+)
 
 const (
 	// KYCBySignatureVerificationKey is verification key to verify kycBysSignature circuit

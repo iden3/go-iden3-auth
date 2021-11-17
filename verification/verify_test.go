@@ -1,7 +1,7 @@
 package verification
 
 import (
-	"github.com/iden3/go-auth/pkg/circuits"
+	"github.com/iden3/go-auth/circuits"
 	"github.com/iden3/go-circom-prover-verifier/parsers"
 	types2 "github.com/iden3/go-circom-prover-verifier/types"
 	"github.com/iden3/go-circom-prover-verifier/verifier"

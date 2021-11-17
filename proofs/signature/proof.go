@@ -2,7 +2,7 @@ package signature
 
 import (
 	"errors"
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 )
 
 // VerifyProof performs signature verification

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 	"github.com/iden3/go-circom-prover-verifier/parsers"
 
 	circomTypes "github.com/iden3/go-circom-prover-verifier/types"

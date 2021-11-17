@@ -16,19 +16,19 @@ var (
 
 // ProofMetadata defines basic metadata that can be retrieved from any proof
 type ProofMetadata struct {
-	AuthData       *AuthenticationMetadata
-	AdditionalData map[string]interface{}
+	AuthData       *AuthenticationMetadata `json:"auth_data,omitempty"`
+	AdditionalData map[string]interface{}  `json:"additional_data,omitempty"`
 }
 
 // ZeroKnowledgeProof represents structure of zkp object
 type ZeroKnowledgeProof struct {
-	Type        ProofType `json:"type"`
-	CircuitID   CircuitID `json:"circuit_id"`
-	PubSignals  []string  `json:"pub_signals"`
-	ProofData   *ProofData
-	CircuitData *CircuitData
+	Type        ProofType    `json:"type"`
+	CircuitID   CircuitID    `json:"circuit_id"`
+	PubSignals  []string     `json:"pub_signals"`
+	ProofData   *ProofData   `json:"proof_data"`
+	CircuitData *CircuitData `json:"circuit_data,omitempty"`
 	ProofMetadata
-	TypedScope
+	TypedScope `json:"-"`
 }
 
 // AuthenticationMetadata defines basic metadata that can be retrieved from auth proof

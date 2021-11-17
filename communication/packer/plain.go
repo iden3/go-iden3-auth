@@ -3,7 +3,7 @@ package packer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/iden3/go-auth/pkg/types"
+	"github.com/iden3/go-auth/types"
 )
 
 // PlainMessagePacker is simple packer that doesn't use encryption / encoding

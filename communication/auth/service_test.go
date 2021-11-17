@@ -1,23 +1,23 @@
 package auth
 
 import (
-	"github.com/iden3/go-auth/pkg/circuits"
-	"github.com/iden3/go-auth/pkg/types"
+	circuits2 "github.com/iden3/go-auth/circuits"
+	types2 "github.com/iden3/go-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestVerify(t *testing.T) {
 
-	var message types.AuthorizationMessageResponse
+	var message types2.AuthorizationMessageResponse
 	message.Type = AuthorizationResponseMessageType
-	message.Data = types.AuthorizationMessageResponseData{}
+	message.Data = types2.AuthorizationMessageResponseData{}
 
-	zkpProof := types.ZeroKnowledgeProof{
-		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+	zkpProof := types2.ZeroKnowledgeProof{
+		Type:      types2.ZeroKnowledgeProofType,
+		CircuitID: types2.KycBySignaturesCircuitID,
 	}
-	zkpProof.ProofData = &types.ProofData{
+	zkpProof.ProofData = &types2.ProofData{
 		A: []string{"15410252994758206156331933443865902387659457159831652500594192431349076893658",
 			"20150829872771081060142254046116588090324284033366663360366174697329414878949",
 			"1"},
@@ -63,7 +63,7 @@ func TestVerify(t *testing.T) {
 		"25",
 		"18",
 	}
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []types2.TypedScope{zkpProof}
 
 	err := Verify(&message)
 	assert.Nil(t, err)
@@ -71,16 +71,16 @@ func TestVerify(t *testing.T) {
 
 func TestVerifyWrongMessage(t *testing.T) {
 
-	var message types.AuthorizationMessageRequest
+	var message types2.AuthorizationMessageRequest
 	message.Type = AuthorizationRequestMessageType
-	message.Data = types.AuthorizationMessageRequestData{}
+	message.Data = types2.AuthorizationMessageRequestData{}
 
-	zkpProofRequest := types.ZeroKnowledgeProofRequest{
-		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+	zkpProofRequest := types2.ZeroKnowledgeProofRequest{
+		Type:      types2.ZeroKnowledgeProofType,
+		CircuitID: types2.KycBySignaturesCircuitID,
 		Rules:     map[string]interface{}{},
 	}
-	message.Data.Scope = []types.TypedScope{zkpProofRequest}
+	message.Data.Scope = []types2.TypedScope{zkpProofRequest}
 
 	err := Verify(&message)
 
@@ -90,9 +90,9 @@ func TestVerifyWrongMessage(t *testing.T) {
 func TestCreateAuthorizationRequest(t *testing.T) {
 
 	aud := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
-	zkpProofRequest := types.ZeroKnowledgeProofRequest{
-		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+	zkpProofRequest := types2.ZeroKnowledgeProofRequest{
+		Type:      types2.ZeroKnowledgeProofType,
+		CircuitID: types2.KycBySignaturesCircuitID,
 		Rules: map[string]interface{}{
 			"challenge":        12345678,
 			"countryBlacklist": []int{840},
@@ -119,18 +119,18 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 
 func TestExtractData(t *testing.T) {
 
-	var message types.AuthorizationMessageResponse
+	var message types2.AuthorizationMessageResponse
 	message.Type = AuthorizationResponseMessageType
-	message.Data = types.AuthorizationMessageResponseData{}
+	message.Data = types2.AuthorizationMessageResponseData{}
 
-	zkpProof := types.ZeroKnowledgeProof{
-		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
-		CircuitData: &types.CircuitData{
-			ID:              types.KycBySignaturesCircuitID,
+	zkpProof := types2.ZeroKnowledgeProof{
+		Type:      types2.ZeroKnowledgeProofType,
+		CircuitID: types2.KycBySignaturesCircuitID,
+		CircuitData: &types2.CircuitData{
+			ID:              types2.KycBySignaturesCircuitID,
 			Description:     "test",
-			VerificationKey: circuits.KYCBySignatureVerificationKey,
-			Metadata:        circuits.KYCBySignaturePublicSignalsSchema,
+			VerificationKey: circuits2.KYCBySignatureVerificationKey,
+			Metadata:        circuits2.KYCBySignaturePublicSignalsSchema,
 		},
 	}
 	zkpProof.PubSignals = []string{
@@ -161,7 +161,7 @@ func TestExtractData(t *testing.T) {
 		"25",
 		"18",
 	}
-	zkpProof.ProofData = &types.ProofData{
+	zkpProof.ProofData = &types2.ProofData{
 		A: []string{"15410252994758206156331933443865902387659457159831652500594192431349076893658",
 			"20150829872771081060142254046116588090324284033366663360366174697329414878949",
 			"1"},
@@ -180,7 +180,7 @@ func TestExtractData(t *testing.T) {
 		},
 	}
 
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []types2.TypedScope{zkpProof}
 	token, err := ExtractMetadata(&message)
 	assert.Nil(t, err)
 
@@ -190,16 +190,16 @@ func TestExtractData(t *testing.T) {
 
 func TestVerifyMessageWithAuthProof(t *testing.T) {
 
-	var message types.AuthorizationMessageResponse
+	var message types2.AuthorizationMessageResponse
 	message.Type = AuthorizationResponseMessageType
-	message.Data = types.AuthorizationMessageResponseData{}
+	message.Data = types2.AuthorizationMessageResponseData{}
 
-	zkpProof := types.ZeroKnowledgeProof{
-		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.AuthCircuitID,
+	zkpProof := types2.ZeroKnowledgeProof{
+		Type:      types2.ZeroKnowledgeProofType,
+		CircuitID: types2.AuthCircuitID,
 	}
 
-	zkpProof.ProofData = &types.ProofData{
+	zkpProof.ProofData = &types2.ProofData{
 		A: []string{"14146277947056297753840642586002829867111675410988595047766001252156753371528", "14571022849315211248046007113544986624773029852663683182064313232057584750907", "1"},
 		B: [][]string{
 			{"16643510334478363316178974136322830670001098048711963846055396047727066595515", "10398230582752448515583571758866992012509398625081722188208617704185602394573"},
@@ -215,7 +215,7 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 		"383481829333688262229762912714748186426235428103586432827469388069546950656",
 		"12345",
 	}
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []types2.TypedScope{zkpProof}
 
 	err := Verify(&message)
 	assert.Nil(t, err)
