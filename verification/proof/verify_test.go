@@ -1,4 +1,4 @@
-package verification
+package proof
 
 import (
 	"github.com/iden3/go-auth/circuits"
