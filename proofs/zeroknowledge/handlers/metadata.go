@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/iden3/go-auth/types"
+	core "github.com/iden3/go-iden3-core"
+	"github.com/iden3/go-merkletree-sql"
+	"math/big"
 )
 
 const (
 	identifierAttribute string = "user_identifier"
 	challengeAttribute  string = "challenge"
+	stateAttribute      string = "user_state"
 )
 
 // MetadataProofHandler is handler to extract metadata of the provided proof
@@ -36,11 +40,20 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 	if !ok {
 		return errors.New("no user identifier attribute in provided proof")
 	}
+	stateIndex, ok := metaData[stateAttribute]
+	if ok {
+		proofMetadata.AuthData.UserState = m.PubSignals[stateIndex]
+	}
 	challengeIndex, ok := metaData[challengeAttribute]
 	if !ok {
 		return errors.New("no user challenge attribute in provided proof")
 	}
-	proofMetadata.AuthData.UserIdentifier = m.PubSignals[identifierIndex]
+
+	proofMetadata.AuthData.UserIdentifier, err = convertID(m.PubSignals[identifierIndex])
+	if err != nil {
+		return err
+	}
+
 	proofMetadata.AuthData.AuthenticationChallenge = m.PubSignals[challengeIndex]
 
 	// load schema fields and indexes
@@ -64,4 +77,17 @@ func (h *MetadataProofHandler) Process(m *types.ZeroKnowledgeProof) (err error) 
 func (h *MetadataProofHandler) SetNext(next ProofHandler) ProofHandler {
 	h.next = next
 	return h
+}
+
+func convertID(_id string) (string, error) {
+	idInt, ok := new(big.Int).SetString(_id, 10)
+	if !ok {
+		return "", errors.New("id is not a big int")
+	}
+	elemBytes := merkletree.NewElemBytesFromBigInt(idInt)
+	id, err := core.IDFromBytes(elemBytes[:31])
+	if !ok {
+		return "", err
+	}
+	return id.String(), nil
 }
