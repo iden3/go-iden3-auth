@@ -141,10 +141,16 @@ Also, it supports the verification of authorization-response.
     if err != nil {
     		// do smth ...
     }
+    stateInfo, err := auth.VerifyState(token,"< rpc url >", "< state contract address >")
+    if err != nil {
+    		// do smth ...
+    }
     log.Infof("user identifier from token %s", token.Identifier) // we can get user id from proofs 
     log.Infof("auth challenge that was %s", token.Challenge) // we can get challenge from proofs 
     log.Infof("any other info from token %+v", token.Scope) // we can get any info according to circuit schemas
-    ```
+    log.Infof("state information latest: %t, transition time: %v", stateInfo.Latest, stateInfo.TransitionTimestamp) // we can get info about state
+
+   ```
 
 
 Auth library works with plain packer which doesn't support encoding or encryption but it can be implemented by introducing another packer.
@@ -200,3 +206,14 @@ This allows extracting user identifiers and challenges for authentication from p
 Other signals are added to the user token ( scope field) as attributes of a specific circuit.
 
 Circuit public signals schemas are known by this library or can be retrieved from some registry.
+
+### Verification of user identity states
+
+The blockchain verification algorithm is used
+
+1. Gets state from the blockchain (address of id state contract and URL must be provided by the caller of the library):
+  1. Empty state is returned - it means that identity state hasn’t been updated or updated state hasn’t been published. We need to compare id and state. If they are different it’s not a genesis state of identity then it’s not valid.
+  2. The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough and we work with the latest user state.
+  3. The non-empty state is returned and it’s not equal to the state that the user has provided. Gets the transition time of the state. The verification party can make a decision if it can accept this state based on that time frame
+
+2. Verification party can make a decision to accept or not provided state information
