@@ -14,7 +14,7 @@ type VerificationHandler struct {
 // Process applies handler logic on provided message
 func (h *VerificationHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 
-	err = verification.Verify(*m.ProofData, m.PubSignals, []byte(m.CircuitData.VerificationKey))
+	err = verification.VerifyProof(*m.ProofData, m.PubSignals, []byte(m.CircuitData.VerificationKey))
 	if err != nil {
 		return err
 	}

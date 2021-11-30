@@ -34,6 +34,7 @@ type ZeroKnowledgeProof struct {
 // AuthenticationMetadata defines basic metadata that can be retrieved from auth proof
 type AuthenticationMetadata struct {
 	UserIdentifier          string
+	UserState               string
 	AuthenticationChallenge string
 }
 

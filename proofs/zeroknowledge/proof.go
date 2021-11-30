@@ -1,54 +1,54 @@
 package zeroknowledge
 
 import (
-	circuits2 "github.com/iden3/go-auth/circuits"
-	handlers2 "github.com/iden3/go-auth/proofs/zeroknowledge/handlers"
-	types2 "github.com/iden3/go-auth/types"
+	"github.com/iden3/go-auth/circuits"
+	"github.com/iden3/go-auth/proofs/zeroknowledge/handlers"
+	types "github.com/iden3/go-auth/types"
 )
 
-var supportedCircuits = map[types2.CircuitID]types2.CircuitData{
-	types2.KycBySignaturesCircuitID: {
-		ID:              types2.KycBySignaturesCircuitID,
+var supportedCircuits = map[types.CircuitID]types.CircuitData{
+	types.KycBySignaturesCircuitID: {
+		ID:              types.KycBySignaturesCircuitID,
 		Description:     "circuit for kyc claims verification",
-		VerificationKey: circuits2.KYCBySignatureVerificationKey,
-		Metadata:        circuits2.KYCBySignaturePublicSignalsSchema,
+		VerificationKey: circuits.KYCBySignatureVerificationKey,
+		Metadata:        circuits.KYCBySignaturePublicSignalsSchema,
 	},
-	types2.AuthCircuitID: {
-		ID:              types2.AuthCircuitID,
+	types.AuthCircuitID: {
+		ID:              types.AuthCircuitID,
 		Description:     "circuit for verification of  basic authentication",
-		VerificationKey: circuits2.AuthenticationVerificationKey,
-		Metadata:        circuits2.AuthenticationPublicSignalsSchema,
+		VerificationKey: circuits.AuthenticationVerificationKey,
+		Metadata:        circuits.AuthenticationPublicSignalsSchema,
 	},
 }
 
 // VerifyProof performs groth16 verification
-func VerifyProof(m *types2.ZeroKnowledgeProof) (err error) {
+func VerifyProof(m *types.ZeroKnowledgeProof) (err error) {
 
-	zkp := &handlers2.ZeroKnowledgeProofHandler{}
+	zkp := &handlers.ZeroKnowledgeProofHandler{}
 
-	ch := &handlers2.CircuitHandler{
+	ch := &handlers.CircuitHandler{
 		SupportedCircuits: supportedCircuits,
 	}
 	zkp.SetNext(ch)
 
-	vh := &handlers2.VerificationHandler{}
+	vh := &handlers.VerificationHandler{}
 	ch.SetNext(vh)
 
 	return zkp.Process(m)
 }
 
 // ExtractMetadata extracts proof metadata
-func ExtractMetadata(m *types2.ZeroKnowledgeProof) (err error) {
+func ExtractMetadata(m *types.ZeroKnowledgeProof) (err error) {
 
-	zkp := &handlers2.ZeroKnowledgeProofHandler{}
+	zkp := &handlers.ZeroKnowledgeProofHandler{}
 
-	ch := &handlers2.CircuitHandler{
+	ch := &handlers.CircuitHandler{
 		SupportedCircuits: supportedCircuits,
 	}
 
-	mph := &handlers2.MetadataProofHandler{}
-
-	zkp.SetNext(ch).SetNext(mph)
+	mph := &handlers.MetadataProofHandler{}
+	ch.SetNext(mph)
+	zkp.SetNext(ch)
 
 	err = zkp.Process(m)
 	return err
