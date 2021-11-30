@@ -3,7 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/iden3/go-auth/types"
-	"github.com/iden3/go-auth/verification/proof"
+	"github.com/iden3/go-auth/verification"
 )
 
 // VerificationHandler is handler to check verification of the provided proof
@@ -14,7 +14,7 @@ type VerificationHandler struct {
 // Process applies handler logic on provided message
 func (h *VerificationHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 
-	err = proof.Verify(*m.ProofData, m.PubSignals, []byte(m.CircuitData.VerificationKey))
+	err = verification.VerifyProof(*m.ProofData, m.PubSignals, []byte(m.CircuitData.VerificationKey))
 	if err != nil {
 		return err
 	}

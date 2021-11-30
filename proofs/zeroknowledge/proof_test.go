@@ -1,7 +1,7 @@
 package zeroknowledge
 
 import (
-	types2 "github.com/iden3/go-auth/types"
+	"github.com/iden3/go-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -9,9 +9,9 @@ import (
 func TestVerifyProof(t *testing.T) {
 
 	var err error
-	proofMessage := &types2.ZeroKnowledgeProof{}
-	proofMessage.CircuitID = types2.KycBySignaturesCircuitID
-	proofMessage.ProofData = &types2.ProofData{
+	proofMessage := &types.ZeroKnowledgeProof{}
+	proofMessage.CircuitID = types.KycBySignaturesCircuitID
+	proofMessage.ProofData = &types.ProofData{
 		A: []string{"15410252994758206156331933443865902387659457159831652500594192431349076893658",
 			"20150829872771081060142254046116588090324284033366663360366174697329414878949",
 			"1"},
@@ -71,10 +71,10 @@ func TestVerifyProof(t *testing.T) {
 func TestVerifyAuthProof(t *testing.T) {
 
 	var err error
-	proofMessage := &types2.ZeroKnowledgeProof{}
-	proofMessage.CircuitID = types2.AuthCircuitID
+	proofMessage := &types.ZeroKnowledgeProof{}
+	proofMessage.CircuitID = types.AuthCircuitID
 
-	proofMessage.ProofData = &types2.ProofData{
+	proofMessage.ProofData = &types.ProofData{
 		A: []string{
 			"8286889681087188684411199510889276918687181609540093440568310458198317956303",
 			"20120810686068956496055592376395897424117861934161580256832624025185006492545",

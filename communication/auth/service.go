@@ -5,46 +5,47 @@ import (
 	"github.com/iden3/go-auth/communication/protocol"
 	"github.com/iden3/go-auth/proofs/signature"
 	"github.com/iden3/go-auth/proofs/zeroknowledge"
-	types2 "github.com/iden3/go-auth/types"
+	"github.com/iden3/go-auth/types"
 )
 
 const (
 	// Name represents name of the service
 	Name = "authorization-service"
 	// AuthorizationRequestMessageType defines auth request type of the communication protocol
-	AuthorizationRequestMessageType types2.ProtocolMessage = protocol.ProtocolName + "/authorization-request/v1"
+	AuthorizationRequestMessageType types.ProtocolMessage = protocol.ProtocolName + "/authorization-request/v1"
 	// AuthorizationResponseMessageType defines auth response type of the communication protocol
-	AuthorizationResponseMessageType types2.ProtocolMessage = protocol.ProtocolName + "/authorization-response/v1"
+	AuthorizationResponseMessageType types.ProtocolMessage = protocol.ProtocolName + "/authorization-response/v1"
 )
 
 // CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(aud, callbackURL string) *types2.AuthorizationMessageRequest {
-	var message types2.AuthorizationMessageRequest
+func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMessageRequest {
+	var message types.AuthorizationMessageRequest
 
 	message.Type = AuthorizationRequestMessageType
-	message.Data = types2.AuthorizationMessageRequestData{
+	message.Data = types.AuthorizationMessageRequestData{
 		CallbackURL: callbackURL,
 		Audience:    aud,
-		Scope:       []types2.TypedScope{},
+		Scope:       []types.TypedScope{},
 	}
 	return &message
 }
 
-// Verify performs a verification of authorization response message
-func Verify(message types2.Message) (err error) {
+// Verify only proofs of  a verification of authorization response message
+//
+func Verify(message types.Message) (err error) {
 	if message.GetType() != AuthorizationResponseMessageType {
 		return fmt.Errorf("%s doesn't support %s message type", Name, (message).GetType())
 	}
-	authorizationContent := message.GetData().(types2.AuthorizationMessageResponseData)
+	authorizationContent := message.GetData().(types.AuthorizationMessageResponseData)
 
 	for _, s := range authorizationContent.Scope {
 		switch proof := s.(type) {
-		case types2.ZeroKnowledgeProof:
+		case types.ZeroKnowledgeProof:
 			err = zeroknowledge.VerifyProof(&proof)
 			if err != nil {
 				return fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
-		case types2.SignatureProof:
+		case types.SignatureProof:
 			err = signature.VerifyProof(&proof)
 			if err != nil {
 				return fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
@@ -56,17 +57,17 @@ func Verify(message types2.Message) (err error) {
 }
 
 // ExtractMetadata extract userToken from provided proofs
-func ExtractMetadata(message types2.Message) (token *UserToken, err error) {
+func ExtractMetadata(message types.Message) (token *UserToken, err error) {
 	if message.GetType() != AuthorizationResponseMessageType {
 		return nil, fmt.Errorf("%s doesn't support %s message type", Name, message.GetType())
 	}
-	authorizationContent := message.GetData().(types2.AuthorizationMessageResponseData)
+	authorizationContent := message.GetData().(types.AuthorizationMessageResponseData)
 
 	token = &UserToken{}
 	token.Scope = map[string]map[string]interface{}{}
 	for _, s := range authorizationContent.Scope {
 		switch proof := s.(type) {
-		case types2.ZeroKnowledgeProof:
+		case types.ZeroKnowledgeProof:
 			err = zeroknowledge.ExtractMetadata(&proof)
 			if err != nil {
 				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
@@ -77,7 +78,7 @@ func ExtractMetadata(message types2.Message) (token *UserToken, err error) {
 				return nil, fmt.Errorf("can't provide user token %s", err.Error())
 			}
 
-		case types2.SignatureProof:
+		case types.SignatureProof:
 			err = signature.ExtractMetadata(&proof)
 			if err != nil {
 				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())

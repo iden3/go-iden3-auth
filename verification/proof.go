@@ -1,4 +1,4 @@
-package proof
+package verification
 
 import (
 	"encoding/json"
@@ -12,8 +12,8 @@ import (
 	"math/big"
 )
 
-// Verify performs a verification of zkp  based on verification key and public inputs
-func Verify(proof types.ProofData, publicInputs []string, verificationKey []byte) error {
+// VerifyProof performs a verification of zkp  based on verification key and public inputs
+func VerifyProof(proof types.ProofData, publicInputs []string, verificationKey []byte) error {
 
 	// 1. parse proofs to proofs object with big integers (circom type)
 
@@ -45,11 +45,11 @@ func Verify(proof types.ProofData, publicInputs []string, verificationKey []byte
 		return err
 	}
 
-	return verify(vkKey, p, pubSignals)
+	return verifyGroth16(vkKey, p, pubSignals)
 }
 
-// verify performs the verification the Groth16 zkSNARK proofs
-func verify(vk *circomTypes.Vk, proof *circomTypes.Proof, inputs []*big.Int) error {
+// verifyGroth16 performs the verification the Groth16 zkSNARK proofs
+func verifyGroth16(vk *circomTypes.Vk, proof *circomTypes.Proof, inputs []*big.Int) error {
 	if len(inputs)+1 != len(vk.IC) {
 		return fmt.Errorf("len(inputs)+1 != len(vk.IC)")
 	}
