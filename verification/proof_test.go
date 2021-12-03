@@ -1,10 +1,10 @@
 package verification
 
 import (
-	"github.com/iden3/go-auth/circuits"
 	"github.com/iden3/go-circom-prover-verifier/parsers"
 	types2 "github.com/iden3/go-circom-prover-verifier/types"
 	"github.com/iden3/go-circom-prover-verifier/verifier"
+	"github.com/iden3/go-iden3-auth/circuits"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/iden3/go-auth/types"
-	"github.com/iden3/go-auth/verification"
+	"github.com/iden3/go-iden3-auth/types"
+	"github.com/iden3/go-iden3-auth/verification"
 )
 
 // VerificationHandler is handler to check verification of the provided proof

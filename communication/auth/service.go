@@ -2,10 +2,10 @@ package auth
 
 import (
 	"fmt"
-	"github.com/iden3/go-auth/communication/protocol"
-	"github.com/iden3/go-auth/proofs/signature"
-	"github.com/iden3/go-auth/proofs/zeroknowledge"
-	"github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/communication/protocol"
+	"github.com/iden3/go-iden3-auth/proofs/signature"
+	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge"
+	"github.com/iden3/go-iden3-auth/types"
 )
 
 const (

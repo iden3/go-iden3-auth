@@ -1,7 +1,7 @@
 package zeroknowledge
 
 import (
-	"github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

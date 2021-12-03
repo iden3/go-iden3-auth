@@ -1,9 +1,9 @@
 package zeroknowledge
 
 import (
-	"github.com/iden3/go-auth/circuits"
-	"github.com/iden3/go-auth/proofs/zeroknowledge/handlers"
-	types "github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/circuits"
+	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge/handlers"
+	types "github.com/iden3/go-iden3-auth/types"
 )
 
 var supportedCircuits = map[types.CircuitID]types.CircuitData{

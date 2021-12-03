@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/types"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/iden3/go-merkletree-sql"
 	"math/big"

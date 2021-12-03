@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	types2 "github.com/iden3/go-auth/types"
+	types2 "github.com/iden3/go-iden3-auth/types"
 )
 
 // CircuitHandler is handler to verify circuit information of provided proof

@@ -1,4 +1,4 @@
-module github.com/iden3/go-auth
+module github.com/iden3/go-iden3-auth
 
 go 1.17
 

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/types"
 )
 
 // ProofHandler is a handler for proof processing

@@ -1,8 +1,8 @@
 package packer
 
 import (
-	"github.com/iden3/go-auth/communication/auth"
-	types2 "github.com/iden3/go-auth/types"
+	"github.com/iden3/go-iden3-auth/communication/auth"
+	types2 "github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -2,8 +2,8 @@ package auth
 
 import (
 	"context"
-	"github.com/iden3/go-auth/types"
-	"github.com/iden3/go-auth/verification"
+	"github.com/iden3/go-iden3-auth/types"
+	"github.com/iden3/go-iden3-auth/verification"
 	"github.com/pkg/errors"
 
 	core "github.com/iden3/go-iden3-core"
