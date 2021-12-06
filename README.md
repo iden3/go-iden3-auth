@@ -26,14 +26,15 @@ The library supports the creation of authorization requests with a possibility t
         "callbackUrl": "https://test.com",
         "audience": "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ",
         "scope": [
-          {
-            "circuit_id": "kycBySignatures",
-            "type": "zeroknowledge",
-            "rules": {
-              "challenge": "1234567"
-            }
+            {
+              "circuit_id": "auth",
+              "type": "zeroknowledge",
+              "rules": {
+                  "audience": "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ",
+                  "challenge": 1234567
+              }
           }
-        ]
+       ]
       }
     }
     ```
