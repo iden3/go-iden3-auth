@@ -16,7 +16,7 @@ type Message interface {
 // BasicMessage is structure for message with unknown data format
 type BasicMessage struct {
 	Type ProtocolMessage `json:"type"`
-	Data interface{}
+	Data json.RawMessage `json:"data"`
 	Message
 }
 
@@ -39,7 +39,7 @@ type AuthorizationMessageRequestData struct {
 
 // AuthorizationMessageResponseData is struct the represents authorization response data
 type AuthorizationMessageResponseData struct {
-	Scope []TypedScope `json:"scope"`
+	Scope []interface{} `json:"scope"`
 }
 
 // TypedScope is interface that restricts objects that can be used for scope in authorization request

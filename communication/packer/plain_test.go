@@ -37,10 +37,17 @@ func TestPlainMessagePacker_Pack(t *testing.T) {
 func TestPlainMessagePacker_Unpack(t *testing.T) {
 	packer := PlainMessagePacker{}
 
-	msgBytes := []byte(`{"type":"https://iden3-communication.io/authorization-request/v1","data":{"callbackUrl":"https://test.com","audience":"1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ","scope":[{"circuit_id":"kycBySignatures","type":"zeroknowledge","rules":{"challenge":"1234567"}}]}}`)
+	msgBytes := []byte(`{"type":"https://iden3-communication.io/authorization-response/v1","data":{"scope":[{"type":"zeroknowledge","circuit_id":"auth","pub_signals":["371135506535866236563870411357090963344408827476607986362864968105378316288","12345","16751774198505232045539489584666775489135471631443877047826295522719290880931"],"proof_data":{"pi_a":["8286889681087188684411199510889276918687181609540093440568310458198317956303","20120810686068956496055592376395897424117861934161580256832624025185006492545","1"],"pi_b":[["8781021494687726640921078755116610543888920881180197598360798979078295904948","19202155147447713148677957576892776380573753514701598304555554559013661311518"],["15726655173394887666308034684678118482468533753607200826879522418086507576197","16663572050292231627606042532825469225281493999513959929720171494729819874292"],["1","0"]],"pi_c":["9723779257940517259310236863517792034982122114581325631102251752415874164616","3242951480985471018890459433562773969741463856458716743271162635077379852479","1"],"protocol":"groth16"}}]}}`)
 	message, err := packer.Unpack(msgBytes)
 	assert.Nil(t, err)
-	assert.Equal(t, auth.AuthorizationRequestMessageType, message.GetType())
+	assert.Equal(t, auth.AuthorizationResponseMessageType, message.GetType())
+
+	err = auth.Verify(message)
+	assert.Nil(t, err)
+
+	token, err := auth.ExtractMetadata(message)
+	assert.Nil(t, err)
+	assert.Equal(t, "11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s", token.ID)
 
 }
 func TestPlainMessagePacker_PackAuthorizationResponse(t *testing.T) {
@@ -72,7 +79,7 @@ func TestPlainMessagePacker_PackAuthorizationResponse(t *testing.T) {
 		"383481829333688262229762912714748186426235428103586432827469388069546950656",
 		"12345",
 	}
-	message.Data.Scope = []types2.TypedScope{zkpProof}
+	message.Data.Scope = []interface{}{zkpProof}
 
 	msgBytes, err := packer.Pack("application/json", &message)
 	t.Log(string(msgBytes))
