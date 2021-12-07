@@ -143,7 +143,7 @@ Also, it supports the verification of authorization-response.
     if err != nil {
     		// do smth ...
     }
-    stateInfo, err := auth.VerifyState(token,"< rpc url >", "< state contract address >")
+    stateInfo, err := token.VerifyState(ctx.Background(),"< rpc url >", "< state contract address >")
     if err != nil {
     		// do smth ...
     }
