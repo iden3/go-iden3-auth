@@ -65,7 +65,7 @@ func TestVerify(t *testing.T) {
 		"25",
 		"18",
 	}
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []interface{}{zkpProof}
 
 	err := Verify(&message)
 	assert.Nil(t, err)
@@ -182,7 +182,7 @@ func TestExtractData(t *testing.T) {
 		},
 	}
 
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []interface{}{zkpProof}
 	token, err := ExtractMetadata(&message)
 	assert.Nil(t, err)
 
@@ -230,7 +230,7 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 		"12345",
 		"16751774198505232045539489584666775489135471631443877047826295522719290880931",
 	}
-	message.Data.Scope = []types.TypedScope{zkpProof}
+	message.Data.Scope = []interface{}{zkpProof}
 
 	err := Verify(&message)
 	assert.Nil(t, err)
