@@ -1,5 +1,7 @@
 package types
 
+import "github.com/iden3/go-circuits"
+
 // ProofType is a type that must be used for proof definition
 type ProofType string
 
@@ -22,11 +24,11 @@ type ProofMetadata struct {
 
 // ZeroKnowledgeProof represents structure of zkp object
 type ZeroKnowledgeProof struct {
-	Type        ProofType    `json:"type"`
-	CircuitID   CircuitID    `json:"circuit_id"`
-	PubSignals  []string     `json:"pub_signals"`
-	ProofData   *ProofData   `json:"proof_data"`
-	CircuitData *CircuitData `json:"circuit_data,omitempty"`
+	Type        ProofType          `json:"type"`
+	CircuitID   circuits.CircuitID `json:"circuit_id"`
+	PubSignals  []string           `json:"pub_signals"`
+	ProofData   *ProofData         `json:"proof_data"`
+	CircuitData *CircuitData       `json:"circuit_data,omitempty"`
 	ProofMetadata
 	TypedScope `json:"-"`
 }
@@ -79,7 +81,7 @@ type AuthenticationRules struct {
 
 // ZeroKnowledgeProofRequest represents structure for request of zkp proof
 type ZeroKnowledgeProofRequest struct {
-	CircuitID  CircuitID              `json:"circuit_id,omitempty"`
+	CircuitID  circuits.CircuitID     `json:"circuit_id,omitempty"`
 	Type       ProofType              `json:"type"`
 	Rules      map[string]interface{} `json:"rules,omitempty"`
 	TypedScope `json:"-"`

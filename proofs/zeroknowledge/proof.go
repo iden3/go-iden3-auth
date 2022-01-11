@@ -1,23 +1,29 @@
 package zeroknowledge
 
 import (
-	"github.com/iden3/go-iden3-auth/circuits"
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge/handlers"
 	types "github.com/iden3/go-iden3-auth/types"
 )
 
-var supportedCircuits = map[types.CircuitID]types.CircuitData{
-	types.KycBySignaturesCircuitID: {
-		ID:              types.KycBySignaturesCircuitID,
+var supportedCircuits = map[circuits.CircuitID]types.CircuitData{
+	circuits.KycBySignaturesCircuitID: {
+		ID:              circuits.KycBySignaturesCircuitID,
 		Description:     "circuit for kyc claims verification",
-		VerificationKey: circuits.KYCBySignatureVerificationKey,
-		Metadata:        circuits.KYCBySignaturePublicSignalsSchema,
+		VerificationKey: circuits.KycBySignaturesVerificationKey,
+		Metadata:        circuits.KycBySignaturesPublicSignalsSchema,
 	},
-	types.AuthCircuitID: {
-		ID:              types.AuthCircuitID,
+	circuits.AuthCircuitID: {
+		ID:              circuits.AuthCircuitID,
 		Description:     "circuit for verification of  basic authentication",
 		VerificationKey: circuits.AuthenticationVerificationKey,
 		Metadata:        circuits.AuthenticationPublicSignalsSchema,
+	},
+	circuits.AtomicQueryCircuitID: {
+		ID:              circuits.AtomicQueryCircuitID,
+		Description:     "circuit for atomic query on standard iden3 credential",
+		VerificationKey: circuits.AtomicQueryVerificationKey,
+		Metadata:        circuits.AtomicQueryPublicSignalsSchema,
 	},
 }
 

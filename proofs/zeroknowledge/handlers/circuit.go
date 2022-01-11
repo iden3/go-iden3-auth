@@ -2,17 +2,18 @@ package handlers
 
 import (
 	"fmt"
-	types2 "github.com/iden3/go-iden3-auth/types"
+	"github.com/iden3/go-circuits"
+	types "github.com/iden3/go-iden3-auth/types"
 )
 
 // CircuitHandler is handler to verify circuit information of provided proof
 type CircuitHandler struct {
-	SupportedCircuits map[types2.CircuitID]types2.CircuitData
+	SupportedCircuits map[circuits.CircuitID]types.CircuitData
 	next              ProofHandler
 }
 
 // Process applies handler logic on provided message
-func (h *CircuitHandler) Process(m *types2.ZeroKnowledgeProof) (err error) {
+func (h *CircuitHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 
 	circuitData, ok := h.SupportedCircuits[m.CircuitID]
 	if !ok {

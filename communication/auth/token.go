@@ -18,7 +18,8 @@ type UserToken struct {
 	Scope     map[string]map[string]interface{}
 }
 
-func (token *UserToken) update(scopeID string, metadata types.ProofMetadata) error {
+// Update adds new metadata to user token
+func (token *UserToken) Update(scopeID string, metadata types.ProofMetadata) error {
 
 	if token.Challenge != "" && token.Challenge != metadata.AuthData.AuthenticationChallenge {
 		return errors.New("different challenges were used for authentication")

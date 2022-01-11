@@ -1,8 +1,9 @@
 package packer
 
 import (
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/communication/auth"
-	types2 "github.com/iden3/go-iden3-auth/types"
+	"github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -10,20 +11,20 @@ import (
 func TestPlainMessagePacker_Pack(t *testing.T) {
 	packer := PlainMessagePacker{}
 
-	var message types2.AuthorizationMessageRequest
+	var message types.AuthorizationMessageRequest
 	message.Type = auth.AuthorizationRequestMessageType
-	message.Data = types2.AuthorizationMessageRequestData{}
+	message.Data = types.AuthorizationMessageRequestData{}
 	message.Data.Audience = "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	message.Data.CallbackURL = "https://test.com"
 
-	zkpProofRequest := types2.ZeroKnowledgeProofRequest{
-		Type:      types2.ZeroKnowledgeProofType,
-		CircuitID: types2.KycBySignaturesCircuitID,
+	zkpProofRequest := types.ZeroKnowledgeProofRequest{
+		Type:      types.ZeroKnowledgeProofType,
+		CircuitID: circuits.KycBySignaturesCircuitID,
 		Rules: map[string]interface{}{
 			"challenge": "1234567",
 		},
 	}
-	message.Data.Scope = []types2.TypedScope{zkpProofRequest}
+	message.Data.Scope = []types.TypedScope{zkpProofRequest}
 	message.WithDefaultAuth(1234567)
 	msgBytes, err := packer.Pack("application/json", &message)
 	t.Log(string(msgBytes))
@@ -53,16 +54,16 @@ func TestPlainMessagePacker_Unpack(t *testing.T) {
 func TestPlainMessagePacker_PackAuthorizationResponse(t *testing.T) {
 	packer := PlainMessagePacker{}
 
-	var message types2.AuthorizationMessageResponse
+	var message types.AuthorizationMessageResponse
 	message.Type = auth.AuthorizationResponseMessageType
-	message.Data = types2.AuthorizationMessageResponseData{}
+	message.Data = types.AuthorizationMessageResponseData{}
 
-	zkpProof := types2.ZeroKnowledgeProof{
-		Type:      types2.ZeroKnowledgeProofType,
-		CircuitID: types2.AuthCircuitID,
+	zkpProof := types.ZeroKnowledgeProof{
+		Type:      types.ZeroKnowledgeProofType,
+		CircuitID: circuits.AuthCircuitID,
 	}
 
-	zkpProof.ProofData = &types2.ProofData{
+	zkpProof.ProofData = &types.ProofData{
 		A: []string{
 			"11130843150540789299458990586020000719280246153797882843214290541980522375072",
 			"1300841912943781723022032355836893831132920783788455531838254465784605762713",
