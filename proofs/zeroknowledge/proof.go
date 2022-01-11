@@ -11,7 +11,7 @@ var supportedCircuits = map[circuits.CircuitID]types.CircuitData{
 		ID:              circuits.KycBySignaturesCircuitID,
 		Description:     "circuit for kyc claims verification",
 		VerificationKey: circuits.KycBySignaturesVerificationKey,
-		Metadata:        circuits.KycPublicSignalsSchema,
+		Metadata:        circuits.KycBySignaturesPublicSignalsSchema,
 	},
 	circuits.AuthCircuitID: {
 		ID:              circuits.AuthCircuitID,

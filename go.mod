@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/ethereum/go-ethereum v1.10.13
 	github.com/iden3/go-circom-prover-verifier v0.0.1
+	github.com/iden3/go-circuits v0.0.9
 	github.com/iden3/go-iden3-core v0.0.11
 	github.com/iden3/go-merkletree-sql v1.0.0-pre8
 	github.com/pkg/errors v0.9.1
@@ -20,7 +21,6 @@ require (
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/iden3/go-circuits v0.0.5 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.11 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
