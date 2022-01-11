@@ -1,6 +1,7 @@
 package zeroknowledge
 
 import (
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -10,7 +11,7 @@ func TestVerifyProof(t *testing.T) {
 
 	var err error
 	proofMessage := &types.ZeroKnowledgeProof{}
-	proofMessage.CircuitID = types.KycBySignaturesCircuitID
+	proofMessage.CircuitID = circuits.KycBySignaturesCircuitID
 	proofMessage.ProofData = &types.ProofData{
 		A: []string{"15410252994758206156331933443865902387659457159831652500594192431349076893658",
 			"20150829872771081060142254046116588090324284033366663360366174697329414878949",
@@ -72,7 +73,7 @@ func TestVerifyAuthProof(t *testing.T) {
 
 	var err error
 	proofMessage := &types.ZeroKnowledgeProof{}
-	proofMessage.CircuitID = types.AuthCircuitID
+	proofMessage.CircuitID = circuits.AuthCircuitID
 
 	proofMessage.ProofData = &types.ProofData{
 		A: []string{

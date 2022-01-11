@@ -4,7 +4,7 @@ import (
 	"github.com/iden3/go-circom-prover-verifier/parsers"
 	types2 "github.com/iden3/go-circom-prover-verifier/types"
 	"github.com/iden3/go-circom-prover-verifier/verifier"
-	"github.com/iden3/go-iden3-auth/circuits"
+	"github.com/iden3/go-circuits"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -12,7 +12,7 @@ import (
 
 func TestVerify(t *testing.T) {
 	// verifyGroth16 the proofs
-	vkJSON := []byte(circuits.KYCBySignatureVerificationKey)
+	vkJSON := []byte(circuits.KycBySignaturesCircuitID)
 
 	publicJSON := []byte(`["411744492472830263284610159093112301866082562595864436469836164448155795456","12345","123776615674577205629582240968408410063074486679712932519574537196926599168","11688539338838797595201345228132404230382121068811390693927054959014251630145","840","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","123776615674577205629582240968408410063074486679712932519574537196926599168","11688539338838797595201345228132404230382121068811390693927054959014251630145","2021","4","25","18"]`)
 

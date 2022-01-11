@@ -1,8 +1,9 @@
-package auth
+package credentials
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iden3/go-iden3-auth/communication/auth"
 	"github.com/iden3/go-iden3-auth/communication/protocol"
 	"github.com/iden3/go-iden3-auth/proofs/signature"
 	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge"
@@ -12,46 +13,38 @@ import (
 
 const (
 	// Name represents name of the service
-	Name = "authorization-service"
-	// AuthorizationRequestMessageType defines auth request type of the communication protocol
-	AuthorizationRequestMessageType types.ProtocolMessage = protocol.ProtocolName + "/authorization-request/v1"
-	// AuthorizationResponseMessageType defines auth response type of the communication protocol
-	AuthorizationResponseMessageType types.ProtocolMessage = protocol.ProtocolName + "/authorization-response/v1"
+	Name = "credential-service"
+	// CredentialFetchRequestMessageType defines credential request type of the communication protocol
+	CredentialFetchRequestMessageType types.ProtocolMessage = protocol.ProtocolName + "/credential-fetch-request/v1"
 )
 
-// CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMessageRequest {
-	var message types.AuthorizationMessageRequest
-
-	message.Type = AuthorizationRequestMessageType
-	message.Data = types.AuthorizationMessageRequestData{
-		CallbackURL: callbackURL,
-		Audience:    aud,
-		Scope:       []types.TypedScope{},
-	}
-	return &message
-}
-
-// Verify only proofs of  a verification of authorization response message
-//
-func Verify(message types.Message) (err error) {
-	if message.GetType() != AuthorizationResponseMessageType {
+// VerifyCredentialFetchRequest only proofs of  a verification of credential fetch request  message
+func VerifyCredentialFetchRequest(message types.Message) (err error) {
+	if message.GetType() != CredentialFetchRequestMessageType {
 		return fmt.Errorf("%s doesn't support %s message type", Name, (message).GetType())
 	}
 
-	var authorizationResponseData types.AuthorizationMessageResponseData
+	var fetchRequestData types.CredentialFetchRequestMessageData
 
 	switch message.GetData().(type) {
 	case json.RawMessage:
-		err = json.Unmarshal(message.GetData().(json.RawMessage), &authorizationResponseData)
+		err = json.Unmarshal(message.GetData().(json.RawMessage), &fetchRequestData)
 		if err != nil {
 			return err
 		}
-	case types.AuthorizationMessageResponseData:
-		authorizationResponseData = message.GetData().(types.AuthorizationMessageResponseData)
+	case types.CredentialFetchRequestMessageData:
+		fetchRequestData = message.GetData().(types.CredentialFetchRequestMessageData)
 	}
 
-	for _, s := range authorizationResponseData.Scope {
+	if fetchRequestData.ClaimID == "" {
+		return errors.New("no claim field in fetch request")
+	}
+
+	if fetchRequestData.Schema == "" {
+		return errors.New("no claim schema field in fetch request")
+	}
+
+	for _, s := range fetchRequestData.Scope {
 		var typedScope types.TypedScope
 		typedScope, err = toTypedScope(s)
 		if err != nil {
@@ -69,33 +62,34 @@ func Verify(message types.Message) (err error) {
 				return fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
 		default:
-			fmt.Println(proof)
 			return errors.New("unknown proof")
 		}
-		// TODO: throw error on unknown proof
 	}
 	return nil
 }
 
-// ExtractMetadata extract userToken from provided proofs
-func ExtractMetadata(message types.Message) (token *UserToken, err error) {
-	if message.GetType() != AuthorizationResponseMessageType {
+// ExtractMetadataFromCredentialFetchRequest extract CredentialFetch specific fetchCredToken from provided proofs
+func ExtractMetadataFromCredentialFetchRequest(message types.Message) (fetchCredToken *CredentialFetchUserToken, err error) {
+	if message.GetType() != CredentialFetchRequestMessageType {
 		return nil, fmt.Errorf("%s doesn't support %s message type", Name, message.GetType())
 	}
-	var authorizationResponseData types.AuthorizationMessageResponseData
+	var fetchRequestData types.CredentialFetchRequestMessageData
 
 	switch message.GetData().(type) {
 	case json.RawMessage:
-		err = json.Unmarshal(message.GetData().(json.RawMessage), &authorizationResponseData)
+		err = json.Unmarshal(message.GetData().(json.RawMessage), &fetchRequestData)
 		if err != nil {
 			return nil, err
 		}
-	case types.AuthorizationMessageResponseData:
-		authorizationResponseData = message.GetData().(types.AuthorizationMessageResponseData)
+	case types.CredentialFetchRequestMessageData:
+		fetchRequestData = message.GetData().(types.CredentialFetchRequestMessageData)
 	}
-	token = &UserToken{}
-	token.Scope = map[string]map[string]interface{}{}
-	for _, s := range authorizationResponseData.Scope {
+	fetchCredToken = &CredentialFetchUserToken{
+		ClaimID:     fetchRequestData.ClaimID,
+		ClaimSchema: fetchRequestData.Schema,
+	}
+	fetchCredToken.Scope = map[string]map[string]interface{}{}
+	for _, s := range fetchRequestData.Scope {
 
 		var typedScope types.TypedScope
 		typedScope, err = toTypedScope(s)
@@ -108,10 +102,10 @@ func ExtractMetadata(message types.Message) (token *UserToken, err error) {
 			if err != nil {
 				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
-			err = token.Update(string(proof.CircuitID), proof.ProofMetadata)
+			err = fetchCredToken.Update(string(proof.CircuitID), proof.ProofMetadata)
 
 			if err != nil {
-				return nil, fmt.Errorf("can't provide user token %s", err.Error())
+				return nil, fmt.Errorf("can't provide user fetchCredToken %s", err.Error())
 			}
 
 		case types.SignatureProof:
@@ -119,13 +113,13 @@ func ExtractMetadata(message types.Message) (token *UserToken, err error) {
 			if err != nil {
 				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
-			err = token.Update(proof.KeyType, proof.ProofMetadata)
+			err = fetchCredToken.Update(proof.KeyType, proof.ProofMetadata)
 			if err != nil {
-				return nil, fmt.Errorf("can't provide user token %s", err.Error())
+				return nil, fmt.Errorf("can't provide user fetchCredToken %s", err.Error())
 			}
 		}
 	}
-	return token, nil
+	return fetchCredToken, nil
 }
 
 func toTypedScope(value interface{}) (types.TypedScope, error) {
@@ -162,4 +156,11 @@ func toTypedScope(value interface{}) (types.TypedScope, error) {
 	default:
 		return nil, errors.Errorf("scope object type is not supported %v", value)
 	}
+}
+
+// CredentialFetchUserToken is token to fetch credential
+type CredentialFetchUserToken struct {
+	ClaimID     string `json:"claim_id"`
+	ClaimSchema string `json:"claim_schema"`
+	auth.UserToken
 }

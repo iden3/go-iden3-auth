@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/iden3/go-iden3-auth/circuits"
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -17,7 +17,7 @@ func TestVerify(t *testing.T) {
 
 	zkpProof := types.ZeroKnowledgeProof{
 		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+		CircuitID: circuits.KycBySignaturesCircuitID,
 	}
 	zkpProof.ProofData = &types.ProofData{
 		A: []string{"15410252994758206156331933443865902387659457159831652500594192431349076893658",
@@ -79,7 +79,7 @@ func TestVerifyWrongMessage(t *testing.T) {
 
 	zkpProofRequest := types.ZeroKnowledgeProofRequest{
 		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+		CircuitID: circuits.KycBySignaturesCircuitID,
 		Rules:     map[string]interface{}{},
 	}
 	message.Data.Scope = []types.TypedScope{zkpProofRequest}
@@ -94,7 +94,7 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 	aud := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	zkpProofRequest := types.ZeroKnowledgeProofRequest{
 		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+		CircuitID: circuits.KycBySignaturesCircuitID,
 		Rules: map[string]interface{}{
 			"challenge":        12345678,
 			"countryBlacklist": []int{840},
@@ -127,12 +127,12 @@ func TestExtractData(t *testing.T) {
 
 	zkpProof := types.ZeroKnowledgeProof{
 		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.KycBySignaturesCircuitID,
+		CircuitID: circuits.KycBySignaturesCircuitID,
 		CircuitData: &types.CircuitData{
-			ID:              types.KycBySignaturesCircuitID,
+			ID:              circuits.KycBySignaturesCircuitID,
 			Description:     "test",
-			VerificationKey: circuits.KYCBySignatureVerificationKey,
-			Metadata:        circuits.KYCBySignaturePublicSignalsSchema,
+			VerificationKey: circuits.KycBySignaturesVerificationKey,
+			Metadata:        circuits.KycBySignaturesPublicSignalsSchema,
 		},
 	}
 	zkpProof.PubSignals = []string{
@@ -198,7 +198,7 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 
 	zkpProof := types.ZeroKnowledgeProof{
 		Type:      types.ZeroKnowledgeProofType,
-		CircuitID: types.AuthCircuitID,
+		CircuitID: circuits.AuthCircuitID,
 	}
 
 	zkpProof.ProofData = &types.ProofData{

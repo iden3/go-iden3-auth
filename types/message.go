@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/iden3/go-circuits"
 )
 
 // ProtocolMessage is type for protocol messages
@@ -85,7 +86,7 @@ func (m *AuthorizationMessageRequest) WithDefaultAuth(challenge int64) error {
 
 	authProofRequest := ZeroKnowledgeProofRequest{
 		Type:      ZeroKnowledgeProofType,
-		CircuitID: AuthCircuitID,
+		CircuitID: circuits.AuthCircuitID,
 		Rules:     rules,
 	}
 	m.Data.Scope = append(m.Data.Scope, authProofRequest)
@@ -106,5 +107,29 @@ func (m *AuthorizationMessageResponse) GetType() ProtocolMessage {
 
 // GetData returns data of AuthorizationMessage
 func (m *AuthorizationMessageResponse) GetData() interface{} {
+	return m.Data
+}
+
+// CredentialFetchRequest is struct the represents credential fetch request message format
+type CredentialFetchRequest struct {
+	Type    ProtocolMessage                   `json:"type"`
+	Data    CredentialFetchRequestMessageData `json:"data"`
+	Message `json:"-"`
+}
+
+// CredentialFetchRequestMessageData is struct the represents credential fetch request data
+type CredentialFetchRequestMessageData struct {
+	ClaimID string        `json:"claimID"`
+	Schema  string        `json:"schema"`
+	Scope   []interface{} `json:"scope"`
+}
+
+// GetType returns defined type of AuthorizationMessage
+func (m *CredentialFetchRequest) GetType() ProtocolMessage {
+	return m.Type
+}
+
+// GetData returns data of AuthorizationMessage
+func (m *CredentialFetchRequest) GetData() interface{} {
 	return m.Data
 }
