@@ -226,8 +226,8 @@ github.com/huin/goutil v0.0.0-20170803182201-1ca381bf3150/go.mod h1:PpLOETDnJ0o3
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/iden3/go-circom-prover-verifier v0.0.1 h1:gfmAwhvUB0Wya++dGfgvMYPsLzJf34Yw6x269CnhOP0=
 github.com/iden3/go-circom-prover-verifier v0.0.1/go.mod h1:1FkpX4nUXxYcY2fpzqd27wHHEnWeo1v1nwDnz2TgBRo=
-github.com/iden3/go-circuits v0.11.0 h1:U80dVP2deF1HkggB/ZXEH1uItY5d0ntPTuzNcXmpZTI=
-github.com/iden3/go-circuits v0.11.0/go.mod h1:7zat5ks5thTadVZT/FlPFEr51x58kxBqvEpMpH7x+eQ=
+github.com/iden3/go-circuits v0.12.0 h1:0Vn4w2leH9qAGtX2FfeJB35c28mxt5nc9rh6kH/B+WQ=
+github.com/iden3/go-circuits v0.12.0/go.mod h1:7zat5ks5thTadVZT/FlPFEr51x58kxBqvEpMpH7x+eQ=
 github.com/iden3/go-iden3-core v0.0.12 h1:wmDZU2e5Z7iMrCUCQQWzeUqBE8X4wl3t41DeyhnHpL8=
 github.com/iden3/go-iden3-core v0.0.12/go.mod h1:Ou51YR716WqeBJ3Z4BkGVAJROgSYgfnl4i8x3mfLOeY=
 github.com/iden3/go-iden3-crypto v0.0.5/go.mod h1:XKw1oDwYn2CIxKOtr7m/mL5jMn4mLOxAxtZBRxQBev8=
