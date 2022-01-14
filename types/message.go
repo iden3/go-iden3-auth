@@ -119,7 +119,7 @@ type CredentialFetchRequest struct {
 
 // CredentialFetchRequestMessageData is struct the represents credential fetch request data
 type CredentialFetchRequestMessageData struct {
-	ClaimID string        `json:"claimID"`
+	ClaimID string        `json:"claim_id"`
 	Schema  string        `json:"schema"`
 	Scope   []interface{} `json:"scope"`
 }

@@ -12,10 +12,10 @@ import (
 
 // UserToken is token that can be used for user authorization
 type UserToken struct {
-	ID        string `json:"id"`
-	Challenge string `json:"challenge"`
-	State     string `json:"state"`
-	Scope     map[string]map[string]interface{}
+	ID        string                            `json:"id"`
+	Challenge string                            `json:"challenge"`
+	State     string                            `json:"state"`
+	Scope     map[string]map[string]interface{} `json:"scope"`
 }
 
 // Update adds new metadata to user token
