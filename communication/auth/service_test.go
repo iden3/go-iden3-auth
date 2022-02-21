@@ -85,9 +85,7 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 		},
 	}
 
-	request := CreateAuthorizationRequest(aud, "https://test.com/callback")
-	err := request.WithDefaultAuth(10)
-	assert.Nil(t, err)
+	request := CreateAuthorizationRequest(10, aud, "https://test.com/callback")
 
 	request.WithZeroKnowledgeProofRequest(zkpProofRequest)
 

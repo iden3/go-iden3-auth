@@ -73,8 +73,7 @@ The library supports the creation of authorization requests with a possibility t
     		},
     	}
     
-    	request := CreateAuthorizationRequest(aud, "https://test.com/callback") //creation
-    	request.WithDefaultAuth(12345) // ask for default authentication
+    	request := CreateAuthorizationRequest("12345", aud, "https://test.com/callback") //creation auth request
     	request.WithZeroKnowledgeProofRequest(zkpProofRequest) // ask for specific proof
     ```
 
@@ -178,8 +177,7 @@ Auth library works with plain packer which doesn't support encoding or encryptio
 
     ```go
     
-    request := CreateAuthorizationRequest(aud, "https://test.com/callback") //creation
-    request.WithDefaultAuth(challenge) // ask for default authentication
+    request := CreateAuthorizationRequest(challenge, aud, "https://test.com/callback") //creation
     
     msgBytes, err := packer.Pack("application/json", &request) // pack any message
     

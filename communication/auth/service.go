@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/iden3/go-iden3-auth/communication/protocol"
 	"github.com/iden3/go-iden3-auth/proofs/signature"
 	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge"
@@ -20,7 +21,7 @@ const (
 )
 
 // CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMessageRequest {
+func CreateAuthorizationRequest(challenge int64, aud, callbackURL string) *types.AuthorizationMessageRequest {
 	var message types.AuthorizationMessageRequest
 
 	message.Type = AuthorizationRequestMessageType
@@ -29,6 +30,9 @@ func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMes
 		Audience:    aud,
 		Scope:       []types.TypedScope{},
 	}
+
+	message.WithDefaultAuth(challenge)
+
 	return &message
 }
 
