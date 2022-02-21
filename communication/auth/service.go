@@ -31,7 +31,7 @@ func CreateAuthorizationRequest(challenge int64, aud, callbackURL string) *types
 		Scope:       []types.TypedScope{},
 	}
 
-	message.WithDefaultAuth(challenge)
+	message.WithDefaultAuth(challenge) //nolint:gosec //reason: default configuration should never throw an exception
 
 	return &message
 }
