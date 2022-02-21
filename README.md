@@ -139,7 +139,7 @@ Also, it supports the verification of authorization-response.
 
     ```go
     message, err := packer.Unpack(msgBytes) // unpack raw message
-    err = auth.Verify(message)  // call to library to verify zkp proofs
+    err = auth.VerifyProof(message)  // call to library to verify zkp proofs
     if err != nil {
     		// do smth ...
     }
