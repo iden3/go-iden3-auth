@@ -25,6 +25,8 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Update go modules
+        run: go mod tidy
       - name: Unit Tests
         env:
           RPC_URL: ${{ secrets.RPC_URL }}
