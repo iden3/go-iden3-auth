@@ -44,7 +44,7 @@ func TestPlainMessagePacker_Unpack(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, auth.AuthorizationResponseMessageType, message.GetType())
 
-	err = auth.VerifyProof(message)
+	err = auth.VerifyProofs(message)
 	assert.Nil(t, err)
 
 	token, err := auth.ExtractMetadata(message)

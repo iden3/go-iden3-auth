@@ -42,7 +42,7 @@ func TestVerify(t *testing.T) {
 	zkpProof.PubSignals = []string{"12345", "372902514040400364441393275265861152892555341750332828757240276565437644800", "19443506635601976434000063402326775248489014592264899338419890539515181882284", "840", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "372902514040400364441393275265861152892555341750332828757240276565437644800", "19443506635601976434000063402326775248489014592264899338419890539515181882284", "2021", "4", "25"}
 	message.Data.Scope = []interface{}{zkpProof}
 
-	err := VerifyProof(&message)
+	err := VerifyProofs(&message)
 	assert.Nil(t, err)
 }
 
@@ -59,7 +59,7 @@ func TestVerifyWrongMessage(t *testing.T) {
 	}
 	message.Data.Scope = []types.TypedScope{zkpProofRequest}
 
-	err := VerifyProof(&message)
+	err := VerifyProofs(&message)
 
 	assert.NotNil(t, err)
 }
@@ -205,7 +205,7 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 	}
 	message.Data.Scope = []interface{}{zkpProof}
 
-	err := VerifyProof(&message)
+	err := VerifyProofs(&message)
 	assert.Nil(t, err)
 
 	token, err := ExtractMetadata(&message)
@@ -302,7 +302,7 @@ func TestVerifyMessageWithAuthAndAtomicProof(t *testing.T) {
 	}
 	message.Data.Scope = []interface{}{zkpAuth, zkpAtomic}
 
-	err := VerifyProof(&message)
+	err := VerifyProofs(&message)
 	assert.Nil(t, err)
 
 	token, err := ExtractMetadata(&message)

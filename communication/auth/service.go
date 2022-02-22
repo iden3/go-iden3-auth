@@ -36,8 +36,8 @@ func CreateAuthorizationRequest(challenge int64, aud, callbackURL string) *types
 	return &message
 }
 
-// VerifyProof verifies only proofs of a verification of authorization response message
-func VerifyProof(message types.Message) (err error) {
+// VerifyProofs verifies only zk proofs of authorization response message
+func VerifyProofs(message types.Message) (err error) {
 	if message.GetType() != AuthorizationResponseMessageType {
 		return fmt.Errorf("%s doesn't support %s message type", Name, (message).GetType())
 	}
