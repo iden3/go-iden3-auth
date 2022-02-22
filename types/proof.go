@@ -73,12 +73,6 @@ type KYCBySignatureRules struct {
 	AllowedIssuers   []string `json:"allowedIssuers"`
 }
 
-// AuthenticationRules represents structure rules for zkp authentication  proof
-type AuthenticationRules struct {
-	Challenge int64  `json:"challenge"`
-	Audience  string `json:"audience"`
-}
-
 // ZeroKnowledgeProofRequest represents structure for request of zkp proof
 type ZeroKnowledgeProofRequest struct {
 	CircuitID  circuits.CircuitID     `json:"circuit_id,omitempty"`

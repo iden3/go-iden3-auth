@@ -26,7 +26,7 @@ func TestPlainMessagePacker_Pack(t *testing.T) {
 		},
 	}
 	message.Data.Scope = []types.TypedScope{zkpProofRequest}
-	message.WithDefaultAuth(1234567)
+	message.WithDefaultZKAuth(1234567)
 	msgBytes, err := packer.Pack("application/json", &message)
 	t.Log(string(msgBytes))
 	assert.Nil(t, err)
