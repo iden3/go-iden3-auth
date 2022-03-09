@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/iden3/go-iden3-auth/communication/protocol"
 	"github.com/iden3/go-iden3-auth/proofs/signature"
 	"github.com/iden3/go-iden3-auth/proofs/zeroknowledge"
@@ -20,7 +21,7 @@ const (
 )
 
 // CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMessageRequest {
+func CreateAuthorizationRequest(challenge int64, aud, callbackURL string) *types.AuthorizationMessageRequest {
 	var message types.AuthorizationMessageRequest
 
 	message.Type = AuthorizationRequestMessageType
@@ -29,12 +30,14 @@ func CreateAuthorizationRequest(aud, callbackURL string) *types.AuthorizationMes
 		Audience:    aud,
 		Scope:       []types.TypedScope{},
 	}
+
+	message.WithDefaultZKAuth(challenge)
+
 	return &message
 }
 
-// Verify only proofs of  a verification of authorization response message
-//
-func Verify(message types.Message) (err error) {
+// VerifyProofs verifies only zk proofs of authorization response message
+func VerifyProofs(message types.Message) (err error) {
 	if message.GetType() != AuthorizationResponseMessageType {
 		return fmt.Errorf("%s doesn't support %s message type", Name, (message).GetType())
 	}

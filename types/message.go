@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	"github.com/iden3/go-circuits"
 )
 
@@ -70,19 +71,11 @@ func (m *AuthorizationMessageRequest) WithZeroKnowledgeProofRequest(proof ZeroKn
 	m.Data.Scope = append(m.Data.Scope, proof)
 }
 
-// WithDefaultAuth adds authentication request to scope
-func (m *AuthorizationMessageRequest) WithDefaultAuth(challenge int64) error {
+// WithDefaultZKAuth adds authentication request to scope
+func (m *AuthorizationMessageRequest) WithDefaultZKAuth(challenge int64) {
 
-	authRules := AuthenticationRules{
-		Challenge: challenge,
-		Audience:  m.Data.Audience,
-	}
-	var rules map[string]interface{}
-	rulesBytes, err := json.Marshal(authRules)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(rulesBytes, &rules)
+	rules := make(map[string]interface{})
+	rules["challenge"] = challenge
 
 	authProofRequest := ZeroKnowledgeProofRequest{
 		Type:      ZeroKnowledgeProofType,
@@ -90,7 +83,6 @@ func (m *AuthorizationMessageRequest) WithDefaultAuth(challenge int64) error {
 		Rules:     rules,
 	}
 	m.Data.Scope = append(m.Data.Scope, authProofRequest)
-	return err
 }
 
 // AuthorizationMessageResponse is struct the represents authentication response message format

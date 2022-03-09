@@ -1,11 +1,12 @@
 package packer
 
 import (
+	"testing"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/communication/auth"
 	"github.com/iden3/go-iden3-auth/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestPlainMessagePacker_Pack(t *testing.T) {
@@ -25,7 +26,7 @@ func TestPlainMessagePacker_Pack(t *testing.T) {
 		},
 	}
 	message.Data.Scope = []types.TypedScope{zkpProofRequest}
-	message.WithDefaultAuth(1234567)
+	message.WithDefaultZKAuth(1234567)
 	msgBytes, err := packer.Pack("application/json", &message)
 	t.Log(string(msgBytes))
 	assert.Nil(t, err)
@@ -43,7 +44,7 @@ func TestPlainMessagePacker_Unpack(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, auth.AuthorizationResponseMessageType, message.GetType())
 
-	err = auth.Verify(message)
+	err = auth.VerifyProofs(message)
 	assert.Nil(t, err)
 
 	token, err := auth.ExtractMetadata(message)
