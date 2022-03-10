@@ -12,12 +12,16 @@ import (
 )
 
 const (
-	getStateContractMethod               = "getState"
-	getTransitionTimestampContractMethod = "getTransitionTimestamp"
+	getStateContractMethod          = "getState"
+	getTransitionInfoContractMethod = "getTransitionInfo"
 
 	errRPCClientCreationMessage        = "couldn't create rpc client"
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
 )
+
+type Unmarshaler interface {
+	Unmarshal([]interface{}) error
+}
 
 // StateVerificationResult can be the state verification result
 type StateVerificationResult struct {
@@ -40,8 +44,9 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 
 	defer c.Close()
 
+	stateContract := new(State)
 	// get latest state for id from contract
-	stateContract, err := contractCall(ctx, c, contractAddress, getStateContractMethod, id)
+	err = contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
 		return StateVerificationResult{}, err
 	}
@@ -58,25 +63,35 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 		// Get the time of the latest state and compare it to the transition time of state provided by the user.
 		// The verification party can make a decision if it can accept this state based on that time frame
 
-		timestamp, err := contractCall(ctx, c, contractAddress, getTransitionTimestampContractMethod, state)
+		transitionInfo := &TransitionInfo{}
+		err := contractCall(ctx, c, contractAddress, getTransitionInfoContractMethod, state, transitionInfo)
 		if err != nil {
 			return StateVerificationResult{}, err
 		}
-		if timestamp.Int64() == 0 {
+
+		if transitionInfo.ID.Cmp(id) != 0 {
+			return StateVerificationResult{}, errors.New("transition info contains invalid id")
+		}
+
+		if transitionInfo.ReplacedAtTimestamp.Int64() == 0 {
 			return StateVerificationResult{}, errors.New("no information of transition for non-latest state")
 		}
-		return StateVerificationResult{Latest: false, State: state.String(), TransitionTimestamp: timestamp.Int64()}, nil
+		return StateVerificationResult{
+			Latest: false,
+			State: state.String(),
+			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
+		}, nil
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
 	return StateVerificationResult{Latest: true, State: state.String()}, nil
 }
 
-func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, contractFunction string, param *big.Int) (*big.Int, error) {
+func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {
 
 	data, err := StateABI.Pack(contractFunction, param)
 	if data == nil {
-		return nil, errors.WithMessagef(err, "%s function: %s, param %v", errCallArgumentEncodedErrorMessage, contractFunction, param)
+		return errors.WithMessagef(err, "%s function: %s, param %v", errCallArgumentEncodedErrorMessage, contractFunction, param)
 	}
 	addr := common.HexToAddress(contractAddress)
 	// 3. get state from contract
@@ -85,20 +100,14 @@ func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, con
 		Data: data,
 	}, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	outputs, err := StateABI.Unpack(getStateContractMethod, res)
+	outputs, err := StateABI.Unpack(contractFunction, res)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if outputs[0] == nil {
-		return nil, errors.New("no state output")
-	}
-	outputBigInt, ok := outputs[0].(*big.Int)
-	if !ok {
-		return nil, errors.New("expected result is not big integer")
-	}
-	return outputBigInt, nil
+
+	return result.Unmarshal(outputs)
 }
 
 func checkGenesisStateID(id, state *big.Int) error {
