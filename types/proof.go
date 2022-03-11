@@ -1,7 +1,5 @@
 package types
 
-import "github.com/iden3/go-circuits"
-
 // ProofType is a type that must be used for proof definition
 type ProofType string
 
@@ -78,6 +76,7 @@ type ZeroKnowledgeProofRequest struct {
 	CircuitID  circuits.CircuitID     `json:"circuit_id,omitempty"`
 	Type       ProofType              `json:"type"`
 	Rules      map[string]interface{} `json:"rules,omitempty"`
+	ClaimID    string                 `json:"claimID,omitempty"`
 	TypedScope `json:"-"`
 }
 
