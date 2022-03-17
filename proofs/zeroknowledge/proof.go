@@ -19,11 +19,17 @@ var supportedCircuits = map[circuits.CircuitID]types.CircuitData{
 		VerificationKey: circuits.AuthenticationVerificationKey,
 		Metadata:        circuits.AuthenticationPublicSignalsSchema,
 	},
-	circuits.AtomicQueryCircuitID: {
-		ID:              circuits.AtomicQueryCircuitID,
+	circuits.AtomicQueryMTPCircuitID: {
+		ID:              circuits.AtomicQueryMTPCircuitID,
 		Description:     "circuit for atomic query on standard iden3 credential",
-		VerificationKey: circuits.AtomicQueryVerificationKey,
-		Metadata:        circuits.AtomicQueryPublicSignalsSchema,
+		VerificationKey: circuits.AtomicQueryMTPVerificationKey,
+		Metadata:        circuits.AtomicQueryMTPPublicSignalsSchema,
+	},
+	circuits.AtomicQuerySigCircuitID: {
+		ID:              circuits.AtomicQuerySigCircuitID,
+		Description:     "circuit for atomic query on standard iden3 credential",
+		VerificationKey: circuits.AtomicQuerySigVerificationKey,
+		Metadata:        circuits.AtomicQuerySigPublicSignalsSchema,
 	},
 }
 
