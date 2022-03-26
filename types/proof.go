@@ -168,13 +168,13 @@ func (vk *VkString) ToInternalVk() (*models.Vk, error) {
 type PublicInputs []string
 
 func (pi PublicInputs) ToBigInt() ([]*big.Int, error) {
-	var public []*big.Int
+	p := make([]*big.Int, 0, len(pi))
 	for _, s := range pi {
 		sb, err := stringToBigInt(s)
 		if err != nil {
 			return nil, err
 		}
-		public = append(public, sb)
+		p = append(p, sb)
 	}
-	return public, nil
+	return p, nil
 }

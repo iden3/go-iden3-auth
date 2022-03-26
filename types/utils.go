@@ -17,7 +17,7 @@ func stringToG1(h []string) (*bn256.G1, error) {
 	h = h[:2]
 	hexa := false
 	if len(h[0]) > 1 {
-		if "0x" == h[0][:2] {
+		if h[0][:2] == "0x" {
 			hexa = true
 		}
 	}
@@ -75,13 +75,15 @@ func stringToG2(h [][]string) (*bn256.G2, error) {
 	h = h[:2]
 	hexa := false
 	if len(h[0][0]) > 1 {
-		if "0x" == h[0][0][:2] {
+		if h[0][0][:2] == "0x" {
 			hexa = true
 		}
 	}
 	in := ""
-	var b []byte
-	var err error
+	var (
+		b   []byte
+		err error
+	)
 	if hexa {
 		for i := 0; i < len(h); i++ {
 			for j := 0; j < len(h[i]); j++ {
@@ -94,7 +96,8 @@ func stringToG2(h [][]string) (*bn256.G2, error) {
 		}
 	} else {
 		// TODO TMP
-		bH, err := stringToBytes(h[0][1])
+		var bH []byte
+		bH, err = stringToBytes(h[0][1])
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +156,7 @@ func stringToBigInt(s string) (*big.Int, error) {
 	}
 	n, ok := new(big.Int).SetString(s, base)
 	if !ok {
-		return nil, fmt.Errorf("Can not parse string to *big.Int: %s", s)
+		return nil, fmt.Errorf("can not parse string to *big.Int: %s", s)
 	}
 	return n, nil
 }
