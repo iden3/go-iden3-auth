@@ -2,13 +2,13 @@ package verification
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 const (
@@ -18,6 +18,11 @@ const (
 	errRPCClientCreationMessage        = "couldn't create rpc client"
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
 )
+
+type BlockchainCaller interface {
+	// Call smart contract. For read operation.
+	CallContract(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)
+}
 
 type Unmarshaler interface {
 	Unmarshal([]interface{}) error
@@ -35,18 +40,10 @@ type StateVerificationResult struct {
 // contractAddress is an address of state contract
 // id is base58 identifier  e.g. id:11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s
 // state is bigint string representation of identity state
-func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state *big.Int) (StateVerificationResult, error) {
-
-	c, err := ethclient.DialContext(ctx, rpcURL)
-	if err != nil {
-		return StateVerificationResult{}, errors.WithMessage(err, errRPCClientCreationMessage)
-	}
-
-	defer c.Close()
-
+func VerifyState(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (StateVerificationResult, error) {
 	stateContract := new(State)
 	// get latest state for id from contract
-	err = contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
+	err := contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
 		return StateVerificationResult{}, err
 	}
@@ -77,8 +74,8 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 			return StateVerificationResult{}, errors.New("no information of transition for non-latest state")
 		}
 		return StateVerificationResult{
-			Latest: false,
-			State: state.String(),
+			Latest:              false,
+			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
@@ -87,7 +84,7 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 	return StateVerificationResult{Latest: true, State: state.String()}, nil
 }
 
-func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {
+func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {
 
 	data, err := StateABI.Pack(contractFunction, param)
 	if data == nil {

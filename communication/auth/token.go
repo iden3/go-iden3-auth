@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/go-iden3-auth/types"
 	"github.com/iden3/go-iden3-auth/verification"
 	"github.com/pkg/errors"
@@ -51,10 +52,15 @@ func (token *UserToken) VerifyState(ctx context.Context, url, addr string) (veri
 	}
 	//  prepare msg data
 
+	c, err := ethclient.DialContext(ctx, url)
+	if err != nil {
+		return verification.StateVerificationResult{}, err
+	}
+
 	stateBigInt, ok := new(big.Int).SetString(token.State, 10)
 	if !ok {
 		return verification.StateVerificationResult{}, errors.Errorf("can't create big int from string %s", token.State)
 	}
-	return verification.VerifyState(context.Background(), url, addr, id.BigInt(), stateBigInt)
+	return verification.VerifyState(context.Background(), c, addr, id.BigInt(), stateBigInt)
 
 }
