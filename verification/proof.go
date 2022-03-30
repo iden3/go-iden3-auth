@@ -15,18 +15,18 @@ func VerifyProof(proof types.ProofData, publicInputs types.PublicInputs, verific
 
 	// 1. cast external proof data to internal model.
 
-	p, err := proof.ToInternalProofData()
+	p, err := proof.ProofPairingData()
 	if err != nil {
 		return err
 	}
 
 	// 2. cast external verification key data to internal model.
-	var vk types.VkString
-	err = json.Unmarshal(verificationKey, &vk)
+	var vkStr types.VkString
+	err = json.Unmarshal(verificationKey, &vkStr)
 	if err != nil {
 		return err
 	}
-	vkKey, err := vk.ToInternalVk()
+	vkKey, err := vkStr.VK()
 	if err != nil {
 		return err
 	}
@@ -41,14 +41,15 @@ func VerifyProof(proof types.ProofData, publicInputs types.PublicInputs, verific
 }
 
 // verifyGroth16 performs the verification the Groth16 zkSNARK proofs
-func verifyGroth16(vk *models.Vk, proof models.ProofData, inputs []*big.Int) error {
+func verifyGroth16(vk *models.Vk, proof models.ProofPairingData, inputs []*big.Int) error {
 	if len(inputs)+1 != len(vk.IC) {
 		return fmt.Errorf("len(inputs)+1 != len(vk.IC)")
 	}
 	vkX := new(bn256.G1).ScalarBaseMult(big.NewInt(0))
 	for i := 0; i < len(inputs); i++ {
 		// check input inside field
-		if inputs[i].Cmp(models.R) != -1 {
+		r, _ := new(big.Int).SetString(models.R, 10)
+		if inputs[i].Cmp(r) != -1 {
 			return fmt.Errorf("input value is not in the fields")
 		}
 		vkX = new(bn256.G1).Add(vkX, new(bn256.G1).ScalarMult(vk.IC[i+1], inputs[i]))

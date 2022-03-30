@@ -55,9 +55,9 @@ type ProofData struct {
 	Protocol string     `json:"protocol"`
 }
 
-func (pr *ProofData) ToInternalProofData() (models.ProofData, error) {
+func (pr *ProofData) ProofPairingData() (models.ProofPairingData, error) {
 	var (
-		p   models.ProofData
+		p   models.ProofPairingData
 		err error
 	)
 
@@ -131,7 +131,7 @@ type VkString struct {
 	IC    [][]string `json:"IC"`
 }
 
-func (vk *VkString) ToInternalVk() (*models.Vk, error) {
+func (vk *VkString) VK() (*models.Vk, error) {
 	var v models.Vk
 	var err error
 	v.Alpha, err = stringToG1(vk.Alpha)
