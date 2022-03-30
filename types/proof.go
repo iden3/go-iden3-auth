@@ -3,10 +3,7 @@
 package types
 
 import (
-	"math/big"
-
 	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/internal/models"
 )
 
 // ProofType is a type that must be used for proof definition
@@ -55,30 +52,6 @@ type ProofData struct {
 	Protocol string     `json:"protocol"`
 }
 
-func (pr *ProofData) ProofPairingData() (models.ProofPairingData, error) {
-	var (
-		p   models.ProofPairingData
-		err error
-	)
-
-	p.A, err = stringToG1(pr.A)
-	if err != nil {
-		return p, err
-	}
-
-	p.B, err = stringToG2(pr.B)
-	if err != nil {
-		return p, err
-	}
-
-	p.C, err = stringToG1(pr.C)
-	if err != nil {
-		return p, err
-	}
-
-	return p, err
-}
-
 // VerificationKeyJSON describes type verification key in JSON format
 type VerificationKeyJSON string
 
@@ -120,61 +93,4 @@ type SignatureProofRequest struct {
 	Message int                    `json:"message,omitempty"`
 	Type    ProofType              `json:"type"`
 	TypedScope
-}
-
-// VkString is the Verification Key data structure in string format (from json).
-type VkString struct {
-	Alpha []string   `json:"vk_alpha_1"`
-	Beta  [][]string `json:"vk_beta_2"`
-	Gamma [][]string `json:"vk_gamma_2"`
-	Delta [][]string `json:"vk_delta_2"`
-	IC    [][]string `json:"IC"`
-}
-
-func (vk *VkString) VK() (*models.Vk, error) {
-	var v models.Vk
-	var err error
-	v.Alpha, err = stringToG1(vk.Alpha)
-	if err != nil {
-		return nil, err
-	}
-
-	v.Beta, err = stringToG2(vk.Beta)
-	if err != nil {
-		return nil, err
-	}
-
-	v.Gamma, err = stringToG2(vk.Gamma)
-	if err != nil {
-		return nil, err
-	}
-
-	v.Delta, err = stringToG2(vk.Delta)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(vk.IC); i++ {
-		p, err := stringToG1(vk.IC[i])
-		if err != nil {
-			return nil, err
-		}
-		v.IC = append(v.IC, p)
-	}
-
-	return &v, nil
-}
-
-type PublicInputs []string
-
-func (pi PublicInputs) ToBigInt() ([]*big.Int, error) {
-	p := make([]*big.Int, 0, len(pi))
-	for _, s := range pi {
-		sb, err := stringToBigInt(s)
-		if err != nil {
-			return nil, err
-		}
-		p = append(p, sb)
-	}
-	return p, nil
 }
