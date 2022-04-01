@@ -56,6 +56,7 @@ func (token *UserToken) VerifyState(ctx context.Context, url, addr string) (veri
 	if err != nil {
 		return verification.StateVerificationResult{}, err
 	}
+	defer c.Close()
 
 	stateBigInt, ok := new(big.Int).SetString(token.State, 10)
 	if !ok {

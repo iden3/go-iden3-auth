@@ -3,13 +3,14 @@ package verification
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/iden3/go-circom-prover-verifier/parsers"
+
 	"github.com/iden3/go-iden3-auth/types"
 
 	circomTypes "github.com/iden3/go-circom-prover-verifier/types"
-
-	"math/big"
 )
 
 // VerifyProof performs a verification of zkp  based on verification key and public inputs

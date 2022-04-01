@@ -11,11 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+//go:generate mockgen -destination=mock/blockchainCallerMock.go . BlockchainCaller
+
 const (
 	getStateContractMethod          = "getState"
 	getTransitionInfoContractMethod = "getTransitionInfo"
 
-	errRPCClientCreationMessage        = "couldn't create rpc client"
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
 )
 
@@ -99,6 +100,7 @@ func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, cont
 	if err != nil {
 		return err
 	}
+
 	outputs, err := StateABI.Unpack(contractFunction, res)
 	if err != nil {
 		return err
