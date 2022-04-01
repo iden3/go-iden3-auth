@@ -77,8 +77,8 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 			return StateVerificationResult{}, errors.New("no information of transition for non-latest state")
 		}
 		return StateVerificationResult{
-			Latest: false,
-			State: state.String(),
+			Latest:              false,
+			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
@@ -113,7 +113,9 @@ func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, con
 func checkGenesisStateID(id, state *big.Int) error {
 
 	stateHash := merkletree.NewHashFromBigInt(state)
-	IDFromState := core.IdGenesisFromIdenState(stateHash).String()
+	var stateHashElemBytes core.ElemBytes
+	copy(stateHashElemBytes[:], stateHash[:])
+	IDFromState := core.IdGenesisFromIdenState(stateHashElemBytes).String()
 
 	elemBytes := merkletree.NewElemBytesFromBigInt(id)
 	IDFromParam, err := core.IDFromBytes(elemBytes[:31])
