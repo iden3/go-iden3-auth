@@ -1,6 +1,10 @@
+// The types package defines the format of communication between the library and the end user.
+
 package types
 
-import "github.com/iden3/go-circuits"
+import (
+	"github.com/iden3/go-circuits"
+)
 
 // ProofType is a type that must be used for proof definition
 type ProofType string
