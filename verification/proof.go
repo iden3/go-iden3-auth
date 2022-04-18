@@ -6,42 +6,59 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/iden3/go-circom-prover-verifier/parsers"
-
 	"github.com/iden3/go-iden3-auth/types"
-
-	circomTypes "github.com/iden3/go-circom-prover-verifier/types"
 )
+
+// r is the mod of the finite field
+const r string = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+
+// proofPairingData describes three components of zkp proof in bn256 format.
+type proofPairingData struct {
+	A *bn256.G1
+	B *bn256.G2
+	C *bn256.G1
+}
+
+// vk is the Verification Key data structure in bn256 format.
+type vk struct {
+	Alpha *bn256.G1
+	Beta  *bn256.G2
+	Gamma *bn256.G2
+	Delta *bn256.G2
+	IC    []*bn256.G1
+}
+
+// vkJSON is the Verification Key data structure in string format (from json).
+type vkJSON struct {
+	Alpha []string   `json:"vk_alpha_1"`
+	Beta  [][]string `json:"vk_beta_2"`
+	Gamma [][]string `json:"vk_gamma_2"`
+	Delta [][]string `json:"vk_delta_2"`
+	IC    [][]string `json:"IC"`
+}
 
 // VerifyProof performs a verification of zkp  based on verification key and public inputs
 func VerifyProof(proof types.ProofData, publicInputs []string, verificationKey []byte) error {
 
-	// 1. parse proofs to proofs object with big integers (circom type)
-
-	proofBytes, err := json.Marshal(proof)
-	if err != nil {
-		return err
-	}
-	p, err := parsers.ParseProof(proofBytes)
+	// 1. cast external proof data to internal model.
+	p, err := parseProofData(proof)
 	if err != nil {
 		return err
 	}
 
-	// 2. parse inputs to [] string if needed
-
-	vkKey, err := parsers.ParseVk(verificationKey)
+	// 2. cast external verification key data to internal model.
+	var vkStr vkJSON
+	err = json.Unmarshal(verificationKey, &vkStr)
+	if err != nil {
+		return err
+	}
+	vkKey, err := parseVK(vkStr)
 	if err != nil {
 		return err
 	}
 
-	// 3. parse inputs
-
-	pusSignalsBytes, err := json.Marshal(publicInputs)
-	if err != nil {
-		return err
-	}
-
-	pubSignals, err := parsers.ParsePublicSignals(pusSignalsBytes)
+	// 2. cast external public inputs data to internal model.
+	pubSignals, err := stringsToArrayBigInt(publicInputs)
 	if err != nil {
 		return err
 	}
@@ -50,14 +67,15 @@ func VerifyProof(proof types.ProofData, publicInputs []string, verificationKey [
 }
 
 // verifyGroth16 performs the verification the Groth16 zkSNARK proofs
-func verifyGroth16(vk *circomTypes.Vk, proof *circomTypes.Proof, inputs []*big.Int) error {
+func verifyGroth16(vk *vk, proof proofPairingData, inputs []*big.Int) error {
 	if len(inputs)+1 != len(vk.IC) {
 		return fmt.Errorf("len(inputs)+1 != len(vk.IC)")
 	}
 	vkX := new(bn256.G1).ScalarBaseMult(big.NewInt(0))
 	for i := 0; i < len(inputs); i++ {
 		// check input inside field
-		if inputs[i].Cmp(circomTypes.R) != -1 {
+		v, _ := new(big.Int).SetString(r, 10)
+		if inputs[i].Cmp(v) != -1 {
 			return fmt.Errorf("input value is not in the fields")
 		}
 		vkX = new(bn256.G1).Add(vkX, new(bn256.G1).ScalarMult(vk.IC[i+1], inputs[i]))
@@ -72,4 +90,74 @@ func verifyGroth16(vk *circomTypes.Vk, proof *circomTypes.Proof, inputs []*big.I
 		return fmt.Errorf("invalid proofs")
 	}
 	return nil
+}
+
+func parseProofData(pr types.ProofData) (proofPairingData, error) {
+	var (
+		p   proofPairingData
+		err error
+	)
+
+	p.A, err = stringToG1(pr.A)
+	if err != nil {
+		return p, err
+	}
+
+	p.B, err = stringToG2(pr.B)
+	if err != nil {
+		return p, err
+	}
+
+	p.C, err = stringToG1(pr.C)
+	if err != nil {
+		return p, err
+	}
+
+	return p, err
+}
+
+func parseVK(vkStr vkJSON) (*vk, error) {
+	var v vk
+	var err error
+	v.Alpha, err = stringToG1(vkStr.Alpha)
+	if err != nil {
+		return nil, err
+	}
+
+	v.Beta, err = stringToG2(vkStr.Beta)
+	if err != nil {
+		return nil, err
+	}
+
+	v.Gamma, err = stringToG2(vkStr.Gamma)
+	if err != nil {
+		return nil, err
+	}
+
+	v.Delta, err = stringToG2(vkStr.Delta)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(vkStr.IC); i++ {
+		p, err := stringToG1(vkStr.IC[i])
+		if err != nil {
+			return nil, err
+		}
+		v.IC = append(v.IC, p)
+	}
+
+	return &v, nil
+}
+
+func stringsToArrayBigInt(publicInputs []string) ([]*big.Int, error) {
+	p := make([]*big.Int, 0, len(publicInputs))
+	for _, s := range publicInputs {
+		sb, err := stringToBigInt(s)
+		if err != nil {
+			return nil, err
+		}
+		p = append(p, sb)
+	}
+	return p, nil
 }
