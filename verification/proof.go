@@ -3,10 +3,10 @@ package verification
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iden3/go-schema-processor/verifiable"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/iden3/go-iden3-auth/types"
 )
 
 // r is the mod of the finite field
@@ -38,10 +38,10 @@ type vkJSON struct {
 }
 
 // VerifyProof performs a verification of zkp  based on verification key and public inputs
-func VerifyProof(proof types.ProofData, publicInputs []string, verificationKey []byte) error {
+func VerifyProof(zkProof verifiable.ZKProof, verificationKey []byte) error {
 
 	// 1. cast external proof data to internal model.
-	p, err := parseProofData(proof)
+	p, err := parseProofData(*zkProof.Proof)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func VerifyProof(proof types.ProofData, publicInputs []string, verificationKey [
 	}
 
 	// 2. cast external public inputs data to internal model.
-	pubSignals, err := stringsToArrayBigInt(publicInputs)
+	pubSignals, err := stringsToArrayBigInt(zkProof.PubSignals)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func verifyGroth16(vk *vk, proof proofPairingData, inputs []*big.Int) error {
 	return nil
 }
 
-func parseProofData(pr types.ProofData) (proofPairingData, error) {
+func parseProofData(pr verifiable.ProofData) (proofPairingData, error) {
 	var (
 		p   proofPairingData
 		err error
@@ -149,7 +149,6 @@ func parseVK(vkStr vkJSON) (*vk, error) {
 
 	return &v, nil
 }
-
 func stringsToArrayBigInt(publicInputs []string) ([]*big.Int, error) {
 	p := make([]*big.Int, 0, len(publicInputs))
 	for _, s := range publicInputs {

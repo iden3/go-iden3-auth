@@ -77,8 +77,8 @@ func VerifyState(ctx context.Context, rpcURL, contractAddress string, id, state 
 			return StateVerificationResult{}, errors.New("no information of transition for non-latest state")
 		}
 		return StateVerificationResult{
-			Latest: false,
-			State: state.String(),
+			Latest:              false,
+			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
@@ -113,14 +113,17 @@ func contractCall(ctx context.Context, c *ethclient.Client, contractAddress, con
 func checkGenesisStateID(id, state *big.Int) error {
 
 	stateHash := merkletree.NewHashFromBigInt(state)
-	IDFromState := core.IdGenesisFromIdenState(stateHash).String()
+	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, stateHash.BigInt())
+	if err != nil {
+		return err
+	}
 
 	elemBytes := merkletree.NewElemBytesFromBigInt(id)
 	IDFromParam, err := core.IDFromBytes(elemBytes[:31])
 	if err != nil {
 		return err
 	}
-	if IDFromState != IDFromParam.String() {
+	if IDFromState.String() != IDFromParam.String() {
 		return errors.Errorf("ID from genesis state (%s) and provided (%s) don't match", IDFromState, IDFromParam.String())
 	}
 	return nil

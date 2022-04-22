@@ -1,9 +1,9 @@
-package auth
+package go_iden3_auth
 
 import (
 	"context"
-	"github.com/iden3/go-iden3-auth/types"
 	"github.com/iden3/go-iden3-auth/verification"
+	"github.com/iden3/iden3comm/protocol/auth"
 	"github.com/pkg/errors"
 
 	core "github.com/iden3/go-iden3-core"
@@ -19,7 +19,7 @@ type UserToken struct {
 }
 
 // Update adds new metadata to user token
-func (token *UserToken) Update(scopeID string, metadata types.ProofMetadata) error {
+func (token *UserToken) Update(scopeID string, metadata auth.ProofMetadata) error {
 
 	if token.Challenge != "" && token.Challenge != metadata.AuthData.AuthenticationChallenge {
 		return errors.New("different challenges were used for authentication")
