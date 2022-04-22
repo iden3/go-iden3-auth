@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/ethereum/go-ethereum v1.10.13
+	github.com/golang/mock v1.3.1
 	github.com/iden3/go-circuits v0.0.27
 	github.com/iden3/go-iden3-core v0.0.12
 	github.com/iden3/go-merkletree-sql v1.0.0-pre8

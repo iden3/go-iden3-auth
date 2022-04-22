@@ -28,11 +28,11 @@ func (s *State) Unmarshal(data []interface{}) error {
 
 type TransitionInfo struct {
 	ReplacedAtTimestamp *big.Int
-	CreatedAtTimestamp *big.Int
-	ReplacedAtBlock uint64
-	CreatedAtBlock uint64
-	ReplacedBy *big.Int
-	ID *big.Int
+	CreatedAtTimestamp  *big.Int
+	ReplacedAtBlock     uint64
+	CreatedAtBlock      uint64
+	ID                  *big.Int
+	ReplacedBy          *big.Int
 }
 
 func (ti *TransitionInfo) Unmarshal(data []interface{}) error {
@@ -80,7 +80,6 @@ func (ti *TransitionInfo) Unmarshal(data []interface{}) error {
 		return errors.Errorf("failed unmarshal to big.Int in position %d", 5)
 	}
 	ti.ReplacedBy = bi
-
 
 	return nil
 }
