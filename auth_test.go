@@ -1,9 +1,8 @@
-package go_iden3_auth
+package auth
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/iden3/go-schema-processor/verifiable"
 	"github.com/iden3/iden3comm"
 	"github.com/iden3/iden3comm/protocol/auth"
@@ -97,16 +96,15 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 
 	assert.Equal(t, 2, len(request.Body.Scope))
 
-	marshalledR, err := json.Marshal(request)
-	assert.Nil(t, err)
-	fmt.Println(string(marshalledR))
+	//marshalledR, err := json.Marshal(request)
+	//assert.Nil(t, err)
+	//fmt.Println(string(marshalledR))
 }
 
 func TestExtractData(t *testing.T) {
 
 	var message iden3comm.BasicMessage
-	message.Type = auth.AuthorizationRequestMessageType
-
+	message.Type = auth.AuthorizationResponseMessageType
 	msgBody := auth.AuthorizationMessageResponseBody{}
 
 	zkpProof := auth.ZeroKnowledgeProof{
@@ -161,7 +159,9 @@ func TestExtractData(t *testing.T) {
 	}
 	msgBody.Scope = []auth.ZeroKnowledgeProof{zkpProof}
 
-	marhsalledMessage, _ := json.Marshal(msgBody.Scope)
+	marhsalledMessage, err := json.Marshal(msgBody)
+	assert.Nil(t, err)
+
 	message.Body = marhsalledMessage
 
 	token, err := ExtractMetadata(&message)
@@ -174,7 +174,7 @@ func TestExtractData(t *testing.T) {
 func TestVerifyMessageWithAuthProof(t *testing.T) {
 
 	var message iden3comm.BasicMessage
-	message.Type = auth.AuthorizationRequestMessageType
+	message.Type = auth.AuthorizationResponseMessageType
 	msgBody := auth.AuthorizationMessageResponseBody{}
 
 	zkpProof := auth.ZeroKnowledgeProof{
@@ -214,7 +214,12 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 	}
 	msgBody.Scope = []auth.ZeroKnowledgeProof{zkpProof}
 
-	err := VerifyProofs(&message)
+	marhsalledMessage, err := json.Marshal(msgBody)
+	assert.Nil(t, err)
+
+	message.Body = marhsalledMessage
+
+	err = VerifyProofs(&message)
 	assert.Nil(t, err)
 
 	token, err := ExtractMetadata(&message)

@@ -1,4 +1,4 @@
-package go_iden3_auth
+package auth
 
 import (
 	"bytes"

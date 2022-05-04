@@ -20,11 +20,13 @@ const (
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
 )
 
+// BlockchainCaller is an interface for smart contract call
 type BlockchainCaller interface {
-	// Call smart contract. For read operation.
+	// CallContract  cals smart contract. For read operation with single bigInt param
 	CallContract(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)
 }
 
+// Unmarshaler is used for contract call result parser
 type Unmarshaler interface {
 	Unmarshal([]interface{}) error
 }

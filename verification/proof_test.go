@@ -20,6 +20,6 @@ func TestVerify(t *testing.T) {
 	err := json.Unmarshal([]byte(p), &pd)
 	assert.NoError(t, err)
 
-	err = VerifyProof(verifiable.ZKProof{&pd, publicJSON}, vkJSON)
+	err = VerifyProof(verifiable.ZKProof{Proof: &pd, PubSignals: publicJSON}, vkJSON)
 	assert.NoError(t, err)
 }

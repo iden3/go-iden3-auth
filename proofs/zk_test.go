@@ -11,7 +11,7 @@ import (
 func TestVerifyProof(t *testing.T) {
 
 	var err error
-	proofMessage := &auth.ZeroKnowledgeProof{}
+	proofMessage := auth.ZeroKnowledgeProof{}
 	proofMessage.CircuitID = circuits.AuthCircuitID
 
 	proofMessage.ProofData = &verifiable.ProofData{
@@ -49,7 +49,7 @@ func TestVerifyProof(t *testing.T) {
 	err = VerifyProof(proofMessage)
 	assert.Nil(t, err)
 
-	err = ExtractMetadata(proofMessage)
+	metadata, err := ExtractMetadata(proofMessage)
 	assert.Nil(t, err)
-	assert.NotNil(t, proofMessage.AuthData)
+	assert.NotNil(t, metadata)
 }

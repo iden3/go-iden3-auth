@@ -6,10 +6,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// State is structure to represent  state from contract
 type State struct {
 	*big.Int
 }
 
+// Unmarshal returns getState contract result as State structure
 func (s *State) Unmarshal(data []interface{}) error {
 	if len(data) == 0 {
 		return errors.New("invalid data")
@@ -26,6 +28,7 @@ func (s *State) Unmarshal(data []interface{}) error {
 	return nil
 }
 
+// TransitionInfo is information about state transition
 type TransitionInfo struct {
 	ReplacedAtTimestamp *big.Int
 	CreatedAtTimestamp  *big.Int
@@ -35,6 +38,7 @@ type TransitionInfo struct {
 	ReplacedBy          *big.Int
 }
 
+// Unmarshal returns contract call result as TransitionInfo structure
 func (ti *TransitionInfo) Unmarshal(data []interface{}) error {
 	if len(data) < 6 {
 		return errors.New("invalid data")

@@ -1,4 +1,4 @@
-package go_iden3_auth
+package auth
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"github.com/iden3/go-schema-processor/verifiable"
 	"github.com/iden3/iden3comm"
 	"github.com/iden3/iden3comm/packers"
+	"github.com/iden3/iden3comm/protocol"
 	"github.com/iden3/iden3comm/protocol/auth"
 	"github.com/iden3/iden3comm/protocol/credentials"
 	"github.com/pkg/errors"
@@ -82,7 +83,7 @@ func VerifyProofs(message iden3comm.Iden3Message) (err error) {
 	for _, proof := range authorizationResponseData.Scope {
 		switch proof.Type {
 		case verifiable.ZeroKnowledgeProofType:
-			err = proofs.VerifyProof(&proof)
+			err = proofs.VerifyProof(proof)
 			if err != nil {
 				return fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
@@ -91,6 +92,42 @@ func VerifyProofs(message iden3comm.Iden3Message) (err error) {
 		}
 	}
 	return nil
+}
+
+func ExtractMetadata(proof protocol.ZeroKnowledgeProof) (map[string]interface{}, err error) {
+	if message.GetType() != auth.AuthorizationResponseMessageType && message.GetType() != credentials.FetchRequestMessageType {
+		return nil, fmt.Errorf("auth lib doesn't support %s message type", message.GetType())
+	}
+	var authorizationResponseData auth.AuthorizationMessageResponseBody
+	switch message.GetBody().(type) {
+	case json.RawMessage:
+		err = json.Unmarshal(message.GetBody().(json.RawMessage), &authorizationResponseData)
+		if err != nil {
+			return nil, err
+		}
+	case auth.AuthorizationMessageResponseBody:
+		authorizationResponseData = message.GetBody().(auth.AuthorizationMessageResponseBody)
+	}
+	token = &UserToken{}
+	token.Scope = map[string]map[string]interface{}{}
+	for _, proof := range authorizationResponseData.Scope {
+		switch proof.Type {
+		case verifiable.ZeroKnowledgeProofType:
+			var metadata auth.ProofMetadata
+			metadata, err = proofs.ExtractMetadata(proof)
+			if err != nil {
+				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
+			}
+			err = token.Update(string(proof.CircuitID), metadata)
+
+			if err != nil {
+				return nil, fmt.Errorf("can't provide user token %s", err.Error())
+			}
+		default:
+			return nil, errors.Errorf("proof type is not supported %s", err)
+		}
+	}
+	return token, nil
 }
 
 // ExtractMetadata extract userToken from provided proofs
@@ -113,16 +150,95 @@ func ExtractMetadata(message iden3comm.Iden3Message) (token *UserToken, err erro
 	for _, proof := range authorizationResponseData.Scope {
 		switch proof.Type {
 		case verifiable.ZeroKnowledgeProofType:
-			err = proofs.ExtractMetadata(&proof)
+			var metadata auth.ProofMetadata
+			metadata, err = proofs.ExtractMetadata(proof)
 			if err != nil {
 				return nil, fmt.Errorf("proof with type  %s is not valid. %s", proof.Type, err.Error())
 			}
-			err = token.Update(string(proof.CircuitID), proof.ProofMetadata)
+			err = token.Update(string(proof.CircuitID), metadata)
 
 			if err != nil {
 				return nil, fmt.Errorf("can't provide user token %s", err.Error())
 			}
+		default:
+			return nil, errors.Errorf("proof type is not supported %s", err)
 		}
 	}
 	return token, nil
 }
+
+/*
+	SERVER issues token after user login. - unapplicable for current stage.
+
+*/
+
+/*
+Client - Server:
+	Client:
+0.1 - user request {AtomicQueryMTP, "age > 23"}
+		1. Send token as : POST Body
+			- euuerugreg.fdgdfgdfgdfg.ggdfgdfgdf
+			- { "payload": dsdsf , "signatures:[ sadasdas]}
+	Server:
+		1. tokenBytes := r.Read(body)
+		2. token :=  jwz.Unmarshal(tokenBytes)
+		3. err := token.VerifyZKP() : zkp is verified.
+		4. err := token.ParseProofMetadata() metadata is extracted from public signals
+					- { token.ID, token.State ,token.CreationTimestamp }
+        5. stateTransitionInfo := token.VerifyState(rpcURL)
+		6. json.Unmarshall(token.Payload, &iden3comm.ProofResponse{Scope:[ZKPProof]})
+
+AtomicProofRequst:{
+
+}
+
+ - VerifyState
+ - VerifyQuery(circuit, rulls)
+interface{
+	UnmarshalCircuitOutput
+	Verify
+}
+
+zkpRequest[3].Type = AtomicQueryMTP
+zkpRequest[3].CicuitID = AtomicQueryMTP
+
+proof[1].ID=[2].ID
+
+scope:{
+	[atmicmtp]: age > 18, ID
+	[atomicmtp]: country notin [100, 1000], ID
+}
+
+proofResponse:{
+
+}
+
+verify( proofs, requestMessage){
+		for each request in requestMessage {
+				// find proof for request
+ 				proofToVerify = proofs[requestId] if not found - error.
+				auth.VerifyZKPProof(proof)
+			    auth.VerifyQuery(proof, request.rules)
+
+		}
+	}
+
+				VerifyQuery( proof,  rules):
+
+						CIRCUITVERIFIER. := auth.ParseProofMetadata(proof)
+								AtomiQueryMPT {
+									AtomicQueryMTPOutputs
+								}
+								(c *AtomiQueryMPT)VerifyStates(){
+
+								}
+								VerifyRulles(request{}){
+								}
+								CIRCUITVERIFIER{
+									VERIFYSTATES()
+									VERIFYRULLES()
+								}
+						CIRCUITVERIFIER.VerifyStates()
+						CIRCUITVERIFIER.VerifyMetadata(rules)
+
+*/

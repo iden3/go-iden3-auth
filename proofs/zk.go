@@ -21,7 +21,7 @@ const (
 )
 
 // VerifyProof performs groth16 verification
-func VerifyProof(m *auth.ZeroKnowledgeProof) (err error) {
+func VerifyProof(m auth.ZeroKnowledgeProof) (err error) {
 
 	if m.Type != verifiable.ZeroKnowledgeProofType {
 		return fmt.Errorf("proofs type %s is not zeroknowledge", m.Type)
@@ -41,23 +41,22 @@ func VerifyProof(m *auth.ZeroKnowledgeProof) (err error) {
 }
 
 // ExtractMetadata extracts proof metadata
-func ExtractMetadata(m *auth.ZeroKnowledgeProof) (err error) {
+func ExtractMetadata(m auth.ZeroKnowledgeProof) (auth.ProofMetadata, error) {
 
 	if m.Type != verifiable.ZeroKnowledgeProofType {
-		return fmt.Errorf("proofs type %s is not zeroknowledge", m.Type)
+		return auth.ProofMetadata{}, fmt.Errorf("proofs type %s is not zeroknowledge", m.Type)
 	}
 
 	c, err := circuits.GetCircuit(m.CircuitID)
 	if err != nil {
-		return err
+		return auth.ProofMetadata{}, err
 	}
 	proofData, err := parsePublicSignals(m.PubSignals, []byte(c.GetPublicSignalsSchema()))
 	if err != nil {
-		return err
+		return auth.ProofMetadata{}, err
 	}
-	m.ProofMetadata = proofData
 
-	return err
+	return proofData, nil
 }
 
 func parsePublicSignals(signals []string, schema []byte) (auth.ProofMetadata, error) {
