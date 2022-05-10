@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/proofs"
-	"github.com/iden3/go-iden3-auth/verification/pubsignals"
+	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/iden3/jwz"
 	"github.com/pkg/errors"
 )
 
 // CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(challenge string, aud, callbackURL string) *protocol.AuthorizationRequestMessage {
+func CreateAuthorizationRequest(challenge, aud, callbackURL string) *protocol.AuthorizationRequestMessage {
 	var message protocol.AuthorizationRequestMessage
 
 	message.Type = protocol.AuthorizationRequestMessageType
@@ -27,11 +27,11 @@ func CreateAuthorizationRequest(challenge string, aud, callbackURL string) *prot
 	return &message
 }
 
-// Verify performs verification of auth response based on auth request
-func Verify(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage, opts pubsignals.VerificationOptions) (err error) {
+// VerifyAuthResponse performs verification of auth response based on auth request
+func VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage, opts pubsignals.VerificationOptions) (err error) {
 
 	for _, proofRequest := range request.Body.Scope {
-		proofResponse := findProofByRequestId(response.Body.Scope, proofRequest.ID)
+		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
 			return errors.Errorf("proof for request id %s is presented not found", proofRequest.ID)
 		}
@@ -42,7 +42,7 @@ func Verify(ctx context.Context, response protocol.AuthorizationResponseMessage,
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("proof with request id %s and circuit id %s is not valid", proofRequest.ID, proofRequest.CircuitID))
 		}
-		cv, err := getCircuitVerifier(circuits.CircuitID(proofResponse.CircuitID), proofResponse.PubSignals)
+		cv, err := getPublicSignalsVerifier(circuits.CircuitID(proofResponse.CircuitID), proofResponse.PubSignals)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", proofRequest.CircuitID))
 		}
@@ -75,7 +75,7 @@ func VerifyJWZ(ctx context.Context, token string, options pubsignals.Verificatio
 		return nil, err
 	}
 
-	cv, err := getCircuitVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
+	cv, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", t.CircuitID))
 	}
@@ -92,12 +92,11 @@ func FullVerify(ctx context.Context, token string, request protocol.Authorizatio
 
 	// verify jwz
 	t, err := VerifyJWZ(ctx, token, options)
-
 	if err != nil {
 		return err
 	}
 
-	// parse jwz paylaod as json message
+	// parse jwz payload as json message
 	var authMsgResponse protocol.AuthorizationResponseMessage
 	msg := t.GetPayload()
 	err = json.Unmarshal(msg, &authMsgResponse)
@@ -106,31 +105,29 @@ func FullVerify(ctx context.Context, token string, request protocol.Authorizatio
 	}
 
 	// verify proof requests
-
-	err = Verify(ctx, authMsgResponse, request, options)
+	err = VerifyAuthResponse(ctx, authMsgResponse, request, options)
 	return err
 }
 
-func getCircuitVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
+func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
 	pubSignalBytes, err := json.Marshal(signals)
 	if err != nil {
 		return nil, err
 	}
-	var cv pubsignals.Verifier
-	switch circuitID {
-	case circuits.AtomicQueryMTPCircuitID:
-		cv = &pubsignals.AtomicQueryMTP{}
-	case circuits.AuthCircuitID:
-		cv = &pubsignals.Auth{}
+
+	cv, err := pubsignals.GetVerifier(circuitID)
+	if err != nil {
+		return nil, err
 	}
+
 	err = cv.PubSignalsUnmarshal(pubSignalBytes)
 	if err != nil {
 		return nil, err
 	}
 	return cv, nil
 }
-func findProofByRequestId(proofs []protocol.ZeroKnowledgeProofResponse, id string) *protocol.ZeroKnowledgeProofResponse {
-	for _, respProof := range proofs {
+func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id string) *protocol.ZeroKnowledgeProofResponse {
+	for _, respProof := range arr {
 		if respProof.ID == id {
 			return &respProof
 		}

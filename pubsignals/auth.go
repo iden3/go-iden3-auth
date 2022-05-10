@@ -3,23 +3,26 @@ package pubsignals
 import (
 	"context"
 	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/verification"
+	"github.com/iden3/go-iden3-auth/state"
 	"github.com/pkg/errors"
 	"time"
 )
 
+// Auth is a wrapper for circuits.AuthPubSignals
 type Auth struct {
 	circuits.AuthPubSignals
 }
 
+// VerifyQuery is not implemented for auth circuit
 func (c *Auth) VerifyQuery(ctx context.Context, query Query) error {
 
 	return errors.New("auth circuit doesn't support queries")
 }
 
+// VerifyStates verify auth tests
 func (c *Auth) VerifyStates(ctx context.Context, opts VerificationOptions) error {
 
-	userStateVerification, err := verification.VerifyState(ctx, opts.BlockchainProvider, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
+	userStateVerification, err := state.Verify(ctx, opts.BlockchainProvider, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
 	if err != nil {
 		return err
 	}

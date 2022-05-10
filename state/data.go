@@ -1,4 +1,4 @@
-package verification
+package state
 
 import (
 	"math/big"

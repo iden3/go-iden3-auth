@@ -1,4 +1,4 @@
-package verification
+package proofs
 
 import (
 	"encoding/json"
@@ -37,8 +37,8 @@ type vkJSON struct {
 	IC    [][]string `json:"IC"`
 }
 
-// VerifyProof performs a verification of zkp  based on verification key and public inputs
-func VerifyProof(zkProof verifiable.ZKProof, verificationKey []byte) error {
+// VerifyGroth16Proof performs a verification of zkp  based on verification key and public inputs
+func VerifyGroth16Proof(zkProof verifiable.ZKProof, verificationKey []byte) error {
 
 	// 1. cast external proof data to internal model.
 	p, err := parseProofData(*zkProof.Proof)
@@ -148,15 +148,4 @@ func parseVK(vkStr vkJSON) (*vk, error) {
 	}
 
 	return &v, nil
-}
-func stringsToArrayBigInt(publicInputs []string) ([]*big.Int, error) {
-	p := make([]*big.Int, 0, len(publicInputs))
-	for _, s := range publicInputs {
-		sb, err := stringToBigInt(s)
-		if err != nil {
-			return nil, err
-		}
-		p = append(p, sb)
-	}
-	return p, nil
 }

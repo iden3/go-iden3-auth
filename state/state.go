@@ -1,4 +1,4 @@
-package verification
+package state
 
 import (
 	"context"
@@ -31,31 +31,31 @@ type Unmarshaler interface {
 	Unmarshal([]interface{}) error
 }
 
-// StateVerificationResult can be the state verification result
-type StateVerificationResult struct {
+// VerificationResult can be the state verification result
+type VerificationResult struct {
 	State               string `json:"state"`
 	Latest              bool   `json:"latest"`
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
-// VerifyState is used to verify identity state
+// Verify is used to verify identity state
 // rpcURL - url to connect to the blockchain
 // contractAddress is an address of state contract
 // id is base58 identifier  e.g. id:11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s
 // state is bigint string representation of identity state
-func VerifyState(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (StateVerificationResult, error) {
+func Verify(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (VerificationResult, error) {
 	stateContract := new(State)
 	// get latest state for id from contract
 	err := contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
-		return StateVerificationResult{}, err
+		return VerificationResult{}, err
 	}
 	if stateContract.Int64() == 0 {
 		err = checkGenesisStateID(id, state)
 		if err != nil {
-			return StateVerificationResult{}, err
+			return VerificationResult{}, err
 		}
-		return StateVerificationResult{Latest: true, State: state.String()}, nil
+		return VerificationResult{Latest: true, State: state.String()}, nil
 	}
 	if stateContract.String() != state.String() {
 
@@ -66,17 +66,17 @@ func VerifyState(ctx context.Context, c BlockchainCaller, contractAddress string
 		transitionInfo := &TransitionInfo{}
 		err := contractCall(ctx, c, contractAddress, getTransitionInfoContractMethod, state, transitionInfo)
 		if err != nil {
-			return StateVerificationResult{}, err
+			return VerificationResult{}, err
 		}
 
 		if transitionInfo.ID.Cmp(id) != 0 {
-			return StateVerificationResult{}, errors.New("transition info contains invalid id")
+			return VerificationResult{}, errors.New("transition info contains invalid id")
 		}
 
 		if transitionInfo.ReplacedAtTimestamp.Int64() == 0 {
-			return StateVerificationResult{}, errors.New("no information of transition for non-latest state")
+			return VerificationResult{}, errors.New("no information of transition for non-latest state")
 		}
-		return StateVerificationResult{
+		return VerificationResult{
 			Latest:              false,
 			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
@@ -84,7 +84,7 @@ func VerifyState(ctx context.Context, c BlockchainCaller, contractAddress string
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return StateVerificationResult{Latest: true, State: state.String()}, nil
+	return VerificationResult{Latest: true, State: state.String()}, nil
 }
 
 func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {
@@ -113,7 +113,11 @@ func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, cont
 
 func checkGenesisStateID(id, state *big.Int) error {
 
-	stateHash := merkletree.NewHashFromBigInt(state)
+	stateHash, err := merkletree.NewHashFromBigInt(state)
+	if err != nil {
+		return err
+	}
+
 	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, stateHash.BigInt())
 	if err != nil {
 		return err

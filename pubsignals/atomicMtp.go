@@ -3,21 +3,23 @@ package pubsignals
 import (
 	"context"
 	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/verification"
+	"github.com/iden3/go-iden3-auth/state"
 	"github.com/pkg/errors"
 	"time"
 )
 
+// AtomicQueryMTP is a wrapper for circuits.AtomicQueryMTPPubSignals
 type AtomicQueryMTP struct {
 	circuits.AtomicQueryMTPPubSignals
 }
 
+// VerifyQuery verifies query for atomic query mtp circuit
 func (c *AtomicQueryMTP) VerifyQuery(ctx context.Context, query Query) error {
 
 	if !query.CheckIssuer(c.IssuerID.String()) {
 		return errors.New("issuer of claim is not in allowed list")
 	}
-	err := query.CheckSchema(c.ClaimSchema)
+	err := query.CheckSchema(ctx, c.ClaimSchema)
 	if err != nil {
 		return err
 	}
@@ -27,9 +29,10 @@ func (c *AtomicQueryMTP) VerifyQuery(ctx context.Context, query Query) error {
 	return nil
 }
 
+// VerifyStates performs all state verifications
 func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, opts VerificationOptions) error {
 
-	userStateVerification, err := verification.VerifyState(ctx, opts.BlockchainProvider, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
+	userStateVerification, err := state.Verify(ctx, opts.BlockchainProvider, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
 	if err != nil {
 		return err
 	}
@@ -44,7 +47,7 @@ func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, opts VerificationOpti
 		}
 	}
 
-	issuerStateVerification, err := verification.VerifyState(ctx, opts.BlockchainProvider, opts.Contract, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
+	issuerStateVerification, err := state.Verify(ctx, opts.BlockchainProvider, opts.Contract, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
 	if err != nil {
 		return err
 	}

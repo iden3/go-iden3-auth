@@ -1,4 +1,4 @@
-package verification
+package proofs
 
 import (
 	"bytes"
@@ -159,4 +159,16 @@ func stringToBigInt(s string) (*big.Int, error) {
 		return nil, fmt.Errorf("can not parse string to *big.Int: %s", s)
 	}
 	return n, nil
+}
+
+func stringsToArrayBigInt(publicInputs []string) ([]*big.Int, error) {
+	p := make([]*big.Int, 0, len(publicInputs))
+	for _, s := range publicInputs {
+		sb, err := stringToBigInt(s)
+		if err != nil {
+			return nil, err
+		}
+		p = append(p, sb)
+	}
+	return p, nil
 }

@@ -20,6 +20,7 @@ type Query struct {
 	ClaimID        string `json:"claimId"`
 }
 
+// CheckIssuer verifies claim issuer
 func (q Query) CheckIssuer(identifier string) bool {
 	for _, i := range q.AllowedIssuers {
 		if i == identifier {
@@ -28,7 +29,9 @@ func (q Query) CheckIssuer(identifier string) bool {
 	}
 	return false
 }
-func (q Query) CheckSchema(schemaHash core.SchemaHash) error {
+
+// CheckSchema verifies claim schema
+func (q Query) CheckSchema(ctx context.Context, schemaHash core.SchemaHash) error {
 	var loader processor.SchemaLoader
 
 	schemaURL, err := url.Parse(q.Schema.URL)
@@ -47,7 +50,7 @@ func (q Query) CheckSchema(schemaHash core.SchemaHash) error {
 		return fmt.Errorf("loader for %s is not supported", schemaURL.Scheme)
 	}
 	var schemaBytes []byte
-	schemaBytes, _, err = loader.Load(context.Background())
+	schemaBytes, _, err = loader.Load(ctx)
 	if err != nil {
 		return err
 	}
