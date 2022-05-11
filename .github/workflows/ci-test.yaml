@@ -11,7 +11,7 @@ jobs:
   test:
     strategy:
       matrix:
-        containers: [ 1.17.2-bullseye ]
+        containers: [ 1.18 ]
     runs-on: ubuntu-latest
     container: golang:${{ matrix.containers }}
     steps:
