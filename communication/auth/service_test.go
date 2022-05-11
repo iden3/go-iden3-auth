@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"github.com/iden3/go-iden3-auth/communication/packer"
 	"os"
 	"testing"
 
@@ -88,9 +86,6 @@ func TestVerifyMessageWithAuthProof(t *testing.T) {
 	state, err := token.VerifyState(context.Background(), os.Getenv("RPC_URL"), "0xa36786C3E18225da7cc8FC69c6443ecD41827FF5")
 	assert.Nil(t, err)
 	assert.Equal(t, true, state.Latest)
-
-	msg, err := (&packer.PlainMessagePacker{}).Pack("application/json", &message)
-	fmt.Println(string(msg))
 }
 func TestVerifyMessageWithAuthAndAtomicProofMTP(t *testing.T) {
 
