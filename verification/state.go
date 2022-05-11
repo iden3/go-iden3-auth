@@ -20,11 +20,13 @@ const (
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
 )
 
+// BlockchainCaller is an interfact to call smart contract
 type BlockchainCaller interface {
 	// Call smart contract. For read operation.
 	CallContract(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)
 }
 
+// Unmarshaler converts contrcat data to provided interface
 type Unmarshaler interface {
 	Unmarshal([]interface{}) error
 }
@@ -111,15 +113,17 @@ func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, cont
 
 func checkGenesisStateID(id, state *big.Int) error {
 
-	stateHash := merkletree.NewHashFromBigInt(state)
-	IDFromState := core.IdGenesisFromIdenState(stateHash).String()
+	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, state)
+	if err != nil {
+		return err
+	}
 
 	elemBytes := merkletree.NewElemBytesFromBigInt(id)
 	IDFromParam, err := core.IDFromBytes(elemBytes[:31])
 	if err != nil {
 		return err
 	}
-	if IDFromState != IDFromParam.String() {
+	if IDFromState.String() != IDFromParam.String() {
 		return errors.Errorf("ID from genesis state (%s) and provided (%s) don't match", IDFromState, IDFromParam.String())
 	}
 	return nil

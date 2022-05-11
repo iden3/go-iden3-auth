@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	identifierAttribute string = "user_identifier"
+	identifierAttribute string = "userID"
 	challengeAttribute  string = "challenge"
-	stateAttribute      string = "user_state"
+	stateAttribute      string = "userState"
 )
 
 // MetadataProofHandler is handler to extract metadata of the provided proof

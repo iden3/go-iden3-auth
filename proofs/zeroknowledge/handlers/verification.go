@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/types"
 	"github.com/iden3/go-iden3-auth/verification"
 )
@@ -14,12 +14,14 @@ type VerificationHandler struct {
 // Process applies handler logic on provided message
 func (h *VerificationHandler) Process(m *types.ZeroKnowledgeProof) (err error) {
 
-	err = verification.VerifyProof(*m.ProofData, m.PubSignals, []byte(m.CircuitData.VerificationKey))
+	key, err := circuits.GetVerificationKey(m.CircuitID)
 	if err != nil {
 		return err
 	}
-	fmt.Println("proofs verified")
-
+	err = verification.VerifyProof(*m.ProofData, m.PubSignals, key)
+	if err != nil {
+		return err
+	}
 	if h.next != nil {
 		err = h.next.Process(m)
 		if err != nil {
