@@ -26,7 +26,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Update go modules
-        run: go mod tidy
+        run: go mod tidy -e
       - name: Unit Tests
         env:
           RPC_URL: ${{ secrets.RPC_URL }}
