@@ -8,13 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AtomicQueryMTP is a wrapper for circuits.AtomicQueryMTPPubSignals
-type AtomicQueryMTP struct {
-	circuits.AtomicQueryMTPPubSignals
+// AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
+type AtomicQuerySig struct {
+	circuits.AtomicQuerySigPubSignals
 }
 
 // VerifyQuery verifies query for atomic query mtp circuit
-func (c *AtomicQueryMTP) VerifyQuery(ctx context.Context, query Query) error {
+func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query) error {
 
 	if !query.CheckIssuer(c.IssuerID.String()) {
 		return errors.New("issuer of claim is not in allowed list")
@@ -24,11 +24,12 @@ func (c *AtomicQueryMTP) VerifyQuery(ctx context.Context, query Query) error {
 		return err
 	}
 
+	//
 	return nil
 }
 
-// VerifyStates verifies user state and issuer claim issuance state in the smart contract
-func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, opts state.VerificationOptions) error {
+// VerifyStates verifies user state and issuer auth claim state in the smart contract
+func (c *AtomicQuerySig) VerifyStates(ctx context.Context, opts state.VerificationOptions) error {
 
 	client, err := ethclient.Dial(opts.RPCUrl)
 	if err != nil {
@@ -43,7 +44,7 @@ func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, opts state.Verificati
 	if !userStateResolved.Latest {
 		return ErrUserStateIsNotValid
 	}
-	issuerStateResolved, err := state.Resolve(ctx, client, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
+	issuerStateResolved, err := state.Resolve(ctx, client, opts.Contract, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
 		return err
 	}

@@ -48,6 +48,6 @@ func TestVerifyProof(t *testing.T) {
 	}
 	proofMessage.ID = "1"
 
-	err = VerifyProof(proofMessage)
+	err = VerifyProof(proofMessage, []byte{})
 	assert.Nil(t, err)
 }

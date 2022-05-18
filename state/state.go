@@ -2,14 +2,30 @@ package state
 
 import (
 	"context"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
+	"math/big"
+	"time"
 )
+
+// ResolverFunc is a func that alows to resolve state
+type ResolverFunc func(ctx context.Context, id, state *big.Int) (*ResolvedState, error)
+
+// VerificationOptions is options for state verification
+type VerificationOptions struct {
+	Contract string
+	RPCUrl   string
+}
+
+// ExtendedVerificationsOptions allows to set additional options
+type ExtendedVerificationsOptions struct {
+	VerificationOptions
+	OnlyLatestStates             bool
+	AcceptedStateTransitionDelay time.Duration
+}
 
 //go:generate mockgen -destination=mock/blockchainCallerMock.go . BlockchainCaller
 
@@ -31,31 +47,31 @@ type Unmarshaler interface {
 	Unmarshal([]interface{}) error
 }
 
-// VerificationResult can be the state verification result
-type VerificationResult struct {
+// ResolvedState can be the state verification result
+type ResolvedState struct {
 	State               string `json:"state"`
 	Latest              bool   `json:"latest"`
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
-// Verify is used to verify identity state
+// Resolve is used to resolve identity state
 // rpcURL - url to connect to the blockchain
 // contractAddress is an address of state contract
 // id is base58 identifier  e.g. id:11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s
 // state is bigint string representation of identity state
-func Verify(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (VerificationResult, error) {
+func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (*ResolvedState, error) {
 	stateContract := new(State)
 	// get latest state for id from contract
 	err := contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
-		return VerificationResult{}, err
+		return nil, err
 	}
 	if stateContract.Int64() == 0 {
 		err = checkGenesisStateID(id, state)
 		if err != nil {
-			return VerificationResult{}, err
+			return nil, err
 		}
-		return VerificationResult{Latest: true, State: state.String()}, nil
+		return &ResolvedState{Latest: true, State: state.String()}, nil
 	}
 	if stateContract.String() != state.String() {
 
@@ -64,19 +80,19 @@ func Verify(ctx context.Context, c BlockchainCaller, contractAddress string, id,
 		// The verification party can make a decision if it can accept this state based on that time frame
 
 		transitionInfo := &TransitionInfo{}
-		err := contractCall(ctx, c, contractAddress, getTransitionInfoContractMethod, state, transitionInfo)
+		err = contractCall(ctx, c, contractAddress, getTransitionInfoContractMethod, state, transitionInfo)
 		if err != nil {
-			return VerificationResult{}, err
+			return nil, err
 		}
 
 		if transitionInfo.ID.Cmp(id) != 0 {
-			return VerificationResult{}, errors.New("transition info contains invalid id")
+			return nil, errors.New("transition info contains invalid id")
 		}
 
 		if transitionInfo.ReplacedAtTimestamp.Int64() == 0 {
-			return VerificationResult{}, errors.New("no information of transition for non-latest state")
+			return nil, errors.New("no information of transition for non-latest state")
 		}
-		return VerificationResult{
+		return &ResolvedState{
 			Latest:              false,
 			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
@@ -84,7 +100,7 @@ func Verify(ctx context.Context, c BlockchainCaller, contractAddress string, id,
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return VerificationResult{Latest: true, State: state.String()}, nil
+	return &ResolvedState{Latest: true, State: state.String()}, nil
 }
 
 func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {

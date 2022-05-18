@@ -9,7 +9,13 @@ import (
 var signalsVerifierRegistry = map[circuits.CircuitID]Verifier{}
 var circuitsLock = new(sync.RWMutex)
 
-// RegisterVerifier is factory for pubsignals init.
+// ErrUserStateIsNotValid declares that issuer state is invalid
+var ErrUserStateIsNotValid = errors.New("user state is not valid")
+
+// ErrIssuerClaimStateIsNotValid declares that issuer state is invalid
+var ErrIssuerClaimStateIsNotValid = errors.New("issuer state is not valid")
+
+// RegisterVerifier is factory for public signals init.
 // This is done during init() in the method's implementation
 func RegisterVerifier(id circuits.CircuitID, v Verifier) {
 	circuitsLock.Lock()

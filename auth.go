@@ -4,13 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/proofs"
 	"github.com/iden3/go-iden3-auth/pubsignals"
+	"github.com/iden3/go-iden3-auth/state"
+	"github.com/iden3/go-jwz"
 	"github.com/iden3/iden3comm/protocol"
-	"github.com/iden3/jwz"
 	"github.com/pkg/errors"
+	"math/big"
+	"time"
 )
+
+// Verifier is a struct for auth instance
+type Verifier struct {
+	circuitsVerificationKeys map[circuits.CircuitID][]byte
+}
+
+// NewVerifier returns setup instance of auth library
+func NewVerifier(keys map[circuits.CircuitID][]byte) *Verifier {
+	return &Verifier{circuitsVerificationKeys: keys}
+}
 
 // CreateAuthorizationRequest creates new authorization request message
 func CreateAuthorizationRequest(challenge, aud, callbackURL string) *protocol.AuthorizationRequestMessage {
@@ -28,7 +42,7 @@ func CreateAuthorizationRequest(challenge, aud, callbackURL string) *protocol.Au
 }
 
 // VerifyAuthResponse performs verification of auth response based on auth request
-func VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage, opts pubsignals.VerificationOptions) (err error) {
+func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage, opts state.VerificationOptions) (err error) {
 
 	for _, proofRequest := range request.Body.Scope {
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
@@ -38,19 +52,27 @@ func VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResp
 		if proofRequest.CircuitID != proofResponse.CircuitID {
 			return errors.Errorf("proof response for request id %s has different circuit id than requested. requested %s - presented %s", proofRequest.ID, proofRequest.CircuitID, proofResponse.CircuitID)
 		}
-		err = proofs.VerifyProof(*proofResponse)
+
+		verificationKey, ok := v.circuitsVerificationKeys[circuits.CircuitID(proofRequest.CircuitID)]
+		if !ok {
+			return errors.Errorf("verification key for circuit with id %s not found", proofRequest.CircuitID)
+		}
+		err = proofs.VerifyProof(*proofResponse, verificationKey)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("proof with request id %s and circuit id %s is not valid", proofRequest.ID, proofRequest.CircuitID))
 		}
+
 		cv, err := getPublicSignalsVerifier(circuits.CircuitID(proofResponse.CircuitID), proofResponse.PubSignals)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", proofRequest.CircuitID))
 		}
-		err = cv.VerifyStates(ctx, opts)
+
+		err = cv.VerifyQuery(ctx, proofRequest.Rules["query"].(pubsignals.Query))
 		if err != nil {
 			return err
 		}
-		err = cv.VerifyQuery(ctx, proofRequest.Rules["query"].(pubsignals.Query))
+
+		err = cv.VerifyStates(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -60,26 +82,28 @@ func VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResp
 }
 
 // VerifyJWZ performs verification of jwz token
-func VerifyJWZ(ctx context.Context, token string, options pubsignals.VerificationOptions) (t *jwz.Token, err error) {
+func (v *Verifier) VerifyJWZ(ctx context.Context, token string, options state.VerificationOptions) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
 	if err != nil {
 		return nil, err
 	}
-	verificationKey, err := circuits.GetVerificationKey(circuits.CircuitID(t.CircuitID))
-	if err != nil {
-		return nil, err
+
+	verificationKey, ok := v.circuitsVerificationKeys[circuits.CircuitID(t.CircuitID)]
+	if !ok {
+		return nil, errors.Errorf("verification key for circuit with id %s not found", t.CircuitID)
 	}
-	err = t.Verify(verificationKey)
+	_, err = t.Verify(verificationKey)
 	if err != nil {
 		return nil, err
 	}
 
-	cv, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
+	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", t.CircuitID))
+		return nil, err
 	}
-	err = cv.VerifyStates(ctx, options)
+
+	err = circuitVerifier.VerifyStates(ctx, options)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +112,10 @@ func VerifyJWZ(ctx context.Context, token string, options pubsignals.Verificatio
 }
 
 // FullVerify performs verification of jwz token and auth request
-func FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage, options pubsignals.VerificationOptions) error {
+func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage, options state.VerificationOptions) error {
 
-	// verify jwz
-	t, err := VerifyJWZ(ctx, token, options)
+	//// verify jwz
+	t, err := v.VerifyJWZ(ctx, token, options)
 	if err != nil {
 		return err
 	}
@@ -105,8 +129,34 @@ func FullVerify(ctx context.Context, token string, request protocol.Authorizatio
 	}
 
 	// verify proof requests
-	err = VerifyAuthResponse(ctx, authMsgResponse, request, options)
+	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, options)
 	return err
+}
+
+// VerifyState allows to verify state
+func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerificationsOptions) error {
+
+	client, err := ethclient.Dial(opts.RPCUrl)
+	if err != nil {
+		return err
+	}
+	stateVerificationRes, err := state.Resolve(ctx, client, opts.Contract, id, s)
+	if err != nil {
+		return err
+	}
+	// VerifyStates performs all state verifications
+	if !stateVerificationRes.Latest {
+		if opts.OnlyLatestStates {
+			return errors.New("state is not latest")
+		}
+		transitionTime := time.Unix(stateVerificationRes.TransitionTimestamp, 0)
+		if time.Now().Sub(transitionTime) > opts.AcceptedStateTransitionDelay {
+			return errors.New("state is not latest and lost actuality")
+		}
+	}
+
+	return nil
+
 }
 
 func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
