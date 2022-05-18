@@ -17,11 +17,14 @@ type Query struct {
 	AllowedIssuers []string
 	Req            map[string]interface{}
 	Schema         protocol.Schema
-	ClaimID        string `json:"claimId"`
+	ClaimID        string `json:"claimId,omitempty"`
 }
 
 // CheckIssuer verifies claim issuer
 func (q Query) CheckIssuer(identifier string) bool {
+	if len(q.AllowedIssuers) == 1 && q.AllowedIssuers[0] == "*" {
+		return true
+	}
 	for _, i := range q.AllowedIssuers {
 		if i == identifier {
 			return true
@@ -56,7 +59,7 @@ func (q Query) CheckSchema(ctx context.Context, schemaHash core.SchemaHash) erro
 	}
 	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
 
-	if sh != schemaHash {
+	if sh.BigInt().Cmp(schemaHash.BigInt()) != 0 {
 		return errors.New("schema that was used is not equal to requested in query")
 	}
 	return nil

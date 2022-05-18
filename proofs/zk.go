@@ -1,7 +1,7 @@
 package proofs
 
 import (
-	"github.com/iden3/go-schema-processor/verifiable"
+	"github.com/iden3/go-rapidsnark/verifier"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
 )
@@ -10,7 +10,7 @@ import (
 func VerifyProof(resp protocol.ZeroKnowledgeProofResponse, verificationKey []byte) (err error) {
 	switch resp.Proof.Protocol {
 	case "groth16":
-		return VerifyGroth16Proof(verifiable.ZKProof{Proof: resp.Proof, PubSignals: resp.PubSignals}, verificationKey)
+		return verifier.VerifyGroth16(resp.ZKProof, verificationKey)
 	default:
 		return errors.Errorf("%s protocol is not supported", resp.Proof.Protocol)
 	}

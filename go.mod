@@ -6,6 +6,7 @@ replace github.com/iden3/iden3comm => ../iden3comm
 
 require (
 	github.com/ethereum/go-ethereum v1.10.17
+	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/golang/mock v1.3.1
 	github.com/iden3/go-circuits v0.0.41
 	github.com/iden3/go-iden3-core v0.0.16

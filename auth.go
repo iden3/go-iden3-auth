@@ -10,9 +10,11 @@ import (
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/iden3/go-jwz"
+	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
 	"math/big"
+	"strconv"
 	"time"
 )
 
@@ -27,16 +29,21 @@ func NewVerifier(keys map[circuits.CircuitID][]byte) *Verifier {
 }
 
 // CreateAuthorizationRequest creates new authorization request message
-func CreateAuthorizationRequest(challenge, aud, callbackURL string) *protocol.AuthorizationRequestMessage {
+// sender - client identifier
+// challenge - int64 that will represent unique message id and provide correlation with response
+func CreateAuthorizationRequest(challenge int64, sender, callbackURL string) *protocol.AuthorizationRequestMessage {
 	var message protocol.AuthorizationRequestMessage
 
+	message.Typ = packers.MediaTypePlainMessage
 	message.Type = protocol.AuthorizationRequestMessageType
-	message.ThreadID = challenge
+	message.ID = strconv.FormatInt(challenge, 10)
+
+	message.ThreadID = strconv.FormatInt(challenge, 10)
 	message.Body = protocol.AuthorizationRequestMessageBody{
 		CallbackURL: callbackURL,
-		Audience:    aud,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
 	}
+	message.From = sender
 
 	return &message
 }
@@ -67,10 +74,10 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", proofRequest.CircuitID))
 		}
 
-		err = cv.VerifyQuery(ctx, proofRequest.Rules["query"].(pubsignals.Query))
-		if err != nil {
-			return err
-		}
+		//err = cv.VerifyQuery(ctx, proofRequest.Rules["query"].(pubsignals.Query))
+		//if err != nil {
+		//	return err
+		//}
 
 		err = cv.VerifyStates(ctx, opts)
 		if err != nil {
