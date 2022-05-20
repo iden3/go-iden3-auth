@@ -5,7 +5,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/state"
-	"github.com/pkg/errors"
 )
 
 // AtomicQueryMTP is a wrapper for circuits.AtomicQueryMTPPubSignals
@@ -16,14 +15,10 @@ type AtomicQueryMTP struct {
 // VerifyQuery verifies query for atomic query mtp circuit
 func (c *AtomicQueryMTP) VerifyQuery(ctx context.Context, query Query) error {
 
-	if !query.CheckIssuer(c.IssuerID.String()) {
-		return errors.New("issuer of claim is not in allowed list")
-	}
-	err := query.CheckSchema(ctx, c.ClaimSchema)
+	err := query.CheckRequest(ctx, c.IssuerID, c.ClaimSchema, c.SlotIndex, c.Values, c.Operator)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

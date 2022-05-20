@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gofrs/uuid"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/proofs"
 	"github.com/iden3/go-iden3-auth/pubsignals"
@@ -14,59 +15,80 @@ import (
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
 	"math/big"
-	"strconv"
 	"time"
 )
 
 // Verifier is a struct for auth instance
 type Verifier struct {
-	circuitsVerificationKeys map[circuits.CircuitID][]byte
+	verificationKeyLoader VerificationKeyLoader
+	opts                  state.VerificationOptions
+}
+
+// VerificationKeyLoader load verification key bytes for specific circuit
+type VerificationKeyLoader interface {
+	Load(id circuits.CircuitID) ([]byte, error)
 }
 
 // NewVerifier returns setup instance of auth library
-func NewVerifier(keys map[circuits.CircuitID][]byte) *Verifier {
-	return &Verifier{circuitsVerificationKeys: keys}
+func NewVerifier(keyLoader VerificationKeyLoader, opts state.VerificationOptions) *Verifier {
+	return &Verifier{verificationKeyLoader: keyLoader, opts: opts}
 }
 
 // CreateAuthorizationRequest creates new authorization request message
 // sender - client identifier
-// challenge - int64 that will represent unique message id and provide correlation with response
-func CreateAuthorizationRequest(challenge int64, sender, callbackURL string) *protocol.AuthorizationRequestMessage {
-	var message protocol.AuthorizationRequestMessage
+// reason - describes purpose of request
+// callbackURL - url for authorization response
+func CreateAuthorizationRequest(reason, sender, callbackURL string) (*protocol.AuthorizationRequestMessage, error) {
+	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
+}
 
-	message.Typ = packers.MediaTypePlainMessage
-	message.Type = protocol.AuthorizationRequestMessageType
-	message.ID = strconv.FormatInt(challenge, 10)
+// CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
+func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL string) (*protocol.AuthorizationRequestMessage, error) {
+	var request protocol.AuthorizationRequestMessage
 
-	message.ThreadID = strconv.FormatInt(challenge, 10)
-	message.Body = protocol.AuthorizationRequestMessageBody{
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
+	request.Typ = packers.MediaTypePlainMessage
+	request.Type = protocol.AuthorizationRequestMessageType
+	request.ID = id.String()
+	request.ThreadID = id.String()
+	request.Body = protocol.AuthorizationRequestMessageBody{
 		CallbackURL: callbackURL,
+		Reason:      reason,
+		Message:     message,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
 	}
-	message.From = sender
+	request.From = sender
 
-	return &message
+	return &request, nil
 }
 
 // VerifyAuthResponse performs verification of auth response based on auth request
-func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage, opts state.VerificationOptions) (err error) {
+func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage) error {
+
+	if request.Body.Message != response.Body.Message {
+		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
+	}
 
 	for _, proofRequest := range request.Body.Scope {
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
-			return errors.Errorf("proof for request id %s is presented not found", proofRequest.ID)
+			return errors.Errorf("proof for zk request id %v is presented not found", proofRequest.ID)
 		}
 		if proofRequest.CircuitID != proofResponse.CircuitID {
-			return errors.Errorf("proof response for request id %s has different circuit id than requested. requested %s - presented %s", proofRequest.ID, proofRequest.CircuitID, proofResponse.CircuitID)
+			return errors.Errorf("proof response for request id %v has different circuit id than requested. requested %s - presented %s", proofRequest.ID, proofRequest.CircuitID, proofResponse.CircuitID)
 		}
 
-		verificationKey, ok := v.circuitsVerificationKeys[circuits.CircuitID(proofRequest.CircuitID)]
-		if !ok {
-			return errors.Errorf("verification key for circuit with id %s not found", proofRequest.CircuitID)
+		verificationKey, err := v.verificationKeyLoader.Load(circuits.CircuitID(proofResponse.CircuitID))
+		if err != nil {
+			return err
 		}
 		err = proofs.VerifyProof(*proofResponse, verificationKey)
 		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("proof with request id %s and circuit id %s is not valid", proofRequest.ID, proofRequest.CircuitID))
+			return errors.Wrap(err, fmt.Sprintf("proof with request id %v and circuit id %s is not valid", proofRequest.ID, proofRequest.CircuitID))
 		}
 
 		cv, err := getPublicSignalsVerifier(circuits.CircuitID(proofResponse.CircuitID), proofResponse.PubSignals)
@@ -74,12 +96,23 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", proofRequest.CircuitID))
 		}
 
-		//err = cv.VerifyQuery(ctx, proofRequest.Rules["query"].(pubsignals.Query))
-		//if err != nil {
-		//	return err
-		//}
+		// prepare query from request
+		queryBytes, err := json.Marshal(proofRequest.Rules["query"])
+		if err != nil {
+			return err
+		}
+		var query pubsignals.Query
+		err = json.Unmarshal(queryBytes, &query)
+		if err != nil {
+			return err
+		}
+		// verify query
+		err = cv.VerifyQuery(ctx, query)
+		if err != nil {
+			return err
+		}
 
-		err = cv.VerifyStates(ctx, opts)
+		err = cv.VerifyStates(ctx, v.opts)
 		if err != nil {
 			return err
 		}
@@ -89,15 +122,15 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 }
 
 // VerifyJWZ performs verification of jwz token
-func (v *Verifier) VerifyJWZ(ctx context.Context, token string, options state.VerificationOptions) (t *jwz.Token, err error) {
+func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
 	if err != nil {
 		return nil, err
 	}
 
-	verificationKey, ok := v.circuitsVerificationKeys[circuits.CircuitID(t.CircuitID)]
-	if !ok {
+	verificationKey, err := v.verificationKeyLoader.Load(circuits.CircuitID(t.CircuitID))
+	if err != nil {
 		return nil, errors.Errorf("verification key for circuit with id %s not found", t.CircuitID)
 	}
 	_, err = t.Verify(verificationKey)
@@ -110,7 +143,7 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string, options state.Ve
 		return nil, err
 	}
 
-	err = circuitVerifier.VerifyStates(ctx, options)
+	err = circuitVerifier.VerifyStates(ctx, v.opts)
 	if err != nil {
 		return nil, err
 	}
@@ -119,10 +152,10 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string, options state.Ve
 }
 
 // FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage, options state.VerificationOptions) error {
+func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage) error {
 
 	//// verify jwz
-	t, err := v.VerifyJWZ(ctx, token, options)
+	t, err := v.VerifyJWZ(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -136,11 +169,11 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	}
 
 	// verify proof requests
-	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, options)
+	err = v.VerifyAuthResponse(ctx, authMsgResponse, request)
 	return err
 }
 
-// VerifyState allows to verify state
+// VerifyState allows to verify state without binding to  verifier instance
 func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerificationsOptions) error {
 
 	client, err := ethclient.Dial(opts.RPCUrl)
@@ -183,7 +216,7 @@ func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (p
 	}
 	return cv, nil
 }
-func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id string) *protocol.ZeroKnowledgeProofResponse {
+func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id uint32) *protocol.ZeroKnowledgeProofResponse {
 	for _, respProof := range arr {
 		if respProof.ID == id {
 			return &respProof
