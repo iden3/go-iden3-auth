@@ -49,7 +49,7 @@ func (q Query) CheckRequest(ctx context.Context, issuer *core.ID, schemaHash cor
 		loader = &loaders.HTTP{URL: q.Schema.URL}
 	case "ipfs":
 		loader = loaders.IPFS{
-			URL: "ipfs.io/",
+			URL: "ipfs.io",
 			CID: schemaURL.Host,
 		}
 	default:
