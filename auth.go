@@ -205,17 +205,6 @@ func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (p
 		return nil, err
 	}
 
-	//var cv pubsignals.Verifier
-	//switch circuitID {
-	//case circuits.AuthCircuitID:
-	//	cv = &pubsignals.Auth{}
-	//case circuits.AtomicQueryMTPCircuitID:
-	//	cv = &pubsignals.AtomicQueryMTP{}
-	//case circuits.AtomicQuerySigCircuitID:
-	//	cv = &pubsignals.AtomicQuerySig{}
-	//default:
-	//	return nil, errors.Errorf("circuit verifier is not defined for %s", circuitID)
-	//}
 	cv, err := pubsignals.GetVerifier(circuitID)
 	if err != nil {
 		return nil, err
