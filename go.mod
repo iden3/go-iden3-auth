@@ -2,8 +2,6 @@ module github.com/iden3/go-iden3-auth
 
 go 1.18
 
-replace github.com/iden3/iden3comm => ../iden3comm
-
 require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/gofrs/uuid v3.3.0+incompatible
@@ -15,7 +13,6 @@ require (
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
 	github.com/iden3/go-schema-processor v0.0.22
-	github.com/iden3/iden3comm v0.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 )
@@ -37,6 +34,7 @@ require (
 	github.com/iden3/go-rapidsnark/prover v0.0.1 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.1 // indirect
 	github.com/iden3/go-schema-registry-wrapper v0.0.7 // indirect
+	github.com/iden3/iden3comm v0.0.0-20220522162704-bb9d76969709 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0 // indirect
 	github.com/ipfs/go-ipfs-files v0.0.9 // indirect

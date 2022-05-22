@@ -342,7 +342,6 @@ func TestVerifier_VerifyJWZ(t *testing.T) {
 
 func TestVerifier_FullVerify(t *testing.T) {
 
-	//t.Skip()
 	// request
 	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
