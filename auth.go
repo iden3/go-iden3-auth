@@ -190,7 +190,7 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 			return errors.New("state is not latest")
 		}
 		transitionTime := time.Unix(stateVerificationRes.TransitionTimestamp, 0)
-		if time.Now().Sub(transitionTime) > opts.AcceptedStateTransitionDelay {
+		if time.Since(transitionTime) > opts.AcceptedStateTransitionDelay {
 			return errors.New("state is not latest and lost actuality")
 		}
 	}
