@@ -30,14 +30,14 @@ func TestVerifyState(t *testing.T) {
 	tests := []struct {
 		name        string
 		prepareMock func(mbc *mock_verification.MockBlockchainCaller, t *testing.T)
-		expected    ResolvedState
+		expected    *ResolvedState
 	}{
 		{
 			name: "verify state without record in block-chain",
 			prepareMock: func(mbc *mock_verification.MockBlockchainCaller, t *testing.T) {
 				mbc.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(make([]byte, 32), nil)
 			},
-			expected: ResolvedState{
+			expected: &ResolvedState{
 				State:               mockGenesisState.String(),
 				Latest:              true,
 				TransitionTimestamp: 0,
@@ -55,7 +55,7 @@ func TestVerifyState(t *testing.T) {
 
 				mbc.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(b, nil)
 			},
-			expected: ResolvedState{Latest: true, State: mockGenesisState.String()},
+			expected: &ResolvedState{Latest: true, State: mockGenesisState.String()},
 		},
 		{
 			name: "the blockchain contains a newer state record",
@@ -90,7 +90,7 @@ func TestVerifyState(t *testing.T) {
 
 				mbc.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(b, nil)
 			},
-			expected: ResolvedState{
+			expected: &ResolvedState{
 				State:               mockGenesisState.String(),
 				Latest:              false,
 				TransitionTimestamp: 100,
@@ -116,7 +116,7 @@ func TestVerifyState_Error(t *testing.T) {
 	tests := []struct {
 		name        string
 		prepareMock func(mbc *mock_verification.MockBlockchainCaller, t *testing.T)
-		expected    ResolvedState
+		expected    *ResolvedState
 		expectedErr error
 	}{
 		{
@@ -152,7 +152,7 @@ func TestVerifyState_Error(t *testing.T) {
 
 				mbc.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(b, nil)
 			},
-			expected:    ResolvedState{},
+			expected:    nil,
 			expectedErr: errors.New("transition info contains invalid id"),
 		},
 		{
@@ -188,7 +188,7 @@ func TestVerifyState_Error(t *testing.T) {
 
 				mbc.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(b, nil)
 			},
-			expected:    ResolvedState{},
+			expected:    nil,
 			expectedErr: errors.New("no information of transition for non-latest state"),
 		},
 	}
