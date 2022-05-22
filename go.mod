@@ -12,6 +12,8 @@ require (
 	github.com/iden3/go-iden3-core v0.0.16
 	github.com/iden3/go-jwz v0.0.1
 	github.com/iden3/go-merkletree-sql v1.0.1
+	github.com/iden3/go-rapidsnark/types v0.0.1
+	github.com/iden3/go-rapidsnark/verifier v0.0.1
 	github.com/iden3/go-schema-processor v0.0.22
 	github.com/iden3/iden3comm v0.0.1
 	github.com/pkg/errors v0.9.1
@@ -33,8 +35,6 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.13 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.1 // indirect
-	github.com/iden3/go-rapidsnark/types v0.0.1 // indirect
-	github.com/iden3/go-rapidsnark/verifier v0.0.1 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.1 // indirect
 	github.com/iden3/go-schema-registry-wrapper v0.0.7 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
