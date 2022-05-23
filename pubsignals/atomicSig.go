@@ -43,7 +43,7 @@ func (c *AtomicQuerySig) VerifyStates(ctx context.Context, opts state.Verificati
 		return err
 	}
 	if issuerStateResolved == nil {
-		return ErrUserStateIsNotValid
+		return ErrIssuerClaimStateIsNotValid
 	}
 
 	return nil
