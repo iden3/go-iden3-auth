@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
+	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/proofs"
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
@@ -20,18 +21,14 @@ import (
 
 // Verifier is a struct for auth instance
 type Verifier struct {
-	verificationKeyLoader VerificationKeyLoader
-	opts                  state.VerificationOptions
-}
-
-// VerificationKeyLoader load verification key bytes for specific circuit
-type VerificationKeyLoader interface {
-	Load(id circuits.CircuitID) ([]byte, error)
+	verificationKeyLoader loaders.VerificationKeyLoader
+	claimSchemaLoader     loaders.SchemaLoader
+	stateResolver         pubsignals.StateResolver
 }
 
 // NewVerifier returns setup instance of auth library
-func NewVerifier(keyLoader VerificationKeyLoader, opts state.VerificationOptions) *Verifier {
-	return &Verifier{verificationKeyLoader: keyLoader, opts: opts}
+func NewVerifier(keyLoader loaders.VerificationKeyLoader, claimSchemaLoader loaders.SchemaLoader, resolver pubsignals.StateResolver) *Verifier {
+	return &Verifier{verificationKeyLoader: keyLoader, claimSchemaLoader: claimSchemaLoader, stateResolver: resolver}
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -102,12 +99,12 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return err
 		}
 		// verify query
-		err = cv.VerifyQuery(ctx, query)
+		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader)
 		if err != nil {
 			return err
 		}
 
-		err = cv.VerifyStates(ctx, v.opts)
+		err = cv.VerifyStates(ctx, v.stateResolver)
 		if err != nil {
 			return err
 		}
@@ -138,7 +135,7 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 		return nil, err
 	}
 
-	err = circuitVerifier.VerifyStates(ctx, v.opts)
+	err = circuitVerifier.VerifyStates(ctx, v.stateResolver)
 	if err != nil {
 		return nil, err
 	}

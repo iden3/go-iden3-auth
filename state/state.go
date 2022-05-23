@@ -11,9 +11,6 @@ import (
 	"time"
 )
 
-// ResolverFunc is a func that alows to resolve state
-type ResolverFunc func(ctx context.Context, id, state *big.Int) (*ResolvedState, error)
-
 // VerificationOptions is options for state verification
 type VerificationOptions struct {
 	Contract string

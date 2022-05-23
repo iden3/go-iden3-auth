@@ -2,9 +2,8 @@ package pubsignals
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/state"
+	"github.com/iden3/go-iden3-auth/loaders"
 )
 
 // AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
@@ -13,9 +12,16 @@ type AtomicQuerySig struct {
 }
 
 // VerifyQuery verifies query for atomic query mtp circuit
-func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query) error {
+func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 
-	err := query.CheckRequest(ctx, c.IssuerID, c.ClaimSchema, c.SlotIndex, c.Values, c.Operator)
+	err := query.CheckRequest(ctx, schemaLoader, ClaimOutputs{
+		IssuerID:   c.IssuerID,
+		SchemaHash: c.ClaimSchema,
+		SlotIndex:  c.SlotIndex,
+		Operator:   c.Operator,
+		Value:      c.Values,
+	})
+
 	if err != nil {
 		return err
 	}
@@ -23,14 +29,9 @@ func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query) error {
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract
-func (c *AtomicQuerySig) VerifyStates(ctx context.Context, opts state.VerificationOptions) error {
+func (c *AtomicQuerySig) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 
-	client, err := ethclient.Dial(opts.RPCUrl)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-	userStateResolved, err := state.Resolve(ctx, client, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
+	userStateResolved, err := stateResolver.Resolve(ctx, c.UserID.BigInt(), c.UserState.BigInt())
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func (c *AtomicQuerySig) VerifyStates(ctx context.Context, opts state.Verificati
 	if !userStateResolved.Latest {
 		return ErrUserStateIsNotValid
 	}
-	issuerStateResolved, err := state.Resolve(ctx, client, opts.Contract, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
+	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
 		return err
 	}

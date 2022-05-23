@@ -2,9 +2,8 @@ package pubsignals
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/state"
+	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/pkg/errors"
 )
 
@@ -14,19 +13,14 @@ type Auth struct {
 }
 
 // VerifyQuery is not implemented for auth circuit
-func (c *Auth) VerifyQuery(ctx context.Context, query Query) error {
+func (c *Auth) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 	return errors.New("auth circuit doesn't support queries")
 }
 
 // VerifyStates verify auth tests
-func (c *Auth) VerifyStates(ctx context.Context, opts state.VerificationOptions) error {
+func (c *Auth) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 
-	client, err := ethclient.Dial(opts.RPCUrl)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-	resolvedState, err := state.Resolve(ctx, client, opts.Contract, c.UserID.BigInt(), c.UserState.BigInt())
+	resolvedState, err := stateResolver.Resolve(ctx, c.UserID.BigInt(), c.UserState.BigInt())
 	if err != nil {
 		return err
 	}
