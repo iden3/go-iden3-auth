@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/iden3/go-rapidsnark/types"
@@ -37,8 +37,7 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 
-	request, err := CreateAuthorizationRequest(reason, sender, callbackURL)
-	assert.NoError(t, err)
+	request := CreateAuthorizationRequest(reason, sender, callbackURL)
 	assert.Len(t, request.Body.Scope, 0)
 	assert.Equal(t, callbackURL, request.Body.CallbackURL)
 	assert.Equal(t, sender, request.From)
@@ -68,8 +67,7 @@ func TestCreateAuthorizationRequestWithZKP(t *testing.T) {
 		},
 	}
 
-	request, err := CreateAuthorizationRequest(reason, sender, callbackURL)
-	assert.NoError(t, err)
+	request := CreateAuthorizationRequest(reason, sender, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
 	assert.Len(t, request.Body.Scope, 1)
@@ -110,13 +108,11 @@ func TestVerifyMessageWithMTPProof(t *testing.T) {
 			},
 		},
 	}
-	request, err := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
-	assert.Nil(t, err)
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
 	userID := "119tqceWdRd2F6WnAyVuFQRFjK3WUXq2LorSPyG9LJ"
-	responseUUID, err := uuid.NewV4()
-	assert.Nil(t, err)
+	responseUUID := uuid.New()
 
 	// response
 	var message protocol.AuthorizationResponseMessage
@@ -249,7 +245,7 @@ func TestVerifyMessageWithMTPProof(t *testing.T) {
 		Contract: "0xa36786c3e18225da7cc8fc69c6443ecd41827ff5",
 		RPCUrl:   os.Getenv("RPC_URL"),
 	}}
-	err = authInstance.VerifyAuthResponse(context.Background(), message, *request)
+	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
 	assert.Nil(t, err)
 
 }
@@ -260,16 +256,14 @@ func TestVerifyMessageBasicAuth(t *testing.T) {
 	callbackURL := "https://test.com/callback"
 	reason := "basic auth"
 
-	request, err := CreateAuthorizationRequestWithMessage(reason, "msg", verifierID, callbackURL)
-	assert.Nil(t, err)
+	request := CreateAuthorizationRequestWithMessage(reason, "msg", verifierID, callbackURL)
 
 	b, _ := json.Marshal(request)
 	fmt.Println(string(b))
 	// response
 
 	userID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
-	responseUUID, err := uuid.NewV4()
-	assert.Nil(t, err)
+	responseUUID := uuid.New()
 
 	var message protocol.AuthorizationResponseMessage
 	message.Typ = packers.MediaTypePlainMessage
@@ -282,13 +276,12 @@ func TestVerifyMessageBasicAuth(t *testing.T) {
 		Scope:   []protocol.ZeroKnowledgeProofResponse{},
 		Message: "msg",
 	}
-	b, _ = json.Marshal(message)
-	fmt.Println(string(b))
+
 	authInstance := Verifier{&FileKeyLoader{}, state.VerificationOptions{
 		Contract: "0xa36786c3e18225da7cc8fc69c6443ecd41827ff5",
 		RPCUrl:   os.Getenv("RPC_URL"),
 	}}
-	err = authInstance.VerifyAuthResponse(context.Background(), message, *request)
+	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
 	assert.Nil(t, err)
 }
 
@@ -323,8 +316,7 @@ func TestVerifier_VerifyJWZ(t *testing.T) {
 			},
 		},
 	}
-	request, err := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
-	assert.Nil(t, err)
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 	request.ID = "7f38a193-0918-4a48-9fac-36adfdb8b542"
 	request.ThreadID = "7f38a193-0918-4a48-9fac-36adfdb8b542" // because it's used in the response
@@ -371,8 +363,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 			},
 		},
 	}
-	request, err := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
-	assert.Nil(t, err)
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 	request.ID = "7f38a193-0918-4a48-9fac-36adfdb8b542"
 	request.ThreadID = "7f38a193-0918-4a48-9fac-36adfdb8b542" // because it's used in the response
@@ -383,6 +374,6 @@ func TestVerifier_FullVerify(t *testing.T) {
 		Contract: "0xa36786c3e18225da7cc8fc69c6443ecd41827ff5",
 		RPCUrl:   os.Getenv("RPC_URL"),
 	}}
-	err = authInstance.FullVerify(context.Background(), token, *request)
+	err := authInstance.FullVerify(context.Background(), token, request)
 	assert.Nil(t, err)
 }

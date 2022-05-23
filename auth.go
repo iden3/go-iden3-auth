@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/proofs"
 	"github.com/iden3/go-iden3-auth/pubsignals"
@@ -38,23 +38,18 @@ func NewVerifier(keyLoader VerificationKeyLoader, opts state.VerificationOptions
 // sender - client identifier
 // reason - describes purpose of request
 // callbackURL - url for authorization response
-func CreateAuthorizationRequest(reason, sender, callbackURL string) (*protocol.AuthorizationRequestMessage, error) {
+func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
 	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
 }
 
 // CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
-func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL string) (*protocol.AuthorizationRequestMessage, error) {
+func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL string) protocol.AuthorizationRequestMessage {
 	var request protocol.AuthorizationRequestMessage
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
 
 	request.Typ = packers.MediaTypePlainMessage
 	request.Type = protocol.AuthorizationRequestMessageType
-	request.ID = id.String()
-	request.ThreadID = id.String()
+	request.ID = uuid.New().String()
+	request.ThreadID = request.ID
 	request.Body = protocol.AuthorizationRequestMessageBody{
 		CallbackURL: callbackURL,
 		Reason:      reason,
@@ -63,7 +58,7 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL 
 	}
 	request.From = sender
 
-	return &request, nil
+	return request
 }
 
 // VerifyAuthResponse performs verification of auth response based on auth request
