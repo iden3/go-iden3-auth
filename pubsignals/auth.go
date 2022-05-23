@@ -13,7 +13,7 @@ type Auth struct {
 }
 
 // VerifyQuery is not implemented for auth circuit
-func (c *Auth) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
+func (c *Auth) VerifyQuery(_ context.Context, _ Query, _ loaders.SchemaLoader) error {
 	return errors.New("auth circuit doesn't support queries")
 }
 
