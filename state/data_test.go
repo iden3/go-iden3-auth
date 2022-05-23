@@ -1,4 +1,4 @@
-package verification
+package state
 
 import (
 	"math/big"
@@ -7,20 +7,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestState(t *testing.T)  {
-	type testCase struct{
-		name string
-		data []interface{}
+func TestState(t *testing.T) {
+	type testCase struct {
+		name   string
+		data   []interface{}
 		result *State
-		error error
+		error  error
 	}
 
 	tests := []testCase{
 		{
-			name: "Success parse response",
-			data: []interface{}{big.NewInt(1)},
+			name:   "Success parse response",
+			data:   []interface{}{big.NewInt(1)},
 			result: &State{big.NewInt(1)},
-			error: nil,
+			error:  nil,
 		},
 	}
 
@@ -38,24 +38,24 @@ func TestState(t *testing.T)  {
 }
 
 func TestTransitionInfo(t *testing.T) {
-	type testCase struct{
-		name string
-		data []interface{}
+	type testCase struct {
+		name   string
+		data   []interface{}
 		result *TransitionInfo
-		error error
+		error  error
 	}
 
 	tests := []testCase{
 		{
 			name: "Success parse response",
-			data: []interface{}{big.NewInt(1),big.NewInt(1), uint64(11), uint64(12), big.NewInt(1), big.NewInt(1)},
+			data: []interface{}{big.NewInt(1), big.NewInt(1), uint64(11), uint64(12), big.NewInt(1), big.NewInt(1)},
 			result: &TransitionInfo{
 				ReplacedAtTimestamp: big.NewInt(1),
-				CreatedAtTimestamp: big.NewInt(1),
-				ReplacedAtBlock: uint64(11),
-				CreatedAtBlock: uint64(12),
-				ReplacedBy: big.NewInt(1),
-				ID: big.NewInt(1),
+				CreatedAtTimestamp:  big.NewInt(1),
+				ReplacedAtBlock:     uint64(11),
+				CreatedAtBlock:      uint64(12),
+				ReplacedBy:          big.NewInt(1),
+				ID:                  big.NewInt(1),
 			},
 			error: nil,
 		},
