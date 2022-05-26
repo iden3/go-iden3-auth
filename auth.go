@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
@@ -15,8 +18,6 @@ import (
 	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
-	"math/big"
-	"time"
 )
 
 // Verifier is a struct for auth instance
@@ -144,12 +145,12 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 }
 
 // FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage) error {
+func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage) (*protocol.AuthorizationResponseMessage, error) {
 
 	//// verify jwz
 	t, err := v.VerifyJWZ(ctx, token)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// parse jwz payload as json message
@@ -157,12 +158,12 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	msg := t.GetPayload()
 	err = json.Unmarshal(msg, &authMsgResponse)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// verify proof requests
 	err = v.VerifyAuthResponse(ctx, authMsgResponse, request)
-	return err
+	return &authMsgResponse, err
 }
 
 // VerifyState allows to verify state without binding to  verifier instance
