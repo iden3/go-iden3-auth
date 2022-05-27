@@ -49,30 +49,23 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 	if err != nil {
 		return errors.Wrap(err, "can't load schema for request query")
 	}
+
 	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
 	if sh.BigInt().Cmp(out.SchemaHash.BigInt()) != 0 {
 		return errors.New("schema that was used is not equal to requested in query")
 	}
 
-	pr := &processor.Processor{}
-	var parser processor.Parser
-	switch ext {
-	case jsonExt:
-		parser = jsonSuite.Parser{ParsingStrategy: processor.OneFieldPerSlotStrategy}
-	case jsonldExt:
-		parser = jsonldSuite.Parser{ClaimType: q.Schema.Type, ParsingStrategy: processor.OneFieldPerSlotStrategy}
-	default:
-		return errors.Errorf(
-			"process suite for schema format %s is not supported", ext)
+	pr, err := prepareProcessor(q.Schema.Type, ext)
+	if err != nil {
+		return errors.Wrap(err, "can't prepare processor for request query")
 	}
-	pr = processor.InitProcessorOptions(pr, processor.WithParser(parser))
 
 	queryReq, err := parseRequest(q.Req, schemaBytes, pr, len(out.Value))
 	if err != nil {
 		return errors.Wrap(err, "can't parse request query")
 	}
 
-	return verifyQuery(queryReq, out)
+	return verifyQuery(*queryReq, out)
 }
 
 func verifyIssuer(q Query, out ClaimOutputs) bool {
@@ -106,10 +99,27 @@ func verifyQuery(query circuits.Query, out ClaimOutputs) error {
 	return nil
 }
 
-func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor, expectedValueSize int) (circuits.Query, error) {
+func prepareProcessor(claimType, ext string) (*processor.Processor, error) {
+	pr := &processor.Processor{}
+	var parser processor.Parser
+	switch ext {
+	case jsonExt:
+		parser = jsonSuite.Parser{ParsingStrategy: processor.OneFieldPerSlotStrategy}
+	case jsonldExt:
+		parser = jsonldSuite.Parser{ClaimType: claimType, ParsingStrategy: processor.OneFieldPerSlotStrategy}
+	default:
+		return nil, errors.Errorf(
+			"process suite for schema format %s is not supported", ext)
+	}
+	return processor.InitProcessorOptions(pr, processor.WithParser(parser)), nil
+}
+
+func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor,
+	expectedValueSize int) (*circuits.Query,
+	error) {
 
 	if req == nil {
-		return circuits.Query{
+		return &circuits.Query{
 			SlotIndex: 0,
 			Values:    nil,
 			Operator:  circuits.NOOP,
@@ -117,7 +127,7 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 	}
 
 	if len(req) > 1 {
-		return circuits.Query{}, errors.New("multiple requests  not supported")
+		return nil, errors.New("multiple requests  not supported")
 	}
 	var fieldName string
 	var fieldPredicate map[string]interface{}
@@ -126,18 +136,18 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		var ok bool
 		fieldPredicate, ok = body.(map[string]interface{})
 		if !ok {
-			return circuits.Query{}, errors.New("failed cast type map[string]interface")
+			return nil, errors.New("failed cast type map[string]interface")
 		}
 		if len(fieldPredicate) > 1 {
-			return circuits.Query{}, errors.New("multiple predicates for one field not supported")
+			return nil, errors.New("multiple predicates for one field not supported")
 		}
 		break
 	}
 	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schema)
-
 	if err != nil {
-		return circuits.Query{}, err
+		return nil, err
 	}
+
 	var values []*big.Int
 	var operator int
 	for op, v := range fieldPredicate {
@@ -145,17 +155,17 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		var ok bool
 		operator, ok = circuits.QueryOperators[op]
 		if !ok {
-			return circuits.Query{}, errors.New("query operator is not supported")
+			return nil, errors.New("query operator is not supported")
 		}
 
 		values, err = getValuesAsArray(v, expectedValueSize)
 		if err != nil {
-			return circuits.Query{}, err
+			return nil, err
 		}
 		// only one predicate for field is supported
 		break
 	}
-	return circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
+	return &circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
 
 }
 
