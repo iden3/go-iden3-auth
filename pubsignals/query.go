@@ -2,6 +2,8 @@ package pubsignals
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
@@ -11,7 +13,6 @@ import (
 	"github.com/iden3/go-schema-processor/utils"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 const (
@@ -38,16 +39,9 @@ type ClaimOutputs struct {
 
 // CheckRequest checks request
 func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
-	r ClaimOutputs) error {
+	out ClaimOutputs) error {
 
-	issuerAllowed := false
-	for _, i := range q.AllowedIssuers {
-		if i == "*" || i == r.IssuerID.String() {
-			issuerAllowed = true
-			break
-		}
-	}
-	if !issuerAllowed {
+	if !verifyIssuer(q, out) {
 		return errors.New("issuer is not in allowed list")
 	}
 
@@ -56,6 +50,9 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 		return errors.Wrap(err, "can't load schema for request query")
 	}
 	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
+	if sh.BigInt().Cmp(out.SchemaHash.BigInt()) != 0 {
+		return errors.New("schema that was used is not equal to requested in query")
+	}
 
 	pr := &processor.Processor{}
 	var parser processor.Parser
@@ -68,32 +65,57 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 		return errors.Errorf(
 			"process suite for schema format %s is not supported", ext)
 	}
-
 	pr = processor.InitProcessorOptions(pr, processor.WithParser(parser))
 
-	queryReq, err := parseRequest(q.Req, schemaBytes, pr, len(r.Value))
+	queryReq, err := parseRequest(q.Req, schemaBytes, pr, len(out.Value))
 	if err != nil {
 		return errors.Wrap(err, "can't parse request query")
 	}
-	if queryReq.Operator != r.Operator {
-		return errors.New("operator that was used is not equal to requested in query")
-	}
-	if queryReq.SlotIndex != r.SlotIndex {
-		return errors.New("wrong claim slot was used in claim")
-	}
-	for i, v := range queryReq.Values {
-		if v.Cmp(r.Value[i]) != 0 {
-			return errors.New(" comparison value that was used is not equal to requested in query")
+
+	return verifyQuery(queryReq, out)
+}
+
+func verifyIssuer(q Query, out ClaimOutputs) bool {
+	issuerAllowed := false
+	for _, i := range q.AllowedIssuers {
+		if i == "*" || i == out.IssuerID.String() {
+			issuerAllowed = true
+			break
 		}
 	}
+	return issuerAllowed
+}
 
-	if sh.BigInt().Cmp(r.SchemaHash.BigInt()) != 0 {
-		return errors.New("schema that was used is not equal to requested in query")
+func verifyQuery(query circuits.Query, out ClaimOutputs) error {
+
+	if query.Operator == out.Operator && query.Operator == circuits.NOOP {
+		return nil
+	}
+
+	if query.Operator != out.Operator {
+		return errors.New("operator that was used is not equal to requested in query")
+	}
+	if query.SlotIndex != out.SlotIndex {
+		return errors.New("wrong claim slot was used in claim")
+	}
+	for i, v := range query.Values {
+		if v.Cmp(out.Value[i]) != 0 {
+			return errors.New("comparison value that was used is not equal to requested in query")
+		}
 	}
 	return nil
 }
 
 func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor, expectedValueSize int) (circuits.Query, error) {
+
+	if req == nil {
+		return circuits.Query{
+			SlotIndex: 0,
+			Values:    nil,
+			Operator:  circuits.NOOP,
+		}, nil
+	}
+
 	if len(req) > 1 {
 		return circuits.Query{}, errors.New("multiple requests  not supported")
 	}
@@ -136,6 +158,7 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 	return circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
 
 }
+
 func getValuesAsArray(v interface{}, size int) ([]*big.Int, error) {
 	values := make([]*big.Int, size)
 	for i := range values {
