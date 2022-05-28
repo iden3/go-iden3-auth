@@ -52,7 +52,7 @@ func TestVerifyQuery(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Desc, func(t *testing.T) {
-			got := verifyQuery(c.Query, c.Output)
+			got := verifyQuery(&c.Query, c.Output)
 
 			if c.Err != "" {
 				assert.Errorf(t, got, c.Err)
@@ -84,4 +84,55 @@ func TestVerifyIssuer(t *testing.T) {
 	query = Query{AllowedIssuers: []string{"112qpwUbRQ8hwFS69X1Piun39Qz9mujuZfdUGLJjTW"}}
 	out = ClaimOutputs{IssuerID: &id}
 	assert.False(t, verifyIssuer(query, out))
+}
+
+func Test_extractQueryFields(t *testing.T) {
+
+	tests := []struct {
+		name           string
+		req            map[string]interface{}
+		fieldName      string
+		fieldPredicate map[string]interface{}
+		err            string
+	}{
+		{
+			name:           "simple query",
+			req:            map[string]interface{}{"countryCode": map[string]interface{}{"$nin": []int{840}}},
+			fieldName:      "countryCode",
+			fieldPredicate: map[string]interface{}{"$nin": []int{840}},
+			err:            "",
+		},
+		{
+			name: "multiple predicates",
+			req: map[string]interface{}{"countryCode": map[string]interface{}{"$nin": []int{840},
+				"$gt": []int{840}}},
+			fieldName:      "",
+			fieldPredicate: nil,
+			err:            "multiple predicates for one field not supported",
+		},
+		{
+			name: "multiple fields",
+			req: map[string]interface{}{
+				"age":         map[string]interface{}{"$in": []int{18}},
+				"countryCode": map[string]interface{}{"$nin": []int{840}}},
+			fieldName:      "",
+			fieldPredicate: nil,
+			err:            "multiple requests not supported",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotFieldName, gotFieldPredicate, err := extractQueryFields(test.req)
+
+			if test.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Errorf(t, err, test.err)
+			}
+
+			assert.Equal(t, test.fieldName, gotFieldName)
+			assert.Equal(t, test.fieldPredicate, gotFieldPredicate)
+		})
+	}
 }

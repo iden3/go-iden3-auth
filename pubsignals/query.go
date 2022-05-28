@@ -65,7 +65,7 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 		return errors.Wrap(err, "can't parse request query")
 	}
 
-	return verifyQuery(*queryReq, out)
+	return verifyQuery(queryReq, out)
 }
 
 func verifyIssuer(q Query, out ClaimOutputs) bool {
@@ -79,7 +79,7 @@ func verifyIssuer(q Query, out ClaimOutputs) bool {
 	return issuerAllowed
 }
 
-func verifyQuery(query circuits.Query, out ClaimOutputs) error {
+func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
 
 	if query.Operator == out.Operator && query.Operator == circuits.NOOP {
 		return nil
@@ -126,28 +126,26 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		}, nil
 	}
 
-	if len(req) > 1 {
-		return nil, errors.New("multiple requests  not supported")
+	fieldName, fieldPredicate, err := extractQueryFields(req)
+	if err != nil {
+		return nil, err
 	}
-	var fieldName string
-	var fieldPredicate map[string]interface{}
-	for field, body := range req {
-		fieldName = field
-		var ok bool
-		fieldPredicate, ok = body.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("failed cast type map[string]interface")
-		}
-		if len(fieldPredicate) > 1 {
-			return nil, errors.New("multiple predicates for one field not supported")
-		}
-		break
+
+	values, operator, err := parseFieldPredicate(fieldPredicate, err, expectedValueSize)
+	if err != nil {
+		return nil, err
 	}
+
 	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schema)
 	if err != nil {
 		return nil, err
 	}
 
+	return &circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
+
+}
+
+func parseFieldPredicate(fieldPredicate map[string]interface{}, err error, expectedValueSize int) ([]*big.Int, int, error) {
 	var values []*big.Int
 	var operator int
 	for op, v := range fieldPredicate {
@@ -155,18 +153,39 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		var ok bool
 		operator, ok = circuits.QueryOperators[op]
 		if !ok {
-			return nil, errors.New("query operator is not supported")
+			return nil, 0, errors.New("query operator is not supported")
 		}
 
 		values, err = getValuesAsArray(v, expectedValueSize)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
 		// only one predicate for field is supported
 		break
 	}
-	return &circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
+	return values, operator, err
+}
 
+func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPredicate map[string]interface{}, err error) {
+
+	if len(req) > 1 {
+		return "", nil, errors.New("multiple requests not supported")
+	}
+
+	for field, body := range req {
+		fieldName = field
+		var ok bool
+		fieldPredicate, ok = body.(map[string]interface{})
+		if !ok {
+			return "", nil, errors.New("failed cast type map[string]interface")
+		}
+		if len(fieldPredicate) > 1 {
+			return "", nil, errors.New("multiple predicates for one field not supported")
+		}
+		break
+	}
+	return fieldName, fieldPredicate, nil
 }
 
 func getValuesAsArray(v interface{}, size int) ([]*big.Int, error) {
