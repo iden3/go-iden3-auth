@@ -35,18 +35,32 @@ func TestVerifyQuery(t *testing.T) {
 		},
 		{"Equal values",
 			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2)}, Operator: circuits.GT},
-			ClaimOutputs{SlotIndex: 1, Operator: circuits.GT, Value: []*big.Int{big.NewInt(2)}},
+			ClaimOutputs{SlotIndex: 1, Operator: circuits.GT, Value: valueTo64([]*big.Int{big.NewInt(2)})},
 			"",
 		},
 		{"Err diff slots",
 			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2)}, Operator: circuits.GT},
-			ClaimOutputs{SlotIndex: 2, Operator: circuits.GT, Value: []*big.Int{big.NewInt(2)}},
+			ClaimOutputs{SlotIndex: 2, Operator: circuits.GT, Value: valueTo64([]*big.Int{big.NewInt(2)})},
 			"wrong claim slot was used in claim",
 		},
 		{"Err diff values",
 			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2)}, Operator: circuits.LT},
-			ClaimOutputs{SlotIndex: 1, Operator: circuits.LT, Value: []*big.Int{big.NewInt(3)}},
+			ClaimOutputs{SlotIndex: 1, Operator: circuits.LT, Value: valueTo64([]*big.Int{big.NewInt(3)})},
 			"comparison value that was used is not equal to requested in query",
+		},
+		{"Check values",
+			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2), big.NewInt(0)},
+				Operator: circuits.LT},
+			ClaimOutputs{SlotIndex: 1, Operator: circuits.LT, Value: valueTo64([]*big.Int{big.NewInt(2),
+				big.NewInt(0)})},
+			"",
+		},
+		{"err output value size",
+			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2), big.NewInt(0)},
+				Operator: circuits.LT},
+			ClaimOutputs{SlotIndex: 1, Operator: circuits.LT, Value: []*big.Int{big.NewInt(2),
+				big.NewInt(0)}},
+			"wrong claim value size, expected 64 got query 2",
 		},
 	}
 
@@ -63,6 +77,18 @@ func TestVerifyQuery(t *testing.T) {
 		})
 	}
 
+}
+
+func valueTo64(ints []*big.Int) []*big.Int {
+	res := make([]*big.Int, 64)
+	for i, v := range ints {
+		if i >= len(res) {
+			res[i] = big.NewInt(0)
+		} else {
+			res[i] = v
+		}
+	}
+	return res
 }
 
 func TestVerifyIssuer(t *testing.T) {

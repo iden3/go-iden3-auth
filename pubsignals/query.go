@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -60,7 +61,7 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 		return errors.Wrap(err, "can't prepare processor for request query")
 	}
 
-	queryReq, err := parseRequest(q.Req, schemaBytes, pr, len(out.Value))
+	queryReq, err := parseRequest(q.Req, schemaBytes, pr)
 	if err != nil {
 		return errors.Wrap(err, "can't parse request query")
 	}
@@ -91,6 +92,23 @@ func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
 	if query.SlotIndex != out.SlotIndex {
 		return errors.New("wrong claim slot was used in claim")
 	}
+
+	if len(out.Value) != 64 {
+		return errors.New(fmt.Sprintf("wrong claim value size, expected 64 got query %d",
+			len(out.Value)))
+	}
+
+	if len(query.Values) < 64 {
+		a := make([]*big.Int, 64)
+		for i := 0; i < 64; i++ {
+			if i < len(query.Values) {
+				a[i] = query.Values[i]
+			} else {
+				a[i] = big.NewInt(0)
+			}
+		}
+	}
+
 	for i, v := range query.Values {
 		if v.Cmp(out.Value[i]) != 0 {
 			return errors.New("comparison value that was used is not equal to requested in query")
@@ -114,9 +132,7 @@ func prepareProcessor(claimType, ext string) (*processor.Processor, error) {
 	return processor.InitProcessorOptions(pr, processor.WithParser(parser)), nil
 }
 
-func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor,
-	expectedValueSize int) (*circuits.Query,
-	error) {
+func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor) (*circuits.Query, error) {
 
 	if req == nil {
 		return &circuits.Query{
@@ -131,7 +147,7 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		return nil, err
 	}
 
-	values, operator, err := parseFieldPredicate(fieldPredicate, err, expectedValueSize)
+	values, operator, err := parseFieldPredicate(fieldPredicate, err)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +161,7 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 
 }
 
-func parseFieldPredicate(fieldPredicate map[string]interface{}, err error, expectedValueSize int) ([]*big.Int, int, error) {
+func parseFieldPredicate(fieldPredicate map[string]interface{}, err error) ([]*big.Int, int, error) {
 	var values []*big.Int
 	var operator int
 	for op, v := range fieldPredicate {
@@ -156,7 +172,7 @@ func parseFieldPredicate(fieldPredicate map[string]interface{}, err error, expec
 			return nil, 0, errors.New("query operator is not supported")
 		}
 
-		values, err = getValuesAsArray(v, expectedValueSize)
+		values, err = getValuesAsArray(v)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -188,20 +204,15 @@ func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPred
 	return fieldName, fieldPredicate, nil
 }
 
-func getValuesAsArray(v interface{}, size int) ([]*big.Int, error) {
-	values := make([]*big.Int, size)
-	for i := range values {
-		values[i] = big.NewInt(0)
-	}
+func getValuesAsArray(v interface{}) ([]*big.Int, error) {
+	var values []*big.Int
 
 	switch value := v.(type) {
 	case float64:
+		values = make([]*big.Int, 1)
 		values[0] = new(big.Int).SetInt64(int64(value))
 	case []interface{}:
-		if len(value) > size {
-			return nil, errors.Errorf("array size {%d} is bigger max expected size {%d}",
-				len(value), size)
-		}
+		values = make([]*big.Int, len(value))
 		for i, item := range value {
 			values[i] = new(big.Int).SetInt64(int64(item.(float64)))
 		}
