@@ -162,3 +162,18 @@ func Test_extractQueryFields(t *testing.T) {
 		})
 	}
 }
+
+func TestGetValuesAsArray(t *testing.T) {
+
+	got, err := getValuesAsArray(float64(99))
+	assert.NoError(t, err)
+	assert.Equal(t, []*big.Int{big.NewInt(99)}, got)
+
+	v := []interface{}{float64(99), float64(88)}
+	got, err = getValuesAsArray(v)
+	assert.NoError(t, err)
+	assert.Equal(t, []*big.Int{big.NewInt(99), big.NewInt(88)}, got)
+
+	_, err = getValuesAsArray(99)
+	assert.EqualError(t, err, "unsupported values type int")
+}
