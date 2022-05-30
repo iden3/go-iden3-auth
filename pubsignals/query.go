@@ -94,8 +94,8 @@ func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
 	}
 
 	if len(out.Value) != 64 {
-		return errors.New(fmt.Sprintf("wrong claim value size, expected 64 got query %d",
-			len(out.Value)))
+		return fmt.Errorf("wrong claim value size, expected 64 got query %d",
+			len(out.Value))
 	}
 
 	if len(query.Values) < 64 {
