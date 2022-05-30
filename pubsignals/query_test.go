@@ -55,13 +55,6 @@ func TestVerifyQuery(t *testing.T) {
 				big.NewInt(0)})},
 			"",
 		},
-		{"err output value size",
-			circuits.Query{SlotIndex: 1, Values: []*big.Int{big.NewInt(2), big.NewInt(0)},
-				Operator: circuits.LT},
-			ClaimOutputs{SlotIndex: 1, Operator: circuits.LT, Value: []*big.Int{big.NewInt(2),
-				big.NewInt(0)}},
-			"wrong claim value size, expected 64 got query 2",
-		},
 	}
 
 	for _, c := range cases {
@@ -80,15 +73,10 @@ func TestVerifyQuery(t *testing.T) {
 }
 
 func valueTo64(ints []*big.Int) []*big.Int {
-	res := make([]*big.Int, 64)
-	for i, v := range ints {
-		if i >= len(res) {
-			res[i] = big.NewInt(0)
-		} else {
-			res[i] = v
-		}
+	for len(ints) < 64 {
+		ints = append(ints, new(big.Int))
 	}
-	return res
+	return ints
 }
 
 func TestVerifyIssuer(t *testing.T) {
