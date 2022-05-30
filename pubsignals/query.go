@@ -2,7 +2,6 @@ package pubsignals
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -94,20 +93,9 @@ func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
 		return errors.New("wrong claim slot was used in claim")
 	}
 
-	if len(out.Value) != 64 {
-		return fmt.Errorf("wrong claim value size, expected 64 got query %d",
-			len(out.Value))
-	}
-
-	if len(query.Values) < 64 {
-		a := make([]*big.Int, 64)
-		for i := 0; i < 64; i++ {
-			if i < len(query.Values) {
-				a[i] = query.Values[i]
-			} else {
-				a[i] = big.NewInt(0)
-			}
-		}
+	// add zeros, to check that out.Value[n] is also zero and not specific value.
+	for len(query.Values) < len(out.Value) {
+		query.Values = append(query.Values, big.NewInt(0))
 	}
 
 	for i, v := range query.Values {
