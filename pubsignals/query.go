@@ -2,6 +2,8 @@ package pubsignals
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
@@ -11,7 +13,6 @@ import (
 	"github.com/iden3/go-schema-processor/utils"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 const (
@@ -38,16 +39,9 @@ type ClaimOutputs struct {
 
 // CheckRequest checks request
 func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
-	r ClaimOutputs) error {
+	out ClaimOutputs) error {
 
-	issuerAllowed := false
-	for _, i := range q.AllowedIssuers {
-		if i == "*" || i == r.IssuerID.String() {
-			issuerAllowed = true
-			break
-		}
-	}
-	if !issuerAllowed {
+	if !verifyIssuer(q, out) {
 		return errors.New("issuer is not in allowed list")
 	}
 
@@ -55,67 +49,108 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
 	if err != nil {
 		return errors.Wrap(err, "can't load schema for request query")
 	}
-	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
 
+	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
+	if sh.BigInt().Cmp(out.SchemaHash.BigInt()) != 0 {
+		return errors.New("schema that was used is not equal to requested in query")
+	}
+
+	pr, err := prepareProcessor(q.Schema.Type, ext)
+	if err != nil {
+		return errors.Wrap(err, "can't prepare processor for request query")
+	}
+
+	queryReq, err := parseRequest(q.Req, schemaBytes, pr)
+	if err != nil {
+		return errors.Wrap(err, "can't parse request query")
+	}
+
+	return verifyQuery(queryReq, out)
+}
+
+func verifyIssuer(q Query, out ClaimOutputs) bool {
+	issuerAllowed := false
+	for _, i := range q.AllowedIssuers {
+		if i == "*" || i == out.IssuerID.String() {
+			issuerAllowed = true
+			break
+		}
+	}
+	return issuerAllowed
+}
+
+func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
+
+	if query.Operator != out.Operator {
+		return errors.New("operator that was used is not equal to requested in query")
+	}
+
+	if query.Operator == circuits.NOOP { // circuits.NOOP slot and value are not used in this case
+		return nil
+	}
+
+	if query.SlotIndex != out.SlotIndex {
+		return errors.New("wrong claim slot was used in claim")
+	}
+
+	// add zeros, to check that out.Value[n] is also zero and not specific value.
+	for len(query.Values) < len(out.Value) {
+		query.Values = append(query.Values, big.NewInt(0))
+	}
+
+	for i, v := range query.Values {
+		if v.Cmp(out.Value[i]) != 0 {
+			return errors.New("comparison value that was used is not equal to requested in query")
+		}
+	}
+	return nil
+}
+
+func prepareProcessor(claimType, ext string) (*processor.Processor, error) {
 	pr := &processor.Processor{}
 	var parser processor.Parser
 	switch ext {
 	case jsonExt:
 		parser = jsonSuite.Parser{ParsingStrategy: processor.OneFieldPerSlotStrategy}
 	case jsonldExt:
-		parser = jsonldSuite.Parser{ClaimType: q.Schema.Type, ParsingStrategy: processor.OneFieldPerSlotStrategy}
+		parser = jsonldSuite.Parser{ClaimType: claimType, ParsingStrategy: processor.OneFieldPerSlotStrategy}
 	default:
-		return errors.Errorf(
+		return nil, errors.Errorf(
 			"process suite for schema format %s is not supported", ext)
 	}
-
-	pr = processor.InitProcessorOptions(pr, processor.WithParser(parser))
-
-	queryReq, err := parseRequest(q.Req, schemaBytes, pr, len(r.Value))
-	if err != nil {
-		return errors.Wrap(err, "can't parse request query")
-	}
-	if queryReq.Operator != r.Operator {
-		return errors.New("operator that was used is not equal to requested in query")
-	}
-	if queryReq.SlotIndex != r.SlotIndex {
-		return errors.New("wrong claim slot was used in claim")
-	}
-	for i, v := range queryReq.Values {
-		if v.Cmp(r.Value[i]) != 0 {
-			return errors.New(" comparison value that was used is not equal to requested in query")
-		}
-	}
-
-	if sh.BigInt().Cmp(r.SchemaHash.BigInt()) != 0 {
-		return errors.New("schema that was used is not equal to requested in query")
-	}
-	return nil
+	return processor.InitProcessorOptions(pr, processor.WithParser(parser)), nil
 }
 
-func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor, expectedValueSize int) (circuits.Query, error) {
-	if len(req) > 1 {
-		return circuits.Query{}, errors.New("multiple requests  not supported")
-	}
-	var fieldName string
-	var fieldPredicate map[string]interface{}
-	for field, body := range req {
-		fieldName = field
-		var ok bool
-		fieldPredicate, ok = body.(map[string]interface{})
-		if !ok {
-			return circuits.Query{}, errors.New("failed cast type map[string]interface")
-		}
-		if len(fieldPredicate) > 1 {
-			return circuits.Query{}, errors.New("multiple predicates for one field not supported")
-		}
-		break
-	}
-	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schema)
+func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor) (*circuits.Query, error) {
 
-	if err != nil {
-		return circuits.Query{}, err
+	if req == nil {
+		return &circuits.Query{
+			SlotIndex: 0,
+			Values:    nil,
+			Operator:  circuits.NOOP,
+		}, nil
 	}
+
+	fieldName, fieldPredicate, err := extractQueryFields(req)
+	if err != nil {
+		return nil, err
+	}
+
+	values, operator, err := parseFieldPredicate(fieldPredicate, err)
+	if err != nil {
+		return nil, err
+	}
+
+	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	return &circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
+
+}
+
+func parseFieldPredicate(fieldPredicate map[string]interface{}, err error) ([]*big.Int, int, error) {
 	var values []*big.Int
 	var operator int
 	for op, v := range fieldPredicate {
@@ -123,33 +158,50 @@ func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Proce
 		var ok bool
 		operator, ok = circuits.QueryOperators[op]
 		if !ok {
-			return circuits.Query{}, errors.New("query operator is not supported")
+			return nil, 0, errors.New("query operator is not supported")
 		}
 
-		values, err = getValuesAsArray(v, expectedValueSize)
+		values, err = getValuesAsArray(v)
 		if err != nil {
-			return circuits.Query{}, err
+			return nil, 0, err
 		}
+
 		// only one predicate for field is supported
 		break
 	}
-	return circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
-
+	return values, operator, err
 }
-func getValuesAsArray(v interface{}, size int) ([]*big.Int, error) {
-	values := make([]*big.Int, size)
-	for i := range values {
-		values[i] = big.NewInt(0)
+
+func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPredicate map[string]interface{}, err error) {
+
+	if len(req) > 1 {
+		return "", nil, errors.New("multiple requests not supported")
 	}
+
+	for field, body := range req {
+		fieldName = field
+		var ok bool
+		fieldPredicate, ok = body.(map[string]interface{})
+		if !ok {
+			return "", nil, errors.New("failed cast type map[string]interface")
+		}
+		if len(fieldPredicate) > 1 {
+			return "", nil, errors.New("multiple predicates for one field not supported")
+		}
+		break
+	}
+	return fieldName, fieldPredicate, nil
+}
+
+func getValuesAsArray(v interface{}) ([]*big.Int, error) {
+	var values []*big.Int
 
 	switch value := v.(type) {
 	case float64:
+		values = make([]*big.Int, 1)
 		values[0] = new(big.Int).SetInt64(int64(value))
 	case []interface{}:
-		if len(value) > size {
-			return nil, errors.Errorf("array size {%d} is bigger max expected size {%d}",
-				len(value), size)
-		}
+		values = make([]*big.Int, len(value))
 		for i, item := range value {
 			values[i] = new(big.Int).SetInt64(int64(item.(float64)))
 		}

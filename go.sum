@@ -218,8 +218,8 @@ github.com/huin/goupnp v1.0.3-0.20220313090229-ca81a64b4204 h1:+EYBkW+dbi3F/atB+
 github.com/huin/goupnp v1.0.3-0.20220313090229-ca81a64b4204/go.mod h1:ZxNlw5WqJj6wSsRK5+YfflQGXYfccj5VgQsMNixHM7Y=
 github.com/huin/goutil v0.0.0-20170803182201-1ca381bf3150/go.mod h1:PpLOETDnJ0o3iZrZfqZzyLl6l7F3c6L1oWn7OICBi6o=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/iden3/go-circuits v0.0.41 h1:zqfWL6FtJI0aAO8O8mxsZhFqjgtiEPDr2fZV5AC7NUg=
-github.com/iden3/go-circuits v0.0.41/go.mod h1:Is4eMPGPUlO+2Lg2P4k/vRLRmwJAGBQcHki4NoHv80o=
+github.com/iden3/go-circuits v0.0.42-0.20220526155858-cce7d89dd503 h1:cliPDjOUGVuoyTK9l0PgIGlVHj2KHvQqPtMdFBChO2Y=
+github.com/iden3/go-circuits v0.0.42-0.20220526155858-cce7d89dd503/go.mod h1:Is4eMPGPUlO+2Lg2P4k/vRLRmwJAGBQcHki4NoHv80o=
 github.com/iden3/go-iden3-core v0.0.16 h1:BHNcRA+3Jbz0ur9VhQePP9u9o6cGvLBLB3Qs9OGoQlM=
 github.com/iden3/go-iden3-core v0.0.16/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-crypto v0.0.13 h1:ixWRiaqDULNyIDdOWz2QQJG5t4PpNHkQk2P6GV94cok=
