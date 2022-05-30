@@ -82,13 +82,14 @@ func verifyIssuer(q Query, out ClaimOutputs) bool {
 
 func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
 
-	if query.Operator == out.Operator && query.Operator == circuits.NOOP {
-		return nil
-	}
-
 	if query.Operator != out.Operator {
 		return errors.New("operator that was used is not equal to requested in query")
 	}
+
+	if query.Operator == circuits.NOOP { // circuits.NOOP slot and value are not used in this case
+		return nil
+	}
+
 	if query.SlotIndex != out.SlotIndex {
 		return errors.New("wrong claim slot was used in claim")
 	}
