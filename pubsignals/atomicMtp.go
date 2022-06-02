@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	core "github.com/iden3/go-iden3-core"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -43,4 +44,9 @@ func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, stateResolver StateRe
 	}
 
 	return nil
+}
+
+// GetUserID returns userID
+func (c *AtomicQueryMTP) GetUserID() *core.ID {
+	return c.UserID
 }

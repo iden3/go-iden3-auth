@@ -99,6 +99,13 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 		if err != nil {
 			return err
 		}
+
+		// verify proof author
+
+		if cv.GetUserID().String() != response.From {
+			return errors.Errorf("sender of auth response is not equal to identity in proof response %s", response.ID)
+		}
+
 		// verify query
 		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader)
 		if err != nil {
@@ -159,6 +166,15 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	err = json.Unmarshal(msg, &authMsgResponse)
 	if err != nil {
 		return nil, err
+	}
+
+	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
+	if err != nil {
+		return nil, err
+	}
+
+	if circuitVerifier.GetUserID().String() != authMsgResponse.From {
+		return &authMsgResponse, errors.New("sender of message and user id in token public signals are not equal")
 	}
 
 	// verify proof requests

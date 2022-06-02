@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	core "github.com/iden3/go-iden3-core"
 )
 
 // AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
@@ -48,4 +49,9 @@ func (c *AtomicQuerySig) VerifyStates(ctx context.Context, stateResolver StateRe
 	}
 
 	return nil
+}
+
+// GetUserID returns userID
+func (c *AtomicQuerySig) GetUserID() *core.ID {
+	return c.UserID
 }

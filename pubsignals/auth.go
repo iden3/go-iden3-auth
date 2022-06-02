@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
 )
 
@@ -29,4 +30,9 @@ func (c *Auth) VerifyStates(ctx context.Context, stateResolver StateResolver) er
 		return ErrUserStateIsNotValid
 	}
 	return nil
+}
+
+// GetUserID returns userID
+func (c *Auth) GetUserID() *core.ID {
+	return c.UserID
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/state"
+	core "github.com/iden3/go-iden3-core"
 	"math/big"
 )
 
@@ -17,6 +18,6 @@ type StateResolver interface {
 type Verifier interface {
 	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error
 	VerifyStates(ctx context.Context, resolver StateResolver) error
-
+	GetUserID() *core.ID
 	circuits.PubSignalsUnmarshaller
 }
