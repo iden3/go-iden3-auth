@@ -102,8 +102,9 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 
 		// verify proof author
 
-		if cv.GetUserID().String() != response.From {
-			return errors.Errorf("sender of auth response is not equal to identity in proof response %s", response.ID)
+		err = cv.VerifyIDOwnership(response.From, big.NewInt(int64(proofResponse.ID)))
+		if err != nil {
+			return err
 		}
 
 		// verify query
@@ -173,8 +174,14 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 		return nil, err
 	}
 
-	if circuitVerifier.GetUserID().String() != authMsgResponse.From {
-		return &authMsgResponse, errors.New("sender of message and user id in token public signals are not equal")
+	challengeBytes, err := t.GetMessageHash()
+	if err != nil {
+		return nil, err
+	}
+
+	err = circuitVerifier.VerifyIDOwnership(authMsgResponse.From, new(big.Int).SetBytes(challengeBytes))
+	if err != nil {
+		return &authMsgResponse, err
 	}
 
 	// verify proof requests

@@ -2,10 +2,10 @@ package pubsignals
 
 import (
 	"context"
-	core "github.com/iden3/go-iden3-core"
-
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	"github.com/pkg/errors"
+	"math/big"
 )
 
 // AtomicQueryMTP is a wrapper for circuits.AtomicQueryMTPPubSignals
@@ -46,7 +46,13 @@ func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, stateResolver StateRe
 	return nil
 }
 
-// GetUserID returns userID
-func (c *AtomicQueryMTP) GetUserID() *core.ID {
-	return c.UserID
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit
+func (c *AtomicQueryMTP) VerifyIDOwnership(sender string, challenge *big.Int) error {
+	if sender != c.UserID.String() {
+		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
+	}
+	if challenge.Cmp(c.Challenge) != 0 {
+		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
+	}
+	return nil
 }
