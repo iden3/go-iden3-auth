@@ -99,6 +99,14 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 		if err != nil {
 			return err
 		}
+
+		// verify proof author
+
+		err = cv.VerifyIDOwnership(response.From, big.NewInt(int64(proofResponse.ID)))
+		if err != nil {
+			return err
+		}
+
 		// verify query
 		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader)
 		if err != nil {
@@ -159,6 +167,21 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	err = json.Unmarshal(msg, &authMsgResponse)
 	if err != nil {
 		return nil, err
+	}
+
+	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
+	if err != nil {
+		return nil, err
+	}
+
+	challengeBytes, err := t.GetMessageHash()
+	if err != nil {
+		return nil, err
+	}
+
+	err = circuitVerifier.VerifyIDOwnership(authMsgResponse.From, new(big.Int).SetBytes(challengeBytes))
+	if err != nil {
+		return &authMsgResponse, err
 	}
 
 	// verify proof requests

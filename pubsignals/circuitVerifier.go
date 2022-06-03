@@ -17,6 +17,7 @@ type StateResolver interface {
 type Verifier interface {
 	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error
 	VerifyStates(ctx context.Context, resolver StateResolver) error
+	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 
 	circuits.PubSignalsUnmarshaller
 }
