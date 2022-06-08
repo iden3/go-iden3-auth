@@ -58,17 +58,23 @@ type ResolvedState struct {
 // state is bigint string representation of identity state
 func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (*ResolvedState, error) {
 	stateContract := new(State)
+
+	// сheck if id is genesis  - then we do need to resolve it.
+	isGenesis, err := checkGenesisStateID(id, state)
+	if err != nil {
+		return nil, err
+	}
+	if isGenesis {
+		// genesis state is latest
+		return &ResolvedState{Latest: true, State: state.String()}, nil
+	}
 	// get latest state for id from contract
-	err := contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
+	err = contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
 		return nil, err
 	}
 	if stateContract.Int64() == 0 {
-		err = checkGenesisStateID(id, state)
-		if err != nil {
-			return nil, err
-		}
-		return &ResolvedState{Latest: true, State: state.String()}, nil
+		return nil, errors.New("state is not genesis and not registered in the smart contract")
 	}
 	if stateContract.String() != state.String() {
 
@@ -124,25 +130,25 @@ func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, cont
 	return result.Unmarshal(outputs)
 }
 
-func checkGenesisStateID(id, state *big.Int) error {
+func checkGenesisStateID(id, state *big.Int) (bool, error) {
 
 	stateHash, err := merkletree.NewHashFromBigInt(state)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, stateHash.BigInt())
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	elemBytes := merkletree.NewElemBytesFromBigInt(id)
 	IDFromParam, err := core.IDFromBytes(elemBytes[:31])
 	if err != nil {
-		return err
+		return false, err
 	}
 	if IDFromState.String() != IDFromParam.String() {
-		return errors.Errorf("ID from genesis state (%s) and provided (%s) don't match", IDFromState, IDFromParam.String())
+		return false, errors.Errorf("ID from genesis state (%s) and provided (%s) don't match", IDFromState, IDFromParam.String())
 	}
-	return nil
+	return true, err
 }
