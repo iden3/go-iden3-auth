@@ -134,9 +134,12 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 	if err != nil {
 		return nil, errors.Errorf("verification key for circuit with id %s not found", t.CircuitID)
 	}
-	_, err = t.Verify(verificationKey)
+	isValid, err := t.Verify(verificationKey)
 	if err != nil {
 		return nil, err
+	}
+	if !isValid {
+		return nil, errors.New("zero knowledge proof of jwz is not valid")
 	}
 
 	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
@@ -160,6 +163,8 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	if err != nil {
 		return nil, err
 	}
+	tt, _ := t.CompactSerialize()
+	fmt.Println(tt)
 
 	// parse jwz payload as json message
 	var authMsgResponse protocol.AuthorizationResponseMessage
