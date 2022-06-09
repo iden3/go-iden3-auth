@@ -60,8 +60,7 @@ The blockchain verification algorithm is used
 
 ## How to use:
 1. `go get https://github.com/iden3/go-iden3-auth`
-2. 
-3. Request generation:
+2. Request generation:
 
    basic auth:
     ``` golang
