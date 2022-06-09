@@ -53,3 +53,69 @@ The blockchain verification algorithm is used
   3. The non-empty state is returned and it’s not equal to the state that the user has provided. Gets the transition time of the state. The verification party can make a decision if it can accept this state based on that time frame
 
 2. Only latest states for user are valid. Any existing issuer state for claim issuance is valid.
+
+
+
+
+
+## How to use:
+1. `go get https://github.com/iden3/go-iden3-auth`
+2. 
+3. Request generation:
+
+   basic auth:
+    ``` golang
+    var request protocol.AuthorizationRequestMessage
+    // if you need'message' to sign (e.g. vote)
+    request = auth.CreateAuthorizationRequestWithMessage("test flow", "message to sign","verifier id", "callback url")
+    // or if you don't need 'message' to sign
+    request = auth.CreateAuthorizationRequest("test flow","verifier id", "callback url")
+
+   ``` 
+   if you want request specific proof (example):
+   ``` golang
+           var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+           mtpProofRequest.ID = 1
+           mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigCircuitID)
+           mtpProofRequest.Rules = map[string]interface{}{
+               "query": pubsignals.Query{
+                   AllowedIssuers: []string{"*"},
+                   Req: map[string]interface{}{
+                       "birthday": map[string]interface{}{
+                           "$lt": []int{20000101},
+                       },
+                   },
+                   Schema: protocol.Schema{
+                       URL:  "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
+                       Type: "KYCAgeCredential",
+                   },
+               },
+           }
+           request.Body.Scope = append(request.Body.Scope, mtpProofRequest)       
+   ``` 
+
+
+3. Token verification
+
+   
+   Init Verifier:
+   
+   ```
+                    verificationKeyloader := &loaders.FSKeyLoader{Dir: keyDIR}
+                    resolver := state.ETHResolver{
+                        RPCUrl:   "<rpc url>",
+                        Contract:  "contract address",
+                    }
+                    verifier := auth.NewVerifier(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolver)
+   ```
+
+
+FullVerify
+
+``` golang
+		authResponse, err := verifier.FullVerify(r.Context(), string(tokenBytes),
+		authRequest.(protocol.AuthorizationRequestMessage))
+		userId = authResponse.from // msg sender
+``` 
+
+Verify manually if thread id is used a session id to match request with `VerifyJWZ / VerifyAuthResponse` functions
