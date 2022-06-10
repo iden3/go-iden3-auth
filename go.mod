@@ -13,7 +13,7 @@ require (
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
 	github.com/iden3/go-schema-processor v0.0.22
-	github.com/iden3/iden3comm v0.0.0-20220522162704-bb9d76969709
+	github.com/iden3/iden3comm v0.0.0-20220601134535-a1897f21ab6e
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 )
