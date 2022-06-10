@@ -163,9 +163,6 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 	if err != nil {
 		return nil, err
 	}
-	tt, _ := t.CompactSerialize()
-	fmt.Println(tt)
-
 	// parse jwz payload as json message
 	var authMsgResponse protocol.AuthorizationResponseMessage
 	msg := t.GetPayload()
