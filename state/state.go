@@ -2,13 +2,14 @@ package state
 
 import (
 	"context"
+	"math/big"
+	"time"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
-	"math/big"
-	"time"
 )
 
 // VerificationOptions is options for state verification
