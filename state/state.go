@@ -142,13 +142,13 @@ func checkGenesisStateID(id, state *big.Int) (bool, error) {
 		return false, err
 	}
 
-	elemBytes := merkletree.NewElemBytesFromBigInt(id)
-	IDFromParam, err := core.IDFromBytes(elemBytes[:31])
+	idBytes := merkletree.NewElemBytesFromBigInt(id)
+	IDFromParam, err := core.IDFromBytes(idBytes[:31])
 	if err != nil {
 		return false, err
 	}
 	if IDFromState.String() != IDFromParam.String() {
-		return false, errors.Errorf("ID from genesis state (%s) and provided (%s) don't match", IDFromState, IDFromParam.String())
+		return false, nil
 	}
-	return true, err
+	return true, nil
 }
