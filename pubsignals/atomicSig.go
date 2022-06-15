@@ -6,6 +6,7 @@ import (
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/pkg/errors"
 	"math/big"
+	"time"
 )
 
 // AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
@@ -47,6 +48,14 @@ func (c *AtomicQuerySig) VerifyStates(ctx context.Context, stateResolver StateRe
 	}
 	if issuerStateResolved == nil {
 		return ErrIssuerClaimStateIsNotValid
+	}
+
+	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
+	if err != nil {
+		return err
+	}
+	if !issuerNonRevStateResolved.Latest && time.Since(time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0)) > time.Hour {
+		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 
 	return nil
