@@ -22,7 +22,7 @@ const (
 
 // Query represents structure for query to atomic circuit
 type Query struct {
-	AllowedIssuers []string               `json:"allowed_issuers"`
+	AllowedIssuers []string               `json:"allowedIssuers"`
 	Req            map[string]interface{} `json:"req"`
 	Schema         protocol.Schema        `json:"schema"`
 	ClaimID        string                 `json:"claimId,omitempty"`
