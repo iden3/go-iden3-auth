@@ -48,6 +48,7 @@ func (c *AtomicQueryMTP) VerifyStates(ctx context.Context, stateResolver StateRe
 	if err != nil {
 		return err
 	}
+
 	if !issuerNonRevStateResolved.Latest && time.Since(time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0)) > time.Hour {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
