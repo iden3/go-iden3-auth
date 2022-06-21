@@ -6,14 +6,14 @@ require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.2.0
-	github.com/iden3/go-circuits v0.0.42
-	github.com/iden3/go-iden3-core v0.0.18
-	github.com/iden3/go-jwz v0.0.1
+	github.com/iden3/go-circuits v0.1.0
+	github.com/iden3/go-iden3-core v0.1.0
+	github.com/iden3/go-jwz v0.1.1
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
-	github.com/iden3/go-schema-processor v0.0.22
-	github.com/iden3/iden3comm v0.0.0-20220601134535-a1897f21ab6e
+	github.com/iden3/go-schema-processor v0.1.0
+	github.com/iden3/iden3comm v0.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 )
@@ -34,7 +34,6 @@ require (
 	github.com/iden3/go-iden3-crypto v0.0.13 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.1 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.1 // indirect
-	github.com/iden3/go-schema-registry-wrapper v0.0.7 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0 // indirect
 	github.com/ipfs/go-ipfs-files v0.0.9 // indirect
