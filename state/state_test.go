@@ -36,6 +36,8 @@ func TestVerifyState_CheckToGenesisState(t *testing.T) {
 		{Type: uint256Ty, Name: ""},
 	}
 	b, err := args.Pack(new(big.Int))
+	require.NoError(t, err)
+
 	m.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(b, nil)
 
 	latestState, err := Resolve(context.Background(), m, mockContractAddress, userID, userGenesisState)
