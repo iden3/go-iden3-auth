@@ -31,10 +31,23 @@ func TestVerifyState_CheckToGenesisState(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	m := mock_verification.NewMockBlockchainCaller(ctrl)
 
+	// return empty state from blockchain
+	args := abi.Arguments{
+		{Type: uint256Ty, Name: ""},
+	}
+	b, err := args.Pack(new(big.Int))
+	require.NoError(t, err)
+
+	m.EXPECT().CallContract(gomock.Any(), gomock.Any(), nil).Return(b, nil)
+
 	latestState, err := Resolve(context.Background(), m, mockContractAddress, userID, userGenesisState)
+
 	require.NoError(t, err)
 	require.True(t, latestState.Latest)
+	require.True(t, latestState.Genesis)
 	require.Equal(t, userGenesisState.String(), latestState.State)
+
+	ctrl.Finish()
 }
 
 func TestVerifyState_LocalStateIsLatestState(t *testing.T) {
@@ -52,6 +65,8 @@ func TestVerifyState_LocalStateIsLatestState(t *testing.T) {
 	latestState, err := Resolve(context.Background(), m, mockContractAddress, userID, userState)
 	require.NoError(t, err)
 	require.True(t, latestState.Latest)
+	require.False(t, latestState.Genesis)
+
 	require.Equal(t, userState.String(), latestState.State)
 
 	ctrl.Finish()
@@ -91,11 +106,12 @@ func TestVerifyState_LatestStateExistOnBlockchain(t *testing.T) {
 	require.NoError(t, err)
 	m.EXPECT().CallContract(gomock.Any(), gomock.Any(), gomock.Any()).Return(b, nil)
 
-	latestState, err := Resolve(context.Background(), m, mockContractAddress, userID, userState)
+	resolvedState, err := Resolve(context.Background(), m, mockContractAddress, userID, userState)
 	require.NoError(t, err)
-	require.False(t, latestState.Latest)
-	require.Equal(t, userState.String(), latestState.State)
-	require.Equal(t, replacedTime.Int64(), latestState.TransitionTimestamp)
+	require.False(t, resolvedState.Latest)
+	require.False(t, resolvedState.Genesis)
+	require.Equal(t, userState.String(), resolvedState.State)
+	require.Equal(t, replacedTime.Int64(), resolvedState.TransitionTimestamp)
 
 	ctrl.Finish()
 }

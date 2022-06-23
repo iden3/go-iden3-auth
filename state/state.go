@@ -49,6 +49,7 @@ type Unmarshaler interface {
 type ResolvedState struct {
 	State               string `json:"state"`
 	Latest              bool   `json:"latest"`
+	Genesis             bool   `json:"genesis"`
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
@@ -60,22 +61,23 @@ type ResolvedState struct {
 func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (*ResolvedState, error) {
 	stateContract := new(State)
 
-	// сheck if id is genesis  - then we do need to resolve it.
 	isGenesis, err := checkGenesisStateID(id, state)
+	// сheck if id is genesis
 	if err != nil {
 		return nil, err
 	}
-	if isGenesis {
-		// genesis state is latest
-		return &ResolvedState{Latest: true, State: state.String()}, nil
-	}
+
 	// get latest state for id from contract
 	err = contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
 	if err != nil {
 		return nil, err
 	}
+
 	if stateContract.Int64() == 0 {
-		return nil, errors.New("state is not genesis and not registered in the smart contract")
+		if !isGenesis {
+			return nil, errors.New("state is not genesis and not registered in the smart contract")
+		}
+		return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 	}
 	if stateContract.String() != state.String() {
 
@@ -98,13 +100,14 @@ func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id
 		}
 		return &ResolvedState{
 			Latest:              false,
+			Genesis:             isGenesis,
 			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return &ResolvedState{Latest: true, State: state.String()}, nil
+	return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 }
 
 func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {

@@ -87,7 +87,7 @@ type mockStateResolver struct {
 }
 
 func (r *mockStateResolver) Resolve(_ context.Context, id, s *big.Int) (*state.ResolvedState, error) {
-	return &state.ResolvedState{Latest: true, TransitionTimestamp: 0}, nil
+	return &state.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
 }
 
 func TestCreateAuthorizationRequest(t *testing.T) {
@@ -352,6 +352,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
 	_, err := authInstance.FullVerify(context.Background(), token, request)
 	assert.Nil(t, err)
+
 }
 
 func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
