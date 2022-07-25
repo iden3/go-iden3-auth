@@ -13,7 +13,7 @@ require (
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
 	github.com/iden3/go-schema-processor v0.1.0
-	github.com/iden3/iden3comm v0.1.1
+	github.com/iden3/iden3comm v0.1.2-0.20220719072841-3cde986eeb65
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 )
@@ -63,7 +63,7 @@ require (
 	github.com/whyrusleeping/tar-utils v0.0.0-20180509141711-8c6c8ba81d5c // indirect
 	go.opencensus.io v0.22.4 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/sys v0.0.0-20220614162138-6c1b26c55098 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
