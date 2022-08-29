@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/iden3/go-circuits v0.1.0
 	github.com/iden3/go-iden3-core v0.1.0
-	github.com/iden3/go-jwz v0.1.1
+	github.com/iden3/go-jwz v0.1.2-0.20220829001734-682671cd25f5
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
@@ -32,7 +32,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.13 // indirect
-	github.com/iden3/go-rapidsnark/prover v0.0.1 // indirect
+	github.com/iden3/go-rapidsnark/prover v0.0.4-0.20220829001537-985b9c761cc2 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.1 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0 // indirect

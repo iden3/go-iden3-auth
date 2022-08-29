@@ -224,12 +224,12 @@ github.com/iden3/go-iden3-core v0.1.0 h1:bsTRmigwDU9MtzPSjWyd+WL/ZnWGDRjDO4I0e99
 github.com/iden3/go-iden3-core v0.1.0/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-crypto v0.0.13 h1:ixWRiaqDULNyIDdOWz2QQJG5t4PpNHkQk2P6GV94cok=
 github.com/iden3/go-iden3-crypto v0.0.13/go.mod h1:swXIv0HFbJKobbQBtsB50G7IHr6PbTowutSew/iBEoo=
-github.com/iden3/go-jwz v0.1.1 h1:Yd97oMNLedgB0xp+J8kdQFoXlAyT+554W0W8gJLQWjw=
-github.com/iden3/go-jwz v0.1.1/go.mod h1:OqA9/XDV+4F/6WFtm+amBjSUXxwCAm6ZUxKWv7kfcbw=
+github.com/iden3/go-jwz v0.1.2-0.20220829001734-682671cd25f5 h1:fWurzzHzMUWKwNLQePRCe8HP83k6EA9R4QSiUWcfhiI=
+github.com/iden3/go-jwz v0.1.2-0.20220829001734-682671cd25f5/go.mod h1:mhmiurg5UPnp3CSkyMrZxop9szNo1dMH2/x8c1xshxo=
 github.com/iden3/go-merkletree-sql v1.0.1 h1:zZMhhyV6FLoLL+pHQiiPoAI3ORSCTKOL32/n7Sb/+R4=
 github.com/iden3/go-merkletree-sql v1.0.1/go.mod h1:NhLFvX01F/3QqS0FUkC6T2BXPksz+9EbRhKQ7abaBSE=
-github.com/iden3/go-rapidsnark/prover v0.0.1 h1:vohLZNecoZfBPWliGU/axzVGMmX2k4TwevCDWCfa8cs=
-github.com/iden3/go-rapidsnark/prover v0.0.1/go.mod h1:r4nFKxoKNqc9CUK0pi1lACWdws4gl2lXc6tu5qaA5PE=
+github.com/iden3/go-rapidsnark/prover v0.0.4-0.20220829001537-985b9c761cc2 h1:cjzPNeknEY0GoTknc5SWHC+AdQdfzDHPe/DChmejDls=
+github.com/iden3/go-rapidsnark/prover v0.0.4-0.20220829001537-985b9c761cc2/go.mod h1:r4nFKxoKNqc9CUK0pi1lACWdws4gl2lXc6tu5qaA5PE=
 github.com/iden3/go-rapidsnark/types v0.0.1 h1:WTGzdFXKlKo0CzVk1jyN4FsTDKdR+EPfn2wR3pdeXKQ=
 github.com/iden3/go-rapidsnark/types v0.0.1/go.mod h1:ApgcaUxKIgSRA6fAeFxK7p+lgXXfG4oA2HN5DhFlfF4=
 github.com/iden3/go-rapidsnark/verifier v0.0.1 h1:CQd2C6F49oxZlyLLHN0N8fnZU5FqxYwW7qCrreL394Y=

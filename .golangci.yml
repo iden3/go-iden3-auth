@@ -3,6 +3,11 @@ service:
 
 run:
   timeout: 2m
+  # On linux x86_64 use rapisnark version with disabled asm optimizations
+  # because GitHub has some amount of older hardware used for action runners.allow-parallel-runners.
+  # For other platforms this flag is ignored
+  build-tags:
+    - rapidsnark_noasm
   skip-dirs:
     - vendor
 
