@@ -224,12 +224,12 @@ github.com/iden3/go-iden3-core v0.1.0 h1:bsTRmigwDU9MtzPSjWyd+WL/ZnWGDRjDO4I0e99
 github.com/iden3/go-iden3-core v0.1.0/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-crypto v0.0.13 h1:ixWRiaqDULNyIDdOWz2QQJG5t4PpNHkQk2P6GV94cok=
 github.com/iden3/go-iden3-crypto v0.0.13/go.mod h1:swXIv0HFbJKobbQBtsB50G7IHr6PbTowutSew/iBEoo=
-github.com/iden3/go-jwz v0.1.1 h1:Yd97oMNLedgB0xp+J8kdQFoXlAyT+554W0W8gJLQWjw=
-github.com/iden3/go-jwz v0.1.1/go.mod h1:OqA9/XDV+4F/6WFtm+amBjSUXxwCAm6ZUxKWv7kfcbw=
+github.com/iden3/go-jwz v0.1.2-0.20220911142023-bd4f12c86594 h1:hDRsFzzOGCWQPnYjPXkhdRCUVedRarajOsHrBuwRGEQ=
+github.com/iden3/go-jwz v0.1.2-0.20220911142023-bd4f12c86594/go.mod h1:2HDBVowWDVi1ba3lwXkJeq7POckG8j33IXhsTvWzq0A=
 github.com/iden3/go-merkletree-sql v1.0.1 h1:zZMhhyV6FLoLL+pHQiiPoAI3ORSCTKOL32/n7Sb/+R4=
 github.com/iden3/go-merkletree-sql v1.0.1/go.mod h1:NhLFvX01F/3QqS0FUkC6T2BXPksz+9EbRhKQ7abaBSE=
-github.com/iden3/go-rapidsnark/prover v0.0.1 h1:vohLZNecoZfBPWliGU/axzVGMmX2k4TwevCDWCfa8cs=
-github.com/iden3/go-rapidsnark/prover v0.0.1/go.mod h1:r4nFKxoKNqc9CUK0pi1lACWdws4gl2lXc6tu5qaA5PE=
+github.com/iden3/go-rapidsnark/prover v0.0.5 h1:8/qEuiBUnp9yLy6CdXgQgcrf6m1JIeKJAnn2v+etahw=
+github.com/iden3/go-rapidsnark/prover v0.0.5/go.mod h1:r4nFKxoKNqc9CUK0pi1lACWdws4gl2lXc6tu5qaA5PE=
 github.com/iden3/go-rapidsnark/types v0.0.1 h1:WTGzdFXKlKo0CzVk1jyN4FsTDKdR+EPfn2wR3pdeXKQ=
 github.com/iden3/go-rapidsnark/types v0.0.1/go.mod h1:ApgcaUxKIgSRA6fAeFxK7p+lgXXfG4oA2HN5DhFlfF4=
 github.com/iden3/go-rapidsnark/verifier v0.0.1 h1:CQd2C6F49oxZlyLLHN0N8fnZU5FqxYwW7qCrreL394Y=
@@ -238,8 +238,8 @@ github.com/iden3/go-rapidsnark/witness v0.0.1 h1:y+1G1hPqsoea8gZgVXipD5KD0RjrCsS
 github.com/iden3/go-rapidsnark/witness v0.0.1/go.mod h1:ZRd4PX8vJX/2aJ/1XRvtwMon5F7phDRX6C7v/BYBrwE=
 github.com/iden3/go-schema-processor v0.1.0 h1:vZ5PfBDl9PflXhUDH4gVC6VPQKBtKrK4wC29PYsGxg4=
 github.com/iden3/go-schema-processor v0.1.0/go.mod h1:6I9xW4nVUUYb9ykFe2TUD8vP09pLznrjTPcidDy0ZLo=
-github.com/iden3/iden3comm v0.1.2-0.20220719072841-3cde986eeb65 h1:7VKR7Odpbnh/bhXfRl5iXiZ1/edeZpVJj5riOV8oOgo=
-github.com/iden3/iden3comm v0.1.2-0.20220719072841-3cde986eeb65/go.mod h1:2q/krrVfRMV0A3IcuMc93+vayysnu6Qgrhhd9a/Wpuo=
+github.com/iden3/iden3comm v0.1.2-0.20220911142410-1a1cd909b733 h1:jNUjv1T3WE0uM+8yRZVi/WX9vcOcoawb8TDrf+DpoFU=
+github.com/iden3/iden3comm v0.1.2-0.20220911142410-1a1cd909b733/go.mod h1:gURAYQIZSuuQpoYVILquIl3PJR7ZKqEMS7Pk+O7MqoQ=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/flux v0.65.1/go.mod h1:J754/zds0vvpfwuq7Gc2wRdVwEodfpCFM7mYlOw2LqY=
 github.com/influxdata/influxdb v1.8.3/go.mod h1:JugdFhsvvI8gadxOI6noqNeeBHvWNTbfYGtiAn+2jhI=
@@ -703,6 +703,8 @@ gopkg.in/fsnotify.v1 v1.4.7/go.mod h1:Tz8NjZHkW78fSQdbUxIjBTcgA1z1m8ZHf0WmKUhAMy
 gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce h1:+JknDZhAj8YMt7GC73Ei8pv4MzjDUNPHgQWJdtMAaDU=
 gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce/go.mod h1:5AcXVHNjg+BDxry382+8OKon8SEWiKktQR07RKPsv1c=
 gopkg.in/olebedev/go-duktape.v3 v3.0.0-20200619000410-60c24ae608a6/go.mod h1:uAJfkITjFhyEEuUfm7bsmCZRbW5WRq8s9EY8HZ6hCns=
+gopkg.in/square/go-jose.v2 v2.6.0 h1:NGk74WTnPKBNUhNzQX7PYcTLUjoq7mzKk2OKbvwk2iI=
+gopkg.in/square/go-jose.v2 v2.6.0/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76mk0e1AI=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/urfave/cli.v1 v1.20.0 h1:NdAVW6RYxDif9DhDHaAortIu956m2c0v+09AZBPTbE0=
 gopkg.in/urfave/cli.v1 v1.20.0/go.mod h1:vuBzUtMdQeixQj8LVd+/98pzhxNGQoyuPBlsXHOQNO0=

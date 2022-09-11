@@ -8,12 +8,12 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/iden3/go-circuits v0.1.0
 	github.com/iden3/go-iden3-core v0.1.0
-	github.com/iden3/go-jwz v0.1.1
+	github.com/iden3/go-jwz v0.1.2-0.20220911142023-bd4f12c86594
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.1
 	github.com/iden3/go-schema-processor v0.1.0
-	github.com/iden3/iden3comm v0.1.2-0.20220719072841-3cde986eeb65
+	github.com/iden3/iden3comm v0.1.2-0.20220911142410-1a1cd909b733
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1
 )
@@ -32,7 +32,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.13 // indirect
-	github.com/iden3/go-rapidsnark/prover v0.0.1 // indirect
+	github.com/iden3/go-rapidsnark/prover v0.0.5 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.1 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0 // indirect
@@ -65,5 +65,6 @@ require (
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
