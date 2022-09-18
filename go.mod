@@ -3,25 +3,25 @@ module github.com/iden3/go-iden3-auth
 go 1.18
 
 require (
-	github.com/ethereum/go-ethereum v1.10.17
-	github.com/golang/mock v1.3.1
-	github.com/google/uuid v1.2.0
+	github.com/ethereum/go-ethereum v1.10.24
+	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
 	github.com/iden3/go-circuits v0.1.0
 	github.com/iden3/go-iden3-core v0.1.0
-	github.com/iden3/go-jwz v0.1.2-0.20220911142023-bd4f12c86594
+	github.com/iden3/go-jwz v0.1.3-0.20220918015448-f75a88892cdf
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.1
-	github.com/iden3/go-rapidsnark/verifier v0.0.1
+	github.com/iden3/go-rapidsnark/verifier v0.0.2
 	github.com/iden3/go-schema-processor v0.1.0
-	github.com/iden3/iden3comm v0.1.2-0.20220911142410-1a1cd909b733
+	github.com/iden3/iden3comm v0.1.2-0.20220918020612-0494175f2f1e
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 )
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.1.2 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/blake512 v1.0.0 // indirect
@@ -66,5 +66,5 @@ require (
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
