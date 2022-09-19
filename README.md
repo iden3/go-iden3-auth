@@ -118,3 +118,7 @@ FullVerify
 ``` 
 
 Verify manually if thread id is used a session id to match request with `VerifyJWZ / VerifyAuthResponse` functions
+
+### Notes on prover optimization for x86_64 hardware
+
+See readme in [iden3/go-rapidsnark/prover](https://github.com/iden3/go-rapidsnark/blob/main/prover/)
