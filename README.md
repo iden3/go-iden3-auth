@@ -119,10 +119,6 @@ FullVerify
 
 Verify manually if thread id is used a session id to match request with `VerifyJWZ / VerifyAuthResponse` functions
 
-### Usage on older hardware and in GitHub Actions
-You might need to switch to Ubuntu-22.04 for GHA and add `rapidsnark_noasm` build tag to your app build command, tests, linters, etc.
+### Notes on prover optimization for x86_64 hardware
 
-```shell
-go build -tags rapidsnark_noasm
-go test -tags rapidsnark_noasm
-```
+See readme in [iden3/go-rapidsnark/prover](https://github.com/iden3/go-rapidsnark/blob/main/prover/)
