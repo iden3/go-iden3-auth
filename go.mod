@@ -6,16 +6,16 @@ require (
 	github.com/ethereum/go-ethereum v1.10.24
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/iden3/go-circuits v0.1.0
-	github.com/iden3/go-iden3-core v0.1.0
-	github.com/iden3/go-jwz v0.1.3
+	github.com/iden3/go-circuits v0.1.1-0.20220926135756-38ea5710839d
+	github.com/iden3/go-iden3-core v0.1.1-0.20220923135459-cda2655fb250
+	github.com/iden3/go-jwz v0.1.4-0.20221006083252-d8b8137a84ae
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.1
 	github.com/iden3/go-rapidsnark/verifier v0.0.2
-	github.com/iden3/go-schema-processor v0.1.0
-	github.com/iden3/iden3comm v0.1.2
+	github.com/iden3/go-schema-processor v0.1.1-0.20220926101219-d2f083d04987
+	github.com/iden3/iden3comm v0.1.3-0.20220927101228-cf8d7bb36b0c
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.4
 )
 
 require (

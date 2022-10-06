@@ -2,10 +2,11 @@ package pubsignals
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/state"
-	"math/big"
 )
 
 // StateResolver is a state resolver interface
@@ -17,7 +18,12 @@ type StateResolver interface {
 type Verifier interface {
 	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error
 	VerifyStates(ctx context.Context, resolver StateResolver) error
-	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 
+	IDOwnershipVerifier
 	circuits.PubSignalsUnmarshaller
+}
+
+// IDOwnershipVerifier is an interface for verification of sender id ownership
+type IDOwnershipVerifier interface {
+	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 }
