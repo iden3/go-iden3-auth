@@ -1,10 +1,11 @@
 package pubsignals
 
 import (
-	"github.com/iden3/go-circuits"
-	"github.com/pkg/errors"
 	"reflect"
 	"sync"
+
+	"github.com/iden3/go-circuits"
+	"github.com/pkg/errors"
 )
 
 var signalsVerifierRegistry = map[circuits.CircuitID]reflect.Type{}
@@ -12,6 +13,7 @@ var circuitsLock = new(sync.RWMutex)
 
 // ErrUserStateIsNotValid declares that issuer state is invalid
 var ErrUserStateIsNotValid = errors.New("user state is not valid")
+var ErrGlobalStateIsNotValid = errors.New("global state is not valid")
 
 // ErrIssuerClaimStateIsNotValid declares that issuer state is invalid
 var ErrIssuerClaimStateIsNotValid = errors.New("issuer state is not valid")
@@ -31,6 +33,7 @@ func RegisterVerifier(id circuits.CircuitID, t reflect.Type) {
 // nolint // register supported circuit
 func init() {
 	RegisterVerifier(circuits.AuthCircuitID, reflect.TypeOf(Auth{}))
+	RegisterVerifier(circuits.AuthV2CircuitID, reflect.TypeOf(AuthV2{}))
 	RegisterVerifier(circuits.AtomicQuerySigCircuitID, reflect.TypeOf(AtomicQuerySig{}))
 	RegisterVerifier(circuits.AtomicQueryMTPCircuitID, reflect.TypeOf(AtomicQueryMTP{}))
 

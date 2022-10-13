@@ -29,6 +29,7 @@ type ExtendedVerificationsOptions struct {
 
 const (
 	getStateContractMethod          = "getState"
+	getSmtRootTransitionsInfo       = "getSmtRootTransitionsInfo"
 	getTransitionInfoContractMethod = "getTransitionInfo"
 
 	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
@@ -101,6 +102,30 @@ func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id
 			State:               state.String(),
 			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
+	}
+
+	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
+	return &ResolvedState{Latest: true, State: state.String()}, nil
+}
+
+// ResolveGlobalRoot is used to resolve global root
+// rpcURL - url to connect to the blockchain
+// contractAddress is an address of state contract
+// state is bigint string representation of global root
+func ResolveGlobalRoot(ctx context.Context, c BlockchainCaller, contractAddress string, state *big.Int) (*ResolvedState, error) {
+
+	globalStateContract := new(State)
+
+	// get the latest global state from contract
+	err := contractCall(ctx, c, contractAddress, getSmtRootTransitionsInfo, state, globalStateContract)
+	if err != nil {
+		return nil, err
+	}
+	if globalStateContract.Int64() == 0 {
+		return nil, errors.New("state not registered in the smart contract")
+	}
+	if globalStateContract.String() != state.String() {
+		return nil, errors.New("not the latest global root")
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
