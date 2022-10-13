@@ -90,6 +90,11 @@ func (r *mockStateResolver) Resolve(_ context.Context, id, s *big.Int) (*state.R
 	return &state.ResolvedState{Latest: true, TransitionTimestamp: 0}, nil
 }
 
+func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*state.ResolvedState, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func TestCreateAuthorizationRequest(t *testing.T) {
 
 	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
@@ -507,4 +512,33 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
 	err := authInstance.VerifyAuthResponse(context.Background(), resp, authReq)
 	assert.NoError(t, err)
+}
+
+func TestCreateAuthorizationV2Request(t *testing.T) {
+
+	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	callbackURL := "https://test.com/callback"
+	reason := "basic authentication"
+
+	request := CreateAuthorizationV2Request(reason, sender, callbackURL)
+	assert.Len(t, request.Body.Scope, 0)
+	assert.Equal(t, callbackURL, request.Body.CallbackURL)
+	assert.Equal(t, sender, request.From)
+	assert.Equal(t, protocol.AuthorizationV2RequestMessageType, request.Type)
+
+}
+
+func TestCreateAuthorizationV2RequestWithMessage(t *testing.T) {
+
+	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	callbackURL := "https://test.com/callback"
+	reason := "basic authentication"
+	message := "message"
+
+	request := CreateAuthorizationV2RequestWithMessage(reason, message, sender, callbackURL)
+	assert.Len(t, request.Body.Scope, 0)
+	assert.Equal(t, callbackURL, request.Body.CallbackURL)
+	assert.Equal(t, sender, request.From)
+	assert.Equal(t, protocol.AuthorizationV2RequestMessageType, request.Type)
+	assert.Equal(t, message, request.Body.Message)
 }

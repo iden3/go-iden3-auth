@@ -40,12 +40,40 @@ func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.Aut
 	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
 }
 
+// CreateAuthorizationV2Request creates new authorization request message
+// sender - client identifier
+// reason - describes purpose of request
+// callbackURL - url for authorization response
+func CreateAuthorizationV2Request(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
+	return CreateAuthorizationV2RequestWithMessage(reason, "", sender, callbackURL)
+}
+
 // CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
 func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL string) protocol.AuthorizationRequestMessage {
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
 	request.Type = protocol.AuthorizationRequestMessageType
+	request.ID = uuid.New().String()
+	request.ThreadID = request.ID
+	request.Body = protocol.AuthorizationRequestMessageBody{
+		CallbackURL: callbackURL,
+		Reason:      reason,
+		Message:     message,
+		Scope:       []protocol.ZeroKnowledgeProofRequest{},
+	}
+	request.From = sender
+
+	return request
+}
+
+// CreateAuthorizationV2RequestWithMessage creates new authorization V2 request with message for signing with jwz
+func CreateAuthorizationV2RequestWithMessage(reason, message, sender,
+	callbackURL string) protocol.AuthorizationRequestMessage {
+	var request protocol.AuthorizationRequestMessage
+
+	request.Typ = packers.MediaTypePlainMessage
+	request.Type = protocol.AuthorizationV2RequestMessageType
 	request.ID = uuid.New().String()
 	request.ThreadID = request.ID
 	request.Body = protocol.AuthorizationRequestMessageBody{
