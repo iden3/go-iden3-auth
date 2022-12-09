@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	core "github.com/iden3/go-iden3-core"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -35,8 +36,13 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolver StateResolver) 
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit
 func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
-	if sender != c.UserID.String() {
-		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
+	userDID, err := core.ParseDIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+
+	if sender != userDID.String() {
+		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, userDID)
 	}
 	if challenge.Cmp(c.Challenge) != 0 {
 		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())

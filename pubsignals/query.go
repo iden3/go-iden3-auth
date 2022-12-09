@@ -2,157 +2,179 @@ package pubsignals
 
 import (
 	"context"
-	"math/big"
-
+	"fmt"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
 	jsonSuite "github.com/iden3/go-schema-processor/json"
-	jsonldSuite "github.com/iden3/go-schema-processor/json-ld"
-	"github.com/iden3/go-schema-processor/processor"
+	"github.com/iden3/go-schema-processor/merklize"
 	"github.com/iden3/go-schema-processor/utils"
-	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
+	"math/big"
 )
 
-const (
-	jsonldExt string = "json-ld"
-	jsonExt   string = "json"
-)
+const PathToSubjectType = "https://www.w3.org/2018/credentials#credentialSubject"
 
-// Query represents structure for query to atomic circuit
 type Query struct {
-	AllowedIssuers []string               `json:"allowedIssuers"`
-	Req            map[string]interface{} `json:"req"`
-	Schema         protocol.Schema        `json:"schema"`
-	ClaimID        string                 `json:"claimId,omitempty"`
+	AllowedIssuers string
+	Req            map[string]interface{}
+	Context        string
+	Type           string
+	ClaimID        string
 }
 
-// ClaimOutputs fields that are used in proof generation
-type ClaimOutputs struct {
-	IssuerID   *core.ID
-	SchemaHash core.SchemaHash
-	SlotIndex  int
-	Operator   int
-	Value      []*big.Int
+type AtomicPubSignals struct {
+	IssuerID           *core.ID
+	ClaimSchema        core.SchemaHash
+	SlotIndex          int
+	Operator           int
+	Value              []*big.Int
+	Timestamp          int64
+	Merklized          int
+	ClaimPathKey       *big.Int
+	ClaimPathNotExists int
+	ValueArraySize     int
 }
 
-// CheckRequest checks request
-func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader,
-	out ClaimOutputs) error {
-
-	if !verifyIssuer(q, out) {
-		return errors.New("issuer is not in allowed list")
+func (q Query) validateIssuer(pubSig *AtomicPubSignals) error {
+	// TODO(illia-korotia): should be list of issuers.
+	if q.AllowedIssuers == "" || q.AllowedIssuers == "*" {
+		return nil
 	}
+	if q.AllowedIssuers == pubSig.IssuerID.String() {
+		return nil
+	}
+	return errors.New("issuer not exists in query access list")
+}
 
-	schemaBytes, ext, err := loader.Load(ctx, q.Schema)
+func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
+	schemaID := fmt.Sprintf("%s#%s", q.Context, q.Type)
+	querySchema := utils.CreateSchemaHash([]byte(schemaID))
+	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
+		return nil
+	}
+	return errors.New("proof was generated for another schema")
+}
+
+func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
+	_, predicate, err := extractQueryFields(q.Req)
 	if err != nil {
-		return errors.Wrap(err, "can't load schema for request query")
+		return err
 	}
-
-	sh := utils.CreateSchemaHash(schemaBytes, q.Schema.Type)
-	if sh.BigInt().Cmp(out.SchemaHash.BigInt()) != 0 {
-		return errors.New("schema that was used is not equal to requested in query")
-	}
-
-	pr, err := prepareProcessor(q.Schema.Type, ext)
+	values, operator, err := parseFieldPredicate(predicate)
 	if err != nil {
-		return errors.Wrap(err, "can't prepare processor for request query")
+		return err
 	}
-
-	queryReq, err := parseRequest(q.Req, schemaBytes, pr)
-	if err != nil {
-		return errors.Wrap(err, "can't parse request query")
+	if operator != pubSig.Operator {
+		return errors.New("proof was generated for another query operator")
 	}
-
-	return verifyQuery(queryReq, out)
-}
-
-func verifyIssuer(q Query, out ClaimOutputs) bool {
-	issuerAllowed := false
-	for _, i := range q.AllowedIssuers {
-		if i == "*" || i == out.IssuerID.String() {
-			issuerAllowed = true
-			break
-		}
-	}
-	return issuerAllowed
-}
-
-func verifyQuery(query *circuits.Query, out ClaimOutputs) error {
-
-	if query.Operator != out.Operator {
-		return errors.New("operator that was used is not equal to requested in query")
-	}
-
-	if query.Operator == circuits.NOOP { // circuits.NOOP slot and value are not used in this case
+	if operator == circuits.NOOP {
 		return nil
 	}
 
-	if query.SlotIndex != out.SlotIndex {
-		return errors.New("wrong claim slot was used in claim")
+	if len(values) > len(pubSig.Value) {
+		return errors.New("query asked proof about more values")
 	}
 
-	// add zeros, to check that out.Value[n] is also zero and not specific value.
-	for len(query.Values) < len(out.Value) {
-		query.Values = append(query.Values, big.NewInt(0))
-	}
-
-	for i, v := range query.Values {
-		if v.Cmp(out.Value[i]) != 0 {
-			return errors.New("comparison value that was used is not equal to requested in query")
+	if len(values) < pubSig.ValueArraySize {
+		diff := pubSig.ValueArraySize - len(values)
+		for diff > 0 {
+			values = append(values, big.NewInt(0))
+			diff--
 		}
 	}
+
+	for i := 0; i < len(values); i++ {
+		if values[i].Cmp(pubSig.Value[i]) != 0 {
+			return errors.New("proof was generated for anther values")
+		}
+	}
+
 	return nil
 }
 
-func prepareProcessor(claimType, ext string) (*processor.Processor, error) {
-	pr := &processor.Processor{}
-	var parser processor.Parser
-	switch ext {
-	case jsonExt:
-		parser = jsonSuite.Parser{ParsingStrategy: processor.OneFieldPerSlotStrategy}
-	case jsonldExt:
-		parser = jsonldSuite.Parser{ClaimType: claimType, ParsingStrategy: processor.OneFieldPerSlotStrategy}
-	default:
-		return nil, errors.Errorf(
-			"process suite for schema format %s is not supported", ext)
+func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *AtomicPubSignals) error {
+	if err := q.validateIssuer(pubSig); err != nil {
+		return err
 	}
-	return processor.InitProcessorOptions(pr, processor.WithParser(parser)), nil
+
+	if err := q.validateSchemaID(pubSig); err != nil {
+		return err
+	}
+
+	if err := q.validatePredicate(pubSig); err != nil {
+		return err
+	}
+
+	schemaBytes, _, err := loader.Load(ctx, q.Context)
+	if err != nil {
+		return fmt.Errorf("failed load schema by context: %w", err)
+	}
+
+	if pubSig.Merklized == 1 {
+		return q.checkMerklizedClaim(ctx, schemaBytes, pubSig)
+	}
+	return q.checkNotMerklizedClaim(ctx, schemaBytes, pubSig)
 }
 
-func parseRequest(req map[string]interface{}, schema []byte, pr *processor.Processor) (*circuits.Query, error) {
-
-	if req == nil {
-		return &circuits.Query{
-			SlotIndex: 0,
-			Values:    nil,
-			Operator:  circuits.NOOP,
-		}, nil
-	}
-
-	fieldName, fieldPredicate, err := extractQueryFields(req)
+func (q Query) checkMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+	fieldName, _, err := extractQueryFields(q.Req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	values, operator, err := parseFieldPredicate(fieldPredicate, err)
+	path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schema)
+	err = path.Prepend(PathToSubjectType)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &circuits.Query{SlotIndex: slotIndex, Values: values, Operator: operator}, nil
+	mkPath, err := path.MtEntry()
+	if err != nil {
+		return err
+	}
 
+	if mkPath.Cmp(pubSig.ClaimPathKey) != 0 {
+		return errors.New("proof was generated for another query")
+	}
+	if pubSig.ClaimPathNotExists == 1 {
+		return errors.New("proof doesn't contains target query kay")
+	}
+
+	return nil
 }
 
-func parseFieldPredicate(fieldPredicate map[string]interface{}, err error) ([]*big.Int, int, error) {
-	var values []*big.Int
-	var operator int
+func (q Query) checkNotMerklizedClaim(ctx context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+	pr := jsonSuite.Parser{}
+
+	fieldName, _, err := extractQueryFields(q.Req)
+	if err != nil {
+		return err
+	}
+
+	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schemaBytes)
+	if err != nil {
+		return err
+	}
+
+	if pubSig.SlotIndex != slotIndex {
+		return errors.New("different slot index for claim")
+	}
+
+	return nil
+}
+
+func parseFieldPredicate(fieldPredicate map[string]interface{}) ([]*big.Int, int, error) {
+	var (
+		values   []*big.Int
+		operator int
+		err      error
+	)
+
 	for op, v := range fieldPredicate {
 
 		var ok bool
@@ -169,7 +191,7 @@ func parseFieldPredicate(fieldPredicate map[string]interface{}, err error) ([]*b
 		// only one predicate for field is supported
 		break
 	}
-	return values, operator, err
+	return values, operator, nil
 }
 
 func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPredicate map[string]interface{}, err error) {

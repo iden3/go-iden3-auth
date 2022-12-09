@@ -2,29 +2,33 @@ package pubsignals
 
 import (
 	"context"
+	"math/big"
+	"time"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/pkg/errors"
-	"math/big"
-	"time"
 )
 
 // AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
-type AtomicQuerySig struct {
-	circuits.AtomicQuerySigPubSignals
+type AtomicQueryV2Sig struct {
+	circuits.AtomicQuerySigV2PubSignals
 }
 
 // VerifyQuery verifies query for atomic query mtp circuit
-func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
-
-	err := query.CheckRequest(ctx, schemaLoader, ClaimOutputs{
-		IssuerID:   c.IssuerID,
-		SchemaHash: c.ClaimSchema,
-		SlotIndex:  c.SlotIndex,
-		Operator:   c.Operator,
-		Value:      c.Values,
+func (c *AtomicQueryV2Sig) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
+	err := query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
+		IssuerID:           c.IssuerID,
+		ClaimSchema:        c.ClaimSchema,
+		SlotIndex:          c.SlotIndex,
+		Operator:           c.Operator,
+		Value:              c.Value,
+		Timestamp:          c.Timestamp,
+		Merklized:          c.Merklized,
+		ClaimPathKey:       c.ClaimPathKey,
+		ClaimPathNotExists: c.ClaimPathNotExists,
+		ValueArraySize:     c.ValueArraySize,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -32,16 +36,7 @@ func (c *AtomicQuerySig) VerifyQuery(ctx context.Context, query Query, schemaLoa
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract
-func (c *AtomicQuerySig) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
-
-	userStateResolved, err := stateResolver.Resolve(ctx, c.UserID.BigInt(), c.UserState.BigInt())
-	if err != nil {
-		return err
-	}
-
-	if !userStateResolved.Latest {
-		return ErrUserStateIsNotValid
-	}
+func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
 		return err
@@ -62,12 +57,13 @@ func (c *AtomicQuerySig) VerifyStates(ctx context.Context, stateResolver StateRe
 }
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit
-func (c *AtomicQuerySig) VerifyIDOwnership(sender string, challenge *big.Int) error {
+func (c *AtomicQueryV2Sig) VerifyIDOwnership(sender string, requestID *big.Int) error {
+	if c.RequestID.Cmp(requestID) != 0 {
+		return errors.New("invalid requestID in proof")
+	}
+
 	if sender != c.UserID.String() {
 		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
-	}
-	if challenge.Cmp(c.Challenge) != 0 {
-		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
 	}
 	return nil
 }

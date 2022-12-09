@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 	"time"
 
@@ -118,7 +119,7 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 		}
 
 		// prepare query from request
-		queryBytes, err := json.Marshal(proofRequest.Rules["query"])
+		queryBytes, err := json.Marshal(proofRequest.Query["query"])
 		if err != nil {
 			return err
 		}
@@ -226,7 +227,11 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 	if err != nil {
 		return err
 	}
-	stateVerificationRes, err := state.Resolve(ctx, client, opts.Contract, id, s)
+	stateGetter, err := state.NewStateCaller(common.HexToAddress(opts.Contract), client)
+	if err != nil {
+		return err
+	}
+	stateVerificationRes, err := state.Resolve(ctx, stateGetter, id, s)
 	if err != nil {
 		return err
 	}
