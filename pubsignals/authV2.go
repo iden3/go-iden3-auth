@@ -10,17 +10,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AuthV2 is a wrapper for circuits.AuthV2PubSignals
+// AuthV2 is a wrapper for circuits.AuthV2PubSignals.
 type AuthV2 struct {
 	circuits.AuthV2PubSignals
 }
 
-// VerifyQuery is not implemented for authV2 circuit
+// VerifyQuery is not implemented for authV2 circuit.
 func (c *AuthV2) VerifyQuery(_ context.Context, _ Query, _ loaders.SchemaLoader) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
 
-// VerifyStates verify AuthV2 tests
+// VerifyStates verify AuthV2 tests.
 func (c *AuthV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 
 	resolvedState, err := stateResolver.ResolveGlobalRoot(ctx, c.GlobalRoot.BigInt())
@@ -34,7 +34,7 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolver StateResolver) 
 	return nil
 }
 
-// VerifyIDOwnership returns error if ownership id wasn't verified in circuit
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
 	userDID, err := core.ParseDIDFromID(*c.UserID)
 	if err != nil {

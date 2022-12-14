@@ -30,13 +30,13 @@ var (
 	ErrInvalidValues = errors.New("proof was generated for anther values")
 )
 
-// Query proof request.
+// Query represents structure for query to atomic circuit.
 type Query struct {
-	AllowedIssuers string
-	Req            map[string]interface{}
-	Context        string
-	Type           string
-	ClaimID        string
+	AllowedIssuers string                 `json:"allowedIssuers"`
+	Req            map[string]interface{} `json:"req"`
+	Context        string                 `json:"context"`
+	Type           string                 `json:"type"`
+	ClaimID        string                 `json:"claimId,omitempty"`
 }
 
 // AtomicPubSignals pub signals from circuit.
@@ -173,7 +173,7 @@ func (q Query) CheckMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig
 	return nil
 }
 
-// CheckNotMerklizedClaim match proof to request if proof is NOT merklized.
+// CheckNotMerklizedClaim check match proof to request if proof is NOT merklized.
 func (q Query) CheckNotMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
 	pr := jsonSuite.Parser{}
 

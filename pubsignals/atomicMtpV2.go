@@ -12,7 +12,7 @@ import (
 	core "github.com/iden3/go-iden3-core"
 )
 
-// AtomicQueryMTPV2 is a wrapper for circuits.AtomicQueryMTPV2PubSignals
+// AtomicQueryMTPV2 is a wrapper for circuits.AtomicQueryMTPV2PubSignals.
 type AtomicQueryMTPV2 struct {
 	circuits.AtomicQueryMTPV2PubSignals
 }
@@ -33,9 +33,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaL
 	})
 }
 
-// For sig check issuer auth claim
-
-// VerifyStates verifies user state and issuer claim issuance state in the smart contract
+// VerifyStates verifies user state and issuer claim issuance state in the smart contract.
 func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
 	if err != nil {
@@ -57,7 +55,7 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolver State
 	return nil
 }
 
-// VerifyIDOwnership returns error if ownership id wasn't verified in circuit
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AtomicQueryMTPV2) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")

@@ -11,12 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AtomicQueryV2Sig is a wrapper for circuits.AtomicQuerySigV2PubSignals
+// AtomicQueryV2Sig is a wrapper for circuits.AtomicQuerySigV2PubSignals.
 type AtomicQueryV2Sig struct {
 	circuits.AtomicQuerySigV2PubSignals
 }
 
-// VerifyQuery verifies query for atomic query mtp circuit
+// VerifyQuery verifies query for atomic query mtp circuit.
 func (c *AtomicQueryV2Sig) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 	err := query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
 		IssuerID:           c.IssuerID,
@@ -36,7 +36,7 @@ func (c *AtomicQueryV2Sig) VerifyQuery(ctx context.Context, query Query, schemaL
 	return nil
 }
 
-// VerifyStates verifies user state and issuer auth claim state in the smart contract
+// VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
@@ -57,7 +57,7 @@ func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver State
 	return nil
 }
 
-// VerifyIDOwnership returns error if ownership id wasn't verified in circuit
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AtomicQueryV2Sig) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")

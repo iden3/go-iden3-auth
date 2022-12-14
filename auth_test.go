@@ -6,17 +6,15 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/iden3/go-rapidsnark/types"
-	"github.com/iden3/iden3comm/packers"
-	"github.com/stretchr/testify/require"
-
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
+	"github.com/iden3/go-rapidsnark/types"
+	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/iden3/go-circuits"
+	"github.com/stretchr/testify/require"
 )
 
 var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./testdata"}
@@ -264,7 +262,7 @@ func TestVerifier_VerifyJWZ_V2(t *testing.T) {
 
 	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
 	parsedToken, err := authInstance.VerifyJWZ(context.Background(), token)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, parsedToken.Alg, "groth16")
 }
 
