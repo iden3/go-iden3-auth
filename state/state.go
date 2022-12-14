@@ -45,6 +45,7 @@ type GISTGetter interface {
 type ResolvedState struct {
 	State               string `json:"state"`
 	Latest              bool   `json:"latest"`
+	Genesis             bool   `json:"genesis"`
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
@@ -59,10 +60,6 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 	if err != nil {
 		return nil, err
 	}
-	if isGenesis {
-		// genesis state is latest
-		return &ResolvedState{Latest: true, State: state.String()}, nil
-	}
 
 	stateInfo, err := getter.GetStateInfoById(&bind.CallOpts{Context: ctx}, id)
 	if err != nil {
@@ -70,7 +67,10 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 	}
 
 	if stateInfo.State.Cmp(zero) == 0 {
-		return nil, errors.New("state is not genesis and not registered in the smart contract")
+		if !isGenesis {
+			return nil, errors.New("state is not genesis and not registered in the smart contract")
+		}
+		return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 	}
 	if stateInfo.Id.Cmp(id) != 0 {
 		return nil, errors.New("transition info contains invalid id")
@@ -82,13 +82,14 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 		}
 		return &ResolvedState{
 			Latest:              false,
+			Genesis:             isGenesis,
 			State:               state.String(),
 			TransitionTimestamp: stateInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
 
 	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return &ResolvedState{Latest: true, State: state.String()}, nil
+	return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 }
 
 // ResolveGlobalRoot is used to resolve global root

@@ -29,12 +29,18 @@ func TestResolve_Success(t *testing.T) {
 		expected         *state.ResolvedState
 	}{
 		{
-			name:             "verify genesis state for usser",
-			contractResponse: func(m *mock.MockStateGetter) {},
-			userID:           userID,
-			userState:        userGenesisState,
+			name: "verify genesis state for user",
+			contractResponse: func(m *mock.MockStateGetter) {
+				res := state.StateInfo{
+					State: big.NewInt(0),
+				}
+				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(res, nil)
+			},
+			userID:    userID,
+			userState: userGenesisState,
 			expected: &state.ResolvedState{
 				State:               userGenesisState.String(),
+				Genesis:             true,
 				Latest:              true,
 				TransitionTimestamp: 0,
 			},
@@ -99,6 +105,18 @@ func TestResolve_Error(t *testing.T) {
 		userState        *big.Int
 		expectedError    string
 	}{
+		{
+			name: "state is not genesis and not registered in the smart contract",
+			contractResponse: func(m *mock.MockStateGetter) {
+				contractResponse := state.StateInfo{
+					State: big.NewInt(0),
+				}
+				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
+			},
+			userID:        userID,
+			userState:     userFirstState,
+			expectedError: "state is not genesis and not registered in the smart contract",
+		},
 		{
 			name: "state not found in contract",
 			contractResponse: func(m *mock.MockStateGetter) {

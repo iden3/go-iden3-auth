@@ -33,7 +33,7 @@ var (
 // Query represents structure for query to atomic circuit.
 type Query struct {
 	AllowedIssuers string                 `json:"allowedIssuers"`
-	Req            map[string]interface{} `json:"req"`
+	Req            map[string]interface{} `json:"req,omitempty"`
 	Context        string                 `json:"context"`
 	Type           string                 `json:"type"`
 	ClaimID        string                 `json:"claimId,omitempty"`
