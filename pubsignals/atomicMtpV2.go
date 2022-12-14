@@ -9,12 +9,15 @@ import (
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	core "github.com/iden3/go-iden3-core"
 )
 
+// AtomicQueryMTPV2 is a wrapper for circuits.AtomicQueryMTPV2PubSignals
 type AtomicQueryMTPV2 struct {
 	circuits.AtomicQueryMTPV2PubSignals
 }
 
+// VerifyQuery checks whether the proof matches the query.
 func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 	return query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
 		IssuerID:           c.IssuerID,
@@ -60,7 +63,11 @@ func (c *AtomicQueryMTPV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 		return errors.New("invalid requestID in proof")
 	}
 
-	if sender != c.UserID.String() {
+	userDID, err := core.ParseDIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+	if sender != userDID.String() {
 		return fmt.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
 	}
 	return nil

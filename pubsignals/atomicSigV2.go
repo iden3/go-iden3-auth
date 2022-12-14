@@ -7,10 +7,11 @@ import (
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
 )
 
-// AtomicQuerySig is a wrapper for circuits.AtomicQuerySigPubSignals
+// AtomicQueryV2Sig is a wrapper for circuits.AtomicQuerySigV2PubSignals
 type AtomicQueryV2Sig struct {
 	circuits.AtomicQuerySigV2PubSignals
 }
@@ -62,7 +63,11 @@ func (c *AtomicQueryV2Sig) VerifyIDOwnership(sender string, requestID *big.Int) 
 		return errors.New("invalid requestID in proof")
 	}
 
-	if sender != c.UserID.String() {
+	userDID, err := core.ParseDIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+	if sender != userDID.String() {
 		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
 	}
 	return nil

@@ -2,10 +2,10 @@ package state
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
@@ -29,6 +29,7 @@ type ExtendedVerificationsOptions struct {
 // StateGetter return user's state info by user's ID
 //
 //go:generate mockgen -destination=mock/StateGetterMock.go . StateGetter
+//nolint:revive // we have two different getters for the state in one pkg
 type StateGetter interface {
 	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (StateInfo, error)
 }

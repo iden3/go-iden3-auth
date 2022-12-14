@@ -3,6 +3,8 @@ package pubsignals
 import (
 	"context"
 	"fmt"
+	"math/big"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
@@ -10,11 +12,25 @@ import (
 	"github.com/iden3/go-schema-processor/merklize"
 	"github.com/iden3/go-schema-processor/utils"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
+// PathToSubjectType path to description of subject type.
 const PathToSubjectType = "https://www.w3.org/2018/credentials#credentialSubject"
 
+var (
+	// ErrUnavailableIssuer issuer from proof not allowed.
+	ErrUnavailableIssuer = errors.New("issuer not exists in query access list")
+	// ErrSchemaID proof was created for different schema.
+	ErrSchemaID = errors.New("proof was generated for another schema")
+	// ErrRequestOperator proof was created for different query.
+	ErrRequestOperator = errors.New("proof was generated for another query operator")
+	// ErrValuesSize proof was created for different values.
+	ErrValuesSize = errors.New("query asked proof about more values")
+	// ErrInvalidValues proof was created for different values.
+	ErrInvalidValues = errors.New("proof was generated for anther values")
+)
+
+// Query proof request.
 type Query struct {
 	AllowedIssuers string
 	Req            map[string]interface{}
@@ -23,6 +39,7 @@ type Query struct {
 	ClaimID        string
 }
 
+// AtomicPubSignals pub signals from circuit.
 type AtomicPubSignals struct {
 	IssuerID           *core.ID
 	ClaimSchema        core.SchemaHash
@@ -44,7 +61,7 @@ func (q Query) validateIssuer(pubSig *AtomicPubSignals) error {
 	if q.AllowedIssuers == pubSig.IssuerID.String() {
 		return nil
 	}
-	return errors.New("issuer not exists in query access list")
+	return ErrUnavailableIssuer
 }
 
 func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
@@ -53,7 +70,7 @@ func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
 	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
 		return nil
 	}
-	return errors.New("proof was generated for another schema")
+	return ErrSchemaID
 }
 
 func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
@@ -61,19 +78,21 @@ func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
 	if err != nil {
 		return err
 	}
+
 	values, operator, err := parseFieldPredicate(predicate)
 	if err != nil {
 		return err
 	}
-	if operator != pubSig.Operator {
-		return errors.New("proof was generated for another query operator")
-	}
+
 	if operator == circuits.NOOP {
 		return nil
 	}
+	if operator != pubSig.Operator {
+		return ErrRequestOperator
+	}
 
 	if len(values) > len(pubSig.Value) {
-		return errors.New("query asked proof about more values")
+		return ErrValuesSize
 	}
 
 	if len(values) < pubSig.ValueArraySize {
@@ -86,13 +105,14 @@ func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
 
 	for i := 0; i < len(values); i++ {
 		if values[i].Cmp(pubSig.Value[i]) != 0 {
-			return errors.New("proof was generated for anther values")
+			return ErrInvalidValues
 		}
 	}
 
 	return nil
 }
 
+// CheckRequest checks if proof was created for this request.
 func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *AtomicPubSignals) error {
 	if err := q.validateIssuer(pubSig); err != nil {
 		return err
@@ -112,12 +132,17 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 	}
 
 	if pubSig.Merklized == 1 {
-		return q.checkMerklizedClaim(ctx, schemaBytes, pubSig)
+		return q.CheckMerklizedClaim(ctx, schemaBytes, pubSig)
 	}
-	return q.checkNotMerklizedClaim(ctx, schemaBytes, pubSig)
+	return q.CheckNotMerklizedClaim(ctx, schemaBytes, pubSig)
 }
 
-func (q Query) checkMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+// CheckMerklizedClaim match proof to request if proof is merklized.
+func (q Query) CheckMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+	if len(q.Req) == 0 {
+		return nil
+	}
+
 	fieldName, _, err := extractQueryFields(q.Req)
 	if err != nil {
 		return err
@@ -139,7 +164,7 @@ func (q Query) checkMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig
 	}
 
 	if mkPath.Cmp(pubSig.ClaimPathKey) != 0 {
-		return errors.New("proof was generated for another query")
+		return errors.New("proof was generated for another path")
 	}
 	if pubSig.ClaimPathNotExists == 1 {
 		return errors.New("proof doesn't contains target query kay")
@@ -148,7 +173,8 @@ func (q Query) checkMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig
 	return nil
 }
 
-func (q Query) checkNotMerklizedClaim(ctx context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+// CheckNotMerklizedClaim match proof to request if proof is NOT merklized.
+func (q Query) CheckNotMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
 	pr := jsonSuite.Parser{}
 
 	fieldName, _, err := extractQueryFields(q.Req)

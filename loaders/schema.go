@@ -3,9 +3,10 @@ package loaders
 import (
 	"context"
 	"fmt"
+	"net/url"
+
 	"github.com/iden3/go-schema-processor/loaders"
 	"github.com/iden3/go-schema-processor/processor"
-	"net/url"
 )
 
 // SchemaLoader is an interface for schema loading
@@ -19,6 +20,8 @@ type DefaultSchemaLoader struct {
 }
 
 // Load loads schema from IPFS or by http link
+//
+//nolint:gocritic // URL is correct name for variable that describes URL.
 func (d DefaultSchemaLoader) Load(ctx context.Context, URL string) (schemaBytes []byte, extension string, err error) {
 	var loader processor.SchemaLoader
 	schemaURL, err := url.Parse(URL)

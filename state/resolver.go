@@ -2,9 +2,10 @@ package state
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"math/big"
 )
 
 // ETHResolver resolver for eth blockchains
@@ -13,6 +14,7 @@ type ETHResolver struct {
 	ContractAddress common.Address
 }
 
+// NewETHResolver create ETH resolver for state.
 func NewETHResolver(url, contract string) *ETHResolver {
 	return &ETHResolver{
 		RPCUrl:          url,

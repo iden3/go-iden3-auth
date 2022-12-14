@@ -1,5 +1,5 @@
 service:
-  golangci-lint-version: 1.45.x
+  golangci-lint-version: 1.50.x
 
 run:
   timeout: 2m
@@ -9,8 +9,6 @@ run:
 linters-settings:
   govet:
     check-shadowing: true
-  revive:
-    min-confidence: 0.1
   maligned:
     suggest-new: true
   goconst:
@@ -53,11 +51,11 @@ linters:
     - nakedret
     - gosimple
     - prealloc
+    - goimports
 
     ## format - fill free to fix
 #    - errcheck
 #    - gofmt
-#    - goimports
   fast: false
   disable:
     - dupl
@@ -69,7 +67,7 @@ issues:
       linters:
         - stylecheck
   #    - Fix and remove
-    - text: "should have a package comment, unless it's in another file for this package"
+    - text: "package-comments: should have a package comment"
       linters:
         - revive
     - path: _test\.go

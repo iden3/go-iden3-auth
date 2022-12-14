@@ -2,11 +2,12 @@ package state_test
 
 import (
 	"context"
-	"github.com/iden3/go-iden3-auth/state"
 	"math/big"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/iden3/go-iden3-auth/state"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	mock "github.com/iden3/go-iden3-auth/state/mock"
@@ -147,6 +148,123 @@ func TestResolve_Error(t *testing.T) {
 			tt.contractResponse(m)
 
 			resState, err := state.Resolve(context.Background(), m, tt.userID, tt.userState)
+			require.Nil(t, resState)
+			require.EqualError(t, err, tt.expectedError)
+
+			ctrl.Finish()
+		})
+	}
+}
+
+func TestResolveGlobalRoot_Success(t *testing.T) {
+	tests := []struct {
+		name             string
+		contractResponse func(m *mock.MockGISTGetter)
+		userID           *big.Int
+		userState        *big.Int
+		expected         *state.ResolvedState
+	}{
+		{
+			name: "Last state has not been replaced",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				ri := state.RootInfo{
+					Root:               userFirstState,
+					CreatedAtTimestamp: big.NewInt(1),
+					ReplacedByRoot:     big.NewInt(0),
+				}
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+			},
+			userState: userFirstState,
+			expected: &state.ResolvedState{
+				State:               userFirstState.String(),
+				Latest:              true,
+				TransitionTimestamp: 0,
+			},
+		},
+		{
+			name: "Last state has been replaced",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				ri := state.RootInfo{
+					Root:                userFirstState,
+					CreatedAtTimestamp:  big.NewInt(3),
+					ReplacedByRoot:      big.NewInt(2),
+					ReplacedAtTimestamp: big.NewInt(1),
+				}
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+			},
+			userState: userFirstState,
+			expected: &state.ResolvedState{
+				State:               userFirstState.String(),
+				Latest:              false,
+				TransitionTimestamp: 1,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			m := mock.NewMockGISTGetter(ctrl)
+			tt.contractResponse(m)
+
+			resState, err := state.ResolveGlobalRoot(context.Background(), m, tt.userState)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, resState)
+
+			ctrl.Finish()
+		})
+	}
+}
+
+func TestResolveGlobalRoot_Error(t *testing.T) {
+	tests := []struct {
+		name             string
+		contractResponse func(m *mock.MockGISTGetter)
+		userID           *big.Int
+		userState        *big.Int
+		expectedError    string
+	}{
+		{
+			name: "Contract call return an error",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				err := errors.New("contract call error")
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(state.RootInfo{}, err)
+			},
+			userState:     userFirstState,
+			expectedError: "contract call error",
+		},
+		{
+			name: "State has not been wrote to contract",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				ri := state.RootInfo{
+					CreatedAtTimestamp: big.NewInt(0),
+				}
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+			},
+			userState:     userFirstState,
+			expectedError: "gist state not registered in the smart contract",
+		},
+		{
+			name: "State has been wrote for another users",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				ri := state.RootInfo{
+					Root:               userSecondState,
+					CreatedAtTimestamp: big.NewInt(3),
+				}
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+			},
+			userState:     userFirstState,
+			expectedError: "gist info contains invalid state",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			m := mock.NewMockGISTGetter(ctrl)
+			tt.contractResponse(m)
+
+			resState, err := state.ResolveGlobalRoot(context.Background(), m, tt.userState)
 			require.Nil(t, resState)
 			require.EqualError(t, err, tt.expectedError)
 

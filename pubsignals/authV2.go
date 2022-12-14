@@ -2,11 +2,11 @@ package pubsignals
 
 import (
 	"context"
-	core "github.com/iden3/go-iden3-core"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
+	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
 )
 
