@@ -53,14 +53,80 @@ type AtomicPubSignals struct {
 	ValueArraySize     int
 }
 
-func (q Query) validateIssuer(pubSig *AtomicPubSignals) error {
+// CheckRequest checks if proof was created for this request.
+func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *AtomicPubSignals) error {
+	if err := q.verifyIssuer(pubSig); err != nil {
+		return err
+	}
+
+	if err := q.verifySchemaID(pubSig); err != nil {
+		return err
+	}
+
+	if err := q.verifyQuery(pubSig); err != nil {
+		return err
+	}
+
+	schemaBytes, _, err := loader.Load(ctx, q.Context)
+	if err != nil {
+		return fmt.Errorf("failed load schema by context: %w", err)
+	}
+
+	return q.verifyClaim(ctx, schemaBytes, pubSig)
+}
+
+func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+	if len(q.Req) == 0 {
+		return nil
+	}
+
+	fieldName, _, err := extractQueryFields(q.Req)
+	if err != nil {
+		return err
+	}
+
+	path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
+	if err != nil {
+		return err
+	}
+
+	err = path.Prepend(PathToSubjectType)
+	if err != nil {
+		return err
+	}
+
+	mkPath, err := path.MtEntry()
+	if err != nil {
+		return err
+	}
+
+	if pubSig.Merklized == 1 {
+		if mkPath.Cmp(pubSig.ClaimPathKey) != 0 {
+			return errors.New("proof was generated for another path")
+		}
+		if pubSig.ClaimPathNotExists == 1 {
+			return errors.New("proof doesn't contains target query key")
+		}
+	} else {
+		slotIdx, err := jsonSuite.Parser{}.GetFieldSlotIndex(fieldName, schemaBytes)
+		if err != nil {
+			return err
+		}
+		if pubSig.SlotIndex != slotIdx {
+			return errors.New("different slot index for claim")
+		}
+	}
+	return nil
+}
+
+func (q Query) verifyIssuer(pubSig *AtomicPubSignals) error {
 	if q.AllowedIssuers != "*" && q.AllowedIssuers != pubSig.IssuerID.String() {
 		return ErrUnavailableIssuer
 	}
 	return nil
 }
 
-func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
+func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
 	schemaID := fmt.Sprintf("%s#%s", q.Context, q.Type)
 	querySchema := utils.CreateSchemaHash([]byte(schemaID))
 	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
@@ -69,7 +135,7 @@ func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
 	return ErrSchemaID
 }
 
-func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
+func (q Query) verifyQuery(pubSig *AtomicPubSignals) error {
 	_, predicate, err := extractQueryFields(q.Req)
 	if err != nil {
 		return err
@@ -103,88 +169,6 @@ func (q Query) validatePredicate(pubSig *AtomicPubSignals) error {
 		if values[i].Cmp(pubSig.Value[i]) != 0 {
 			return ErrInvalidValues
 		}
-	}
-
-	return nil
-}
-
-// CheckRequest checks if proof was created for this request.
-func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *AtomicPubSignals) error {
-	if err := q.validateIssuer(pubSig); err != nil {
-		return err
-	}
-
-	if err := q.validateSchemaID(pubSig); err != nil {
-		return err
-	}
-
-	if err := q.validatePredicate(pubSig); err != nil {
-		return err
-	}
-
-	schemaBytes, _, err := loader.Load(ctx, q.Context)
-	if err != nil {
-		return fmt.Errorf("failed load schema by context: %w", err)
-	}
-
-	if pubSig.Merklized == 1 {
-		return q.CheckMerklizedClaim(ctx, schemaBytes, pubSig)
-	}
-	return q.CheckNotMerklizedClaim(ctx, schemaBytes, pubSig)
-}
-
-// CheckMerklizedClaim match proof to request if proof is merklized.
-func (q Query) CheckMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
-	if len(q.Req) == 0 {
-		return nil
-	}
-
-	fieldName, _, err := extractQueryFields(q.Req)
-	if err != nil {
-		return err
-	}
-
-	path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
-	if err != nil {
-		return err
-	}
-
-	err = path.Prepend(PathToSubjectType)
-	if err != nil {
-		return err
-	}
-
-	mkPath, err := path.MtEntry()
-	if err != nil {
-		return err
-	}
-
-	if mkPath.Cmp(pubSig.ClaimPathKey) != 0 {
-		return errors.New("proof was generated for another path")
-	}
-	if pubSig.ClaimPathNotExists == 1 {
-		return errors.New("proof doesn't contains target query key")
-	}
-
-	return nil
-}
-
-// CheckNotMerklizedClaim check match proof to request if proof is NOT merklized.
-func (q Query) CheckNotMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
-	pr := jsonSuite.Parser{}
-
-	fieldName, _, err := extractQueryFields(q.Req)
-	if err != nil {
-		return err
-	}
-
-	slotIndex, err := pr.GetFieldSlotIndex(fieldName, schemaBytes)
-	if err != nil {
-		return err
-	}
-
-	if pubSig.SlotIndex != slotIndex {
-		return errors.New("different slot index for claim")
 	}
 
 	return nil
