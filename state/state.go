@@ -7,7 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	core "github.com/iden3/go-iden3-core"
-	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
 )
 
@@ -56,7 +55,7 @@ type ResolvedState struct {
 // state is bigint string representation of identity state
 func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*ResolvedState, error) {
 	// сheck if id is genesis  - then we do need to resolve it.
-	isGenesis, err := checkGenesisStateID(id, state)
+	isGenesis, err := CheckGenesisStateID(id, state)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +108,9 @@ func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (
 		return nil, errors.New("gist info contains invalid state")
 	}
 	if globalStateInfo.ReplacedByRoot.Cmp(zero) != 0 {
+		if globalStateInfo.ReplacedAtTimestamp.Cmp(zero) == 0 {
+			return nil, errors.New("state was replaced, but replaced time unknown")
+		}
 		return &ResolvedState{
 			State:               state.String(),
 			Latest:              false,
@@ -122,25 +124,16 @@ func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (
 	}, nil
 }
 
-func checkGenesisStateID(id, state *big.Int) (bool, error) {
-
-	stateHash, err := merkletree.NewHashFromBigInt(state)
+// CheckGenesisStateID check if the state is genesis for the id.
+func CheckGenesisStateID(id, state *big.Int) (bool, error) {
+	didType, err := core.BuildDIDType(core.DIDMethodIden3, core.Polygon, core.Mumbai)
+	if err != nil {
+		return false, err
+	}
+	identifier, err := core.IdGenesisFromIdenState(didType, state)
 	if err != nil {
 		return false, err
 	}
 
-	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, stateHash.BigInt())
-	if err != nil {
-		return false, err
-	}
-
-	idBytes := merkletree.NewElemBytesFromBigInt(id)
-	IDFromParam, err := core.IDFromBytes(idBytes[:31])
-	if err != nil {
-		return false, err
-	}
-	if IDFromState.String() != IDFromParam.String() {
-		return false, nil
-	}
-	return true, nil
+	return id.Cmp(identifier.BigInt()) == 0, nil
 }

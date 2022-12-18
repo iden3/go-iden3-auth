@@ -54,14 +54,10 @@ type AtomicPubSignals struct {
 }
 
 func (q Query) validateIssuer(pubSig *AtomicPubSignals) error {
-	// TODO(illia-korotia): should be list of issuers.
-	if q.AllowedIssuers == "" || q.AllowedIssuers == "*" {
-		return nil
+	if q.AllowedIssuers != "*" && q.AllowedIssuers != pubSig.IssuerID.String() {
+		return ErrUnavailableIssuer
 	}
-	if q.AllowedIssuers == pubSig.IssuerID.String() {
-		return nil
-	}
-	return ErrUnavailableIssuer
+	return nil
 }
 
 func (q Query) validateSchemaID(pubSig *AtomicPubSignals) error {
@@ -167,7 +163,7 @@ func (q Query) CheckMerklizedClaim(_ context.Context, schemaBytes []byte, pubSig
 		return errors.New("proof was generated for another path")
 	}
 	if pubSig.ClaimPathNotExists == 1 {
-		return errors.New("proof doesn't contains target query kay")
+		return errors.New("proof doesn't contains target query key")
 	}
 
 	return nil

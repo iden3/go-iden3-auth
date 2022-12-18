@@ -47,6 +47,8 @@ func CreateAuthorizationV2RequestWithMessage(reason, message, sender,
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
+	// TODO (illia-korotia): should we add AuthorizationV2ResponseMessage type to protocol.
+	// Since we use AuthorizationResponseMessage type for AuthorizationV2RequestMessageType.
 	request.Type = protocol.AuthorizationV2RequestMessageType
 	request.ID = uuid.New().String()
 	request.ThreadID = request.ID

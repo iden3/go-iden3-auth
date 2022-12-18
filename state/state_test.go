@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"testing"
 
+	core "github.com/iden3/go-iden3-core"
+
 	"github.com/golang/mock/gomock"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/pkg/errors"
@@ -14,10 +16,10 @@ import (
 )
 
 var (
-	userID, _           = new(big.Int).SetString("24321776247489977391892714204849454424732134960326243894281082684329361408", 10)
-	userGenesisState, _ = new(big.Int).SetString("371135506535866236563870411357090963344408827476607986362864968105378316288", 10)
-	userFirstState, _   = new(big.Int).SetString("16751774198505232045539489584666775489135471631443877047826295522719290880931", 10)
-	userSecondState, _  = new(big.Int).SetString("909633444088274766079863628649681053783162883711355065358662365638704113570", 10)
+	userID, _           = new(big.Int).SetString("24046132560195495514376446225096639477630837244209093211332602837583401473", 10)
+	userGenesisState, _ = new(big.Int).SetString("7521024223205616003431860562270429547098131848980857190502964780628723574810", 10)
+	userFirstState, _   = new(big.Int).SetString("6017654403209798611575982337826892532952335378376369712724079246845524041042", 10)
+	userSecondState, _  = new(big.Int).SetString("13855704302023058120516733700521568675871224145197005519251383340112309153100", 10)
 )
 
 func TestResolve_Success(t *testing.T) {
@@ -274,6 +276,20 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 			userState:     userFirstState,
 			expectedError: "gist info contains invalid state",
 		},
+		{
+			name: "State was replaced, but replaced time is unknown",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				ri := state.RootInfo{
+					Root:                userFirstState,
+					CreatedAtTimestamp:  big.NewInt(3),
+					ReplacedByRoot:      userSecondState,
+					ReplacedAtTimestamp: big.NewInt(0),
+				}
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+			},
+			userState:     userFirstState,
+			expectedError: "state was replaced, but replaced time unknown",
+		},
 	}
 
 	for _, tt := range tests {
@@ -289,4 +305,22 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 			ctrl.Finish()
 		})
 	}
+}
+
+func TestCheckGenesisStateID(t *testing.T) {
+	userDID, err := core.ParseDID("did:iden3:polygon:mumbai:x6suHR8HkEYczV9yVeAKKiXCZAd25P8WS6QvNhszk")
+	require.NoError(t, err)
+	genesisID, ok := big.NewInt(0).SetString("7521024223205616003431860562270429547098131848980857190502964780628723574810", 10)
+	require.True(t, ok)
+
+	isGenesis, err := state.CheckGenesisStateID(userDID.ID.BigInt(), genesisID)
+	require.NoError(t, err)
+	require.True(t, isGenesis)
+
+	notGenesisState, ok := big.NewInt(0).SetString("6017654403209798611575982337826892532952335378376369712724079246845524041042", 10)
+	require.True(t, ok)
+
+	isGenesis, err = state.CheckGenesisStateID(userDID.ID.BigInt(), notGenesisState)
+	require.NoError(t, err)
+	require.False(t, isGenesis)
 }
