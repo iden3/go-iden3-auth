@@ -106,8 +106,8 @@ func TestVerifyMessageWithMTPProof_V2(t *testing.T) {
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
 		"query": pubsignals.Query{
-			AllowedIssuers: "*",
-			Req: map[string]interface{}{
+			AllowedIssuers: []string{"*"},
+			Query: map[string]interface{}{
 				"countryCode": map[string]interface{}{
 					"$nin": []int{
 						840,
@@ -279,8 +279,8 @@ func TestVerifier_FullVerify_V2(t *testing.T) {
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
 		"query": pubsignals.Query{
-			AllowedIssuers: "*",
-			Req: map[string]interface{}{
+			AllowedIssuers: []string{"*"},
+			Query: map[string]interface{}{
 				"countryCode": map[string]interface{}{
 					"$nin": []int{
 						840,
@@ -321,7 +321,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	zkReq.Optional = &opt
 	zkReq.Query = map[string]interface{}{
 		"query": pubsignals.Query{
-			AllowedIssuers: "*",
+			AllowedIssuers: []string{"*"},
 			Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 			Type:           "KYCCountryOfResidenceCredential",
 		},

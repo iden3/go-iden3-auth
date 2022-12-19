@@ -7,7 +7,7 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.2.0
 	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221203140910-328bdf7a88ac
-	github.com/iden3/go-iden3-core v0.1.1-0.20221203134456-9d507559870d
+	github.com/iden3/go-iden3-core v0.1.1-0.20221219095955-92aedd7d12fa
 	github.com/iden3/go-jwz v0.1.4-0.20221129141428-312a907ea598
 	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.2

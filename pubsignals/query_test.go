@@ -93,8 +93,8 @@ func TestCheckRequest_Success(t *testing.T) {
 		{
 			name: "Check merkalized query",
 			query: Query{
-				AllowedIssuers: "*",
-				Req: map[string]interface{}{
+				AllowedIssuers: []string{"*"},
+				Query: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$nin": []interface{}{float64(800)},
 					},
@@ -134,7 +134,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Invalid issuer",
 			query: Query{
-				AllowedIssuers: "123",
+				AllowedIssuers: []string{"123"},
 			},
 			pubSig: &AtomicPubSignals{
 				IssuerID: &issuerID,
@@ -144,7 +144,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Invalid Schema ID",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCAgeCredential",
 			},
@@ -157,10 +157,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Multiply query",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"req1": struct{}{},
 					"req2": struct{}{},
 				},
@@ -174,10 +174,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Failed params in request",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"req1": 1,
 				},
 			},
@@ -190,10 +190,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Multiple predicates in one request",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$eq":  20,
 						"$nin": 21,
@@ -209,10 +209,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another query",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$eq": []interface{}{float64(20)},
 					},
@@ -228,10 +228,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another values",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"countyCode": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
@@ -248,10 +248,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another path",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"documentType": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
@@ -270,10 +270,10 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Different slot index",
 			query: Query{
-				AllowedIssuers: issuerID.String(),
+				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Req: map[string]interface{}{
+				Query: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},

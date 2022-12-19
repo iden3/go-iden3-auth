@@ -32,8 +32,8 @@ var (
 
 // Query represents structure for query to atomic circuit.
 type Query struct {
-	AllowedIssuers string                 `json:"allowedIssuers"`
-	Req            map[string]interface{} `json:"req,omitempty"`
+	AllowedIssuers []string               `json:"allowedIssuers"`
+	Query          map[string]interface{} `json:"query,omitempty"`
 	Context        string                 `json:"context"`
 	Type           string                 `json:"type"`
 	ClaimID        string                 `json:"claimId,omitempty"`
@@ -76,11 +76,11 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 }
 
 func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
-	if len(q.Req) == 0 {
+	if len(q.Query) == 0 {
 		return nil
 	}
 
-	fieldName, _, err := extractQueryFields(q.Req)
+	fieldName, _, err := extractQueryFields(q.Query)
 	if err != nil {
 		return err
 	}
@@ -120,10 +120,12 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Atomic
 }
 
 func (q Query) verifyIssuer(pubSig *AtomicPubSignals) error {
-	if q.AllowedIssuers != "*" && q.AllowedIssuers != pubSig.IssuerID.String() {
-		return ErrUnavailableIssuer
+	for _, issuer := range q.AllowedIssuers {
+		if issuer == "*" || issuer == pubSig.IssuerID.String() {
+			return nil
+		}
 	}
-	return nil
+	return ErrUnavailableIssuer
 }
 
 func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
@@ -136,7 +138,7 @@ func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
 }
 
 func (q Query) verifyQuery(pubSig *AtomicPubSignals) error {
-	_, predicate, err := extractQueryFields(q.Req)
+	_, predicate, err := extractQueryFields(q.Query)
 	if err != nil {
 		return err
 	}
