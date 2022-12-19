@@ -472,7 +472,7 @@ func TestCreateAuthorizationV2Request(t *testing.T) {
 	assert.Len(t, request.Body.Scope, 0)
 	assert.Equal(t, callbackURL, request.Body.CallbackURL)
 	assert.Equal(t, sender, request.From)
-	assert.Equal(t, protocol.AuthorizationV2RequestMessageType, request.Type)
+	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
 
 }
 
@@ -487,6 +487,6 @@ func TestCreateAuthorizationV2RequestWithMessage(t *testing.T) {
 	assert.Len(t, request.Body.Scope, 0)
 	assert.Equal(t, callbackURL, request.Body.CallbackURL)
 	assert.Equal(t, sender, request.From)
-	assert.Equal(t, protocol.AuthorizationV2RequestMessageType, request.Type)
+	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
 	assert.Equal(t, message, request.Body.Message)
 }
