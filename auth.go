@@ -33,23 +33,21 @@ func NewVerifier(keyLoader loaders.VerificationKeyLoader, claimSchemaLoader load
 	return &Verifier{verificationKeyLoader: keyLoader, claimSchemaLoader: claimSchemaLoader, stateResolver: resolver}
 }
 
-// CreateAuthorizationV2Request creates new authorization request message
+// CreateAuthorizationRequest creates new authorization request message
 // sender - client identifier
 // reason - describes purpose of request
 // callbackURL - url for authorization response
-func CreateAuthorizationV2Request(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
-	return CreateAuthorizationV2RequestWithMessage(reason, "", sender, callbackURL)
+func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
+	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
 }
 
-// CreateAuthorizationV2RequestWithMessage creates new authorization V2 request with message for signing with jwz
-func CreateAuthorizationV2RequestWithMessage(reason, message, sender,
+// CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
+func CreateAuthorizationRequestWithMessage(reason, message, sender,
 	callbackURL string) protocol.AuthorizationRequestMessage {
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
-	// TODO (illia-korotia): should we add AuthorizationV2ResponseMessage type to protocol.
-	// Since we use AuthorizationResponseMessage type for AuthorizationV2RequestMessageType.
-	request.Type = protocol.AuthorizationV2RequestMessageType
+	request.Type = protocol.AuthorizationRequestMessageType
 	request.ID = uuid.New().String()
 	request.ThreadID = request.ID
 	request.Body = protocol.AuthorizationRequestMessageBody{

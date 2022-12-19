@@ -126,7 +126,16 @@ func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (
 
 // CheckGenesisStateID check if the state is genesis for the id.
 func CheckGenesisStateID(id, state *big.Int) (bool, error) {
-	didType, err := core.BuildDIDType(core.DIDMethodIden3, core.Polygon, core.Mumbai)
+	userID, err := core.IDFromInt(id)
+	if err != nil {
+		return false, err
+	}
+	userDID, err := core.ParseDIDFromID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	didType, err := core.BuildDIDType(userDID.Method, userDID.Blockchain, userDID.NetworkID)
 	if err != nil {
 		return false, err
 	}

@@ -121,7 +121,7 @@ func TestVerifyMessageWithMTPProof_V2(t *testing.T) {
 			Type:    "KYCCountryOfResidenceCredential",
 		},
 	}
-	request := CreateAuthorizationV2RequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
 	userID := "did:iden3:polygon:mumbai:x3vgBmSWMecbkxFAvT8waWejmCLmzHcrG56sXbAhB"
@@ -294,7 +294,7 @@ func TestVerifier_FullVerify_V2(t *testing.T) {
 			Type:    "KYCCountryOfResidenceCredential",
 		},
 	}
-	request := CreateAuthorizationV2RequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 	request.ID = "28494007-9c49-4f1a-9694-7700c08865bf"
 	request.ThreadID = "ee92ab12-2671-457e-aa5e-8158c205a985" // because it's used in the response
@@ -327,7 +327,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 		},
 	}
 
-	authReq := CreateAuthorizationV2RequestWithMessage(reason, "test", verifierID, callbackURL)
+	authReq := CreateAuthorizationRequestWithMessage(reason, "test", verifierID, callbackURL)
 	authReq.Body.Scope = append(authReq.Body.Scope, zkReq)
 	authReq.ID = "28494007-9c49-4f1a-9694-7700c08865bf"
 	authReq.ThreadID = "7f38a193-0918-4a48-9fac-36adfdb8b542"
@@ -468,7 +468,7 @@ func TestCreateAuthorizationV2Request(t *testing.T) {
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 
-	request := CreateAuthorizationV2Request(reason, sender, callbackURL)
+	request := CreateAuthorizationRequest(reason, sender, callbackURL)
 	assert.Len(t, request.Body.Scope, 0)
 	assert.Equal(t, callbackURL, request.Body.CallbackURL)
 	assert.Equal(t, sender, request.From)
@@ -483,7 +483,7 @@ func TestCreateAuthorizationV2RequestWithMessage(t *testing.T) {
 	reason := "basic authentication"
 	message := "message"
 
-	request := CreateAuthorizationV2RequestWithMessage(reason, message, sender, callbackURL)
+	request := CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL)
 	assert.Len(t, request.Body.Scope, 0)
 	assert.Equal(t, callbackURL, request.Body.CallbackURL)
 	assert.Equal(t, sender, request.From)
