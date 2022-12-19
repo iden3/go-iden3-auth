@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
-	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/iden3/go-rapidsnark/types"
 	"github.com/iden3/iden3comm/packers"
@@ -105,21 +104,19 @@ func TestVerifyMessageWithMTPProof_V2(t *testing.T) {
 	opt := true
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Query: map[string]interface{}{
-				"countryCode": map[string]interface{}{
-					"$nin": []int{
-						840,
-						120,
-						340,
-						509,
-					},
+		"allowedIssuers": []string{"*"},
+		"query": map[string]interface{}{
+			"countryCode": map[string]interface{}{
+				"$nin": []int{
+					840,
+					120,
+					340,
+					509,
 				},
 			},
-			Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-			Type:    "KYCCountryOfResidenceCredential",
 		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":    "KYCCountryOfResidenceCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
@@ -278,21 +275,19 @@ func TestVerifier_FullVerify_V2(t *testing.T) {
 	opt := true
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Query: map[string]interface{}{
-				"countryCode": map[string]interface{}{
-					"$nin": []int{
-						840,
-						120,
-						340,
-						509,
-					},
+		"allowedIssuers": []string{"*"},
+		"query": map[string]interface{}{
+			"countryCode": map[string]interface{}{
+				"$nin": []int{
+					840,
+					120,
+					340,
+					509,
 				},
 			},
-			Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-			Type:    "KYCCountryOfResidenceCredential",
 		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":    "KYCCountryOfResidenceCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
@@ -320,11 +315,9 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	opt := true
 	zkReq.Optional = &opt
 	zkReq.Query = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-			Type:           "KYCCountryOfResidenceCredential",
-		},
+		"allowedIssuers": []string{"*"},
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":           "KYCCountryOfResidenceCredential",
 	}
 
 	authReq := CreateAuthorizationRequestWithMessage(reason, "test", verifierID, callbackURL)

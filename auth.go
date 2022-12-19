@@ -92,7 +92,7 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 		}
 
 		// prepare query from request
-		queryBytes, err := json.Marshal(proofRequest.Query["query"])
+		queryBytes, err := json.Marshal(proofRequest.Query)
 		if err != nil {
 			return err
 		}
