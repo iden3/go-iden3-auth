@@ -6,14 +6,13 @@ require (
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.2.0
-	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221203140910-328bdf7a88ac
+	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221219124112-49e05babe6a8
 	github.com/iden3/go-iden3-core v0.1.1-0.20221219095955-92aedd7d12fa
 	github.com/iden3/go-jwz v0.1.4-0.20221129141428-312a907ea598
-	github.com/iden3/go-merkletree-sql v1.0.1
 	github.com/iden3/go-rapidsnark/types v0.0.2
 	github.com/iden3/go-rapidsnark/verifier v0.0.4-0.20221129112904-b9f8680ca8e2
 	github.com/iden3/go-schema-processor v0.2.1-0.20221202150832-91826307609c
-	github.com/iden3/iden3comm v0.1.3-0.20221203142631-492b526f62e0
+	github.com/iden3/iden3comm v0.1.3-0.20221219195853-695a902bcacd
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.4
 )

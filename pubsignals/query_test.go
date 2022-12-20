@@ -109,9 +109,10 @@ func TestCheckRequest_Success(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:  5,
-				Value:     []*big.Int{big.NewInt(800)},
-				Merklized: 1,
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(800)},
+				Merklized:           1,
+				IsRevocationChecked: 1,
 			},
 		},
 	}
@@ -258,12 +259,13 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 			},
 			pubSig: &AtomicPubSignals{
-				IssuerID:     &issuerID,
-				ClaimSchema:  coreSchema,
-				ClaimPathKey: big.NewInt(0),
-				Operator:     5,
-				Value:        []*big.Int{big.NewInt(20)},
-				Merklized:    1,
+				IssuerID:            &issuerID,
+				ClaimSchema:         coreSchema,
+				ClaimPathKey:        big.NewInt(0),
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(20)},
+				Merklized:           1,
+				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("proof was generated for another path"),
 		},
@@ -280,12 +282,13 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 			},
 			pubSig: &AtomicPubSignals{
-				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
-				Operator:    5,
-				Value:       []*big.Int{big.NewInt(20)},
-				Merklized:   0,
-				SlotIndex:   0,
+				IssuerID:            &issuerID,
+				ClaimSchema:         coreSchema,
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(20)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("different slot index for claim"),
 		},
@@ -294,7 +297,7 @@ func TestCheckRequest_Error(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig)
-			require.EqualError(t, tt.expErr, err.Error())
+			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
 }

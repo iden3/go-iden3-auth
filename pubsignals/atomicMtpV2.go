@@ -20,16 +20,17 @@ type AtomicQueryMTPV2 struct {
 // VerifyQuery checks whether the proof matches the query.
 func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 	return query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
-		IssuerID:           c.IssuerID,
-		ClaimSchema:        c.ClaimSchema,
-		SlotIndex:          c.SlotIndex,
-		Operator:           c.Operator,
-		Value:              c.Value,
-		Timestamp:          c.Timestamp,
-		Merklized:          c.Merklized,
-		ClaimPathKey:       c.ClaimPathKey,
-		ClaimPathNotExists: c.ClaimPathNotExists,
-		ValueArraySize:     c.ValueArraySize,
+		IssuerID:            c.IssuerID,
+		ClaimSchema:         c.ClaimSchema,
+		SlotIndex:           c.SlotIndex,
+		Operator:            c.Operator,
+		Value:               c.Value,
+		Timestamp:           c.Timestamp,
+		Merklized:           c.Merklized,
+		ClaimPathKey:        c.ClaimPathKey,
+		ClaimPathNotExists:  c.ClaimPathNotExists,
+		ValueArraySize:      c.ValueArraySize,
+		IsRevocationChecked: c.IsRevocationChecked,
 	})
 }
 
@@ -43,6 +44,10 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolver State
 		return ErrIssuerClaimStateIsNotValid
 	}
 
+	// if IsRevocationChecked is set to true. Skip validation revocation status of issuer.
+	if c.IsRevocationChecked == 1 {
+		return nil
+	}
 	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
 	if err != nil {
 		return err

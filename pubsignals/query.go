@@ -41,16 +41,17 @@ type Query struct {
 
 // AtomicPubSignals pub signals from circuit.
 type AtomicPubSignals struct {
-	IssuerID           *core.ID
-	ClaimSchema        core.SchemaHash
-	SlotIndex          int
-	Operator           int
-	Value              []*big.Int
-	Timestamp          int64
-	Merklized          int
-	ClaimPathKey       *big.Int
-	ClaimPathNotExists int
-	ValueArraySize     int
+	IssuerID            *core.ID
+	ClaimSchema         core.SchemaHash
+	SlotIndex           int
+	Operator            int
+	Value               []*big.Int
+	Timestamp           int64
+	Merklized           int
+	ClaimPathKey        *big.Int
+	ClaimPathNotExists  int
+	ValueArraySize      int
+	IsRevocationChecked int
 }
 
 // CheckRequest checks if proof was created for this request.
@@ -85,22 +86,22 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Atomic
 		return err
 	}
 
-	path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
-	if err != nil {
-		return err
-	}
-
-	err = path.Prepend(PathToSubjectType)
-	if err != nil {
-		return err
-	}
-
-	mkPath, err := path.MtEntry()
-	if err != nil {
-		return err
-	}
-
 	if pubSig.Merklized == 1 {
+		path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
+		if err != nil {
+			return err
+		}
+
+		err = path.Prepend(PathToSubjectType)
+		if err != nil {
+			return err
+		}
+
+		mkPath, err := path.MtEntry()
+		if err != nil {
+			return err
+		}
+
 		if mkPath.Cmp(pubSig.ClaimPathKey) != 0 {
 			return errors.New("proof was generated for another path")
 		}

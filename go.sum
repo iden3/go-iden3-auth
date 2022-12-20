@@ -78,6 +78,8 @@ github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpO
 github.com/huin/goupnp v1.0.3 h1:N8No57ls+MnjlB+JPiCVSOyy/ot7MJTqlo7rn+NYSqQ=
 github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221203140910-328bdf7a88ac h1:yoyputXNOC2odWw4TF1WjW0QYEsna16/M57QNQB+wTU=
 github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221203140910-328bdf7a88ac/go.mod h1:HumsT0kT+Iz9rXmWxFYM6V4FqUuUD0QaGnVabnbiL9Q=
+github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221219124112-49e05babe6a8 h1:+JlwKXBhQvqxzBa2GfRzJV8iJqiqRtmtp58KiT/h8XY=
+github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221219124112-49e05babe6a8/go.mod h1:Uc5hMA+/pqxGvPcA6RL8jY7pWEw1sqBBxtgCpZJvtTU=
 github.com/iden3/go-iden3-core v0.1.1-0.20221203134456-9d507559870d h1:wXX6FMzXnXumWNki9f7GLqLIQhgAgT2DsZHBFZotCJQ=
 github.com/iden3/go-iden3-core v0.1.1-0.20221203134456-9d507559870d/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-core v0.1.1-0.20221219095955-92aedd7d12fa h1:HtGAdPK6EhvYQMgrrazfVQ7lHayNwl/foRY7wQY3aic=
@@ -102,6 +104,8 @@ github.com/iden3/go-schema-processor v0.2.1-0.20221202150832-91826307609c h1:iY4
 github.com/iden3/go-schema-processor v0.2.1-0.20221202150832-91826307609c/go.mod h1:3dht3ZDhW+OU2Ru1RjwCAqiGEkazw9IuhPhjRDr8B1Q=
 github.com/iden3/iden3comm v0.1.3-0.20221203142631-492b526f62e0 h1:TlP/sv7Ocp6zBwtl0XtgsUwWCJITVg8qxAEsLu/XH0s=
 github.com/iden3/iden3comm v0.1.3-0.20221203142631-492b526f62e0/go.mod h1:1kyQLlO4ktAh1Gnx9A/vU+uZxy+MdJwogJZS5HIs7M0=
+github.com/iden3/iden3comm v0.1.3-0.20221219195853-695a902bcacd h1:VxORCzCe7l1m+vPu/dGNZ2ecWRUL9AWxEDNc1jCgzwY=
+github.com/iden3/iden3comm v0.1.3-0.20221219195853-695a902bcacd/go.mod h1:1kyQLlO4ktAh1Gnx9A/vU+uZxy+MdJwogJZS5HIs7M0=
 github.com/ipfs/go-cid v0.0.7 h1:ysQJVJA3fNDF1qigJbsSQOdjhVLsOEoPdh0+R97k3jY=
 github.com/ipfs/go-cid v0.0.7/go.mod h1:6Ux9z5e+HpkQdckYoX1PG/6xqKspzlEIR5SDmgqgC/I=
 github.com/ipfs/go-ipfs-api v0.3.0 h1:ZzVrsTV31Z53ZlUare6a5UJ46lC7lW93q/s1/fXyATk=

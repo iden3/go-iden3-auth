@@ -11,24 +11,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AtomicQueryV2Sig is a wrapper for circuits.AtomicQuerySigV2PubSignals.
-type AtomicQueryV2Sig struct {
+// AtomicQuerySigV2 is a wrapper for circuits.AtomicQuerySigV2PubSignals.
+type AtomicQuerySigV2 struct {
 	circuits.AtomicQuerySigV2PubSignals
 }
 
 // VerifyQuery verifies query for atomic query mtp circuit.
-func (c *AtomicQueryV2Sig) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
+func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
 	err := query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
-		IssuerID:           c.IssuerID,
-		ClaimSchema:        c.ClaimSchema,
-		SlotIndex:          c.SlotIndex,
-		Operator:           c.Operator,
-		Value:              c.Value,
-		Timestamp:          c.Timestamp,
-		Merklized:          c.Merklized,
-		ClaimPathKey:       c.ClaimPathKey,
-		ClaimPathNotExists: c.ClaimPathNotExists,
-		ValueArraySize:     c.ValueArraySize,
+		IssuerID:            c.IssuerID,
+		ClaimSchema:         c.ClaimSchema,
+		SlotIndex:           c.SlotIndex,
+		Operator:            c.Operator,
+		Value:               c.Value,
+		Timestamp:           c.Timestamp,
+		Merklized:           c.Merklized,
+		ClaimPathKey:        c.ClaimPathKey,
+		ClaimPathNotExists:  c.ClaimPathNotExists,
+		ValueArraySize:      c.ValueArraySize,
+		IsRevocationChecked: c.IsRevocationChecked,
 	})
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func (c *AtomicQueryV2Sig) VerifyQuery(ctx context.Context, query Query, schemaL
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
+func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
 	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
 		return err
@@ -46,6 +47,10 @@ func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver State
 		return ErrIssuerClaimStateIsNotValid
 	}
 
+	// if IsRevocationChecked is set to true. Skip validation revocation status of issuer.
+	if c.IsRevocationChecked == 1 {
+		return nil
+	}
 	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
 	if err != nil {
 		return err
@@ -58,7 +63,7 @@ func (c *AtomicQueryV2Sig) VerifyStates(ctx context.Context, stateResolver State
 }
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
-func (c *AtomicQueryV2Sig) VerifyIDOwnership(sender string, requestID *big.Int) error {
+func (c *AtomicQuerySigV2) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")
 	}
