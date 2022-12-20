@@ -44,8 +44,8 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolver State
 		return ErrIssuerClaimStateIsNotValid
 	}
 
-	// if IsRevocationChecked is set to true. Skip validation revocation status of issuer.
-	if c.IsRevocationChecked == 1 {
+	// if IsRevocationChecked is set to 0. Skip validation revocation status of issuer.
+	if c.IsRevocationChecked == 0 {
 		return nil
 	}
 	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
