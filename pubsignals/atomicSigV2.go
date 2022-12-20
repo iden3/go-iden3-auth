@@ -47,7 +47,7 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolver State
 		return ErrIssuerClaimStateIsNotValid
 	}
 
-	// if IsRevocationChecked is set to true. Skip validation revocation status of issuer.
+	// if IsRevocationChecked is set to 0. Skip validation revocation status of issuer.
 	if c.IsRevocationChecked == 0 {
 		return nil
 	}
