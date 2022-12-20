@@ -410,7 +410,7 @@ func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestVerifier_VerifyJWZ_V2(t *testing.T) {
+func TestVerifier_VerifyJWZ(t *testing.T) {
 
 	token := ` eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aFYyIiwiY3JpdCI6WyJjaXJjdWl0SWQiXSwidHlwIjoiSldaIn0.bXltZXNzYWdl.eyJwcm9vZiI6eyJwaV9hIjpbIjE2NzY1Mjg4NjY0MTkyNjg4MDU1MTMyMTY2Mjg0OTg0NjE0ODg0MTIzNTg0NTE0NTI0MTU4NzE4MDYxOTYxNjE3OTk2NjUwMzc1NTc0IiwiMTUxMzAxNzA3OTM1MjEzNTM1MzM2NzUyOTg1NTk3OTA3NTU0ODM5MjU4NzExNDY5NTkwMjgzODk5NzQ0MTg1NjEzNjY2NDI3NzA2MjIiLCIxIl0sInBpX2IiOltbIjExOTg5NzQ5NDM1NzA3MzEzNjU4MjUyNzA4OTcyODc1NTgzNzA3OTg1NjQ5NjA4MjM0NDIyOTQ4NzI5MDQ4NDY3NzI0Mjk4NzI5NTI4IiwiMTg3NTYxNTM4OTI1Njc1OTY2NDgwNjY4NzA2Njk3NTg1NTcwMjYxOTE5NjgyNzEwNDI5MTA1NDUwODUwNTg2NzUwOTA1NzEwMTQ0NiJdLFsiOTE4NTY4MjMzNTc4NDgxNTU4NjQ0NTQ5MjMwNzMyNzcyMDM5MzcxNTY2NDMzNTcwMzM2NzE3NDMzMzU4NjU1NjAwNDk0MTE2MjE4NiIsIjE2NDIyNzM3Njc3MzA1MTkyNTc5MDY2ODIwMTgzOTU5MjYxMTc5NDA4Nzc2ODQ2MjcxNjE5MTI5MTMxOTYwNzk0MTI4MDU5NjkxNTI5Il0sWyIxIiwiMCJdXSwicGlfYyI6WyI3OTc3NjIyODQwODYwNzE0NjQwMTE3OTQ0NjU5ODE2Mzk2ODgwODkyMjU4NTIzNjgwMzk2NDE0ODI2Mjc2NDk2NjM1NTIyNTUxNTUzIiwiMjExNTUwNjE3Njk1MDIwMjg5OTEyNzM0NjQyMzgwNjg2MjEwNDc1NTQzMDg4NzkwODc3OTEzMDk0NzU1ODY2NTE0ODIxMDI4NjA5NDIiLCIxIl0sInByb3RvY29sIjoiZ3JvdGgxNiJ9LCJwdWJfc2lnbmFscyI6WyIyNjEwOTQwNDcwMDY5NjI4MzE1NDk5ODY1NDUxMjExNzk1MjQyMDUwMzY3NTQ3MTA5NzM5MjYxODc2MjIyMTU0NjU2NTE0MDQ4MSIsIjYxMTA1MTc3NjgyNDk1NTkyMzgxOTM0Nzc0MzU0NTQ3OTIwMjQ3MzIxNzM4NjU0ODg5MDAyNzA4NDk2MjQzMjg2NTA3NjU2OTE0OTQiLCIxMTA5ODkzOTgyMTc2NDU2ODEzMTA4NzY0NTQzMTI5NjUyODkwNzI3NzI1MzcwOTkzNjQ0MzAyOTM3OTU4NzQ3NTgyMTc1OTI1OTQwNiJdfQ `
 
@@ -420,7 +420,7 @@ func TestVerifier_VerifyJWZ_V2(t *testing.T) {
 	require.Equal(t, parsedToken.Alg, "groth16")
 }
 
-func TestVerifier_FullVerify_V2(t *testing.T) {
+func TestVerifier_FullVerify(t *testing.T) {
 	// request
 	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
@@ -613,7 +613,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCreateAuthorizationV2Request(t *testing.T) {
+func TestCreateAuthorizationRequest(t *testing.T) {
 
 	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
@@ -627,7 +627,7 @@ func TestCreateAuthorizationV2Request(t *testing.T) {
 
 }
 
-func TestCreateAuthorizationV2RequestWithMessage(t *testing.T) {
+func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 
 	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
