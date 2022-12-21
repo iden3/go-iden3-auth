@@ -33,7 +33,7 @@ var (
 // Query represents structure for query to atomic circuit.
 type Query struct {
 	AllowedIssuers []string               `json:"allowedIssuers"`
-	Query          map[string]interface{} `json:"query,omitempty"`
+	Req            map[string]interface{} `json:"req,omitempty"`
 	Context        string                 `json:"context"`
 	Type           string                 `json:"type"`
 	ClaimID        string                 `json:"claimId,omitempty"`
@@ -77,11 +77,11 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 }
 
 func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
-	if len(q.Query) == 0 {
+	if len(q.Req) == 0 {
 		return nil
 	}
 
-	fieldName, _, err := extractQueryFields(q.Query)
+	fieldName, _, err := extractQueryFields(q.Req)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
 }
 
 func (q Query) verifyQuery(pubSig *AtomicPubSignals) error {
-	_, predicate, err := extractQueryFields(q.Query)
+	_, predicate, err := extractQueryFields(q.Req)
 	if err != nil {
 		return err
 	}

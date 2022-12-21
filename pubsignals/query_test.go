@@ -94,7 +94,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			name: "Check merkalized query",
 			query: Query{
 				AllowedIssuers: []string{"*"},
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$nin": []interface{}{float64(800)},
 					},
@@ -161,7 +161,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"req1": struct{}{},
 					"req2": struct{}{},
 				},
@@ -178,7 +178,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"req1": 1,
 				},
 			},
@@ -194,7 +194,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$eq":  20,
 						"$nin": 21,
@@ -213,7 +213,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$eq": []interface{}{float64(20)},
 					},
@@ -232,7 +232,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"countyCode": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
@@ -252,7 +252,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"documentType": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
@@ -275,7 +275,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				AllowedIssuers: []string{issuerID.String()},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
-				Query: map[string]interface{}{
+				Req: map[string]interface{}{
 					"countryCode": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
