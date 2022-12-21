@@ -21,16 +21,39 @@ import (
 	"github.com/pkg/errors"
 )
 
+// WithAcceptedStateTransitionDelay set time out for revocation.
+func WithAcceptedStateTransitionDelay(timeout time.Duration) func(v *Verifier) {
+	return func(v *Verifier) {
+		v.acceptedStateTransitionDelay = timeout
+	}
+}
+
 // Verifier is a struct for auth instance
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	claimSchemaLoader     loaders.SchemaLoader
-	stateResolver         pubsignals.StateResolver
+	stateResolver         map[string]pubsignals.StateResolver
+
+	acceptedStateTransitionDelay time.Duration
 }
 
 // NewVerifier returns setup instance of auth library
-func NewVerifier(keyLoader loaders.VerificationKeyLoader, claimSchemaLoader loaders.SchemaLoader, resolver pubsignals.StateResolver) *Verifier {
-	return &Verifier{verificationKeyLoader: keyLoader, claimSchemaLoader: claimSchemaLoader, stateResolver: resolver}
+func NewVerifier(
+	keyLoader loaders.VerificationKeyLoader,
+	claimSchemaLoader loaders.SchemaLoader,
+	resolver map[string]pubsignals.StateResolver,
+	opts ...func(*Verifier)) *Verifier {
+
+	v := &Verifier{
+		verificationKeyLoader:        keyLoader,
+		claimSchemaLoader:            claimSchemaLoader,
+		stateResolver:                resolver,
+		acceptedStateTransitionDelay: time.Hour,
+	}
+	for _, o := range opts {
+		o(v)
+	}
+	return v
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -115,7 +138,9 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return err
 		}
 
-		err = cv.VerifyStates(ctx, v.stateResolver)
+		err = cv.VerifyStates(ctx, v.stateResolver, pubsignals.VerifyOpts{
+			AcceptedStateTransitionDelay: v.acceptedStateTransitionDelay,
+		})
 		if err != nil {
 			return err
 		}
@@ -149,12 +174,14 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 		return nil, err
 	}
 
-	err = circuitVerifier.VerifyStates(ctx, v.stateResolver)
+	err = circuitVerifier.VerifyStates(ctx, v.stateResolver, pubsignals.VerifyOpts{
+		AcceptedStateTransitionDelay: v.acceptedStateTransitionDelay,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return
+	return t, err
 }
 
 // FullVerify performs verification of jwz token and auth request

@@ -84,6 +84,8 @@ github.com/iden3/go-iden3-core v0.1.1-0.20221203134456-9d507559870d h1:wXX6FMzXn
 github.com/iden3/go-iden3-core v0.1.1-0.20221203134456-9d507559870d/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-core v0.1.1-0.20221219095955-92aedd7d12fa h1:HtGAdPK6EhvYQMgrrazfVQ7lHayNwl/foRY7wQY3aic=
 github.com/iden3/go-iden3-core v0.1.1-0.20221219095955-92aedd7d12fa/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
+github.com/iden3/go-iden3-core v0.1.1-0.20221220095125-4b274af11521 h1:eYYlV1kL1XzHMmDhkSc/zc+V/IvhsEb8iFHVl+IvpAA=
+github.com/iden3/go-iden3-core v0.1.1-0.20221220095125-4b274af11521/go.mod h1:wJtcMK/bSazyW/JrQaRrbpUMgSMg79Pke3xgtfPxDnQ=
 github.com/iden3/go-iden3-crypto v0.0.13 h1:ixWRiaqDULNyIDdOWz2QQJG5t4PpNHkQk2P6GV94cok=
 github.com/iden3/go-iden3-crypto v0.0.13/go.mod h1:swXIv0HFbJKobbQBtsB50G7IHr6PbTowutSew/iBEoo=
 github.com/iden3/go-jwz v0.1.4-0.20221129141428-312a907ea598 h1:JQjs0cgifSub4SgbfPA7XE1o1svJpDpa06nd2YNoHgY=

@@ -18,7 +18,7 @@ type StateResolver interface {
 // Verifier is interface for verification of public signals of zkp
 type Verifier interface {
 	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error
-	VerifyStates(ctx context.Context, resolver StateResolver) error
+	VerifyStates(ctx context.Context, resolvers map[string]StateResolver, opts VerifyOpts) error
 	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 
 	circuits.PubSignalsUnmarshaller

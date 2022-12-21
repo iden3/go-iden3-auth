@@ -32,15 +32,16 @@ var (
 
 // Query represents structure for query to atomic circuit.
 type Query struct {
-	AllowedIssuers []string               `json:"allowedIssuers"`
-	Req            map[string]interface{} `json:"req,omitempty"`
-	Context        string                 `json:"context"`
-	Type           string                 `json:"type"`
-	ClaimID        string                 `json:"claimId,omitempty"`
+	AllowedIssuers           []string               `json:"allowedIssuers"`
+	Req                      map[string]interface{} `json:"req,omitempty"`
+	Context                  string                 `json:"context"`
+	Type                     string                 `json:"type"`
+	ClaimID                  string                 `json:"claimId,omitempty"`
+	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
 }
 
-// AtomicPubSignals pub signals from circuit.
-type AtomicPubSignals struct {
+// CircuitOutputs pub signals from circuit.
+type CircuitOutputs struct {
 	IssuerID            *core.ID
 	ClaimSchema         core.SchemaHash
 	SlotIndex           int
@@ -55,7 +56,7 @@ type AtomicPubSignals struct {
 }
 
 // CheckRequest checks if proof was created for this request.
-func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *AtomicPubSignals) error {
+func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *CircuitOutputs) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
 		return err
 	}
@@ -68,6 +69,10 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 		return err
 	}
 
+	if !q.SkipClaimRevocationCheck && pubSig.IsRevocationChecked == 0 {
+		return errors.New("check revocation is required")
+	}
+
 	schemaBytes, _, err := loader.Load(ctx, q.Context)
 	if err != nil {
 		return fmt.Errorf("failed load schema by context: %w", err)
@@ -76,7 +81,7 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 	return q.verifyClaim(ctx, schemaBytes, pubSig)
 }
 
-func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *AtomicPubSignals) error {
+func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
 	if len(q.Req) == 0 {
 		return nil
 	}
@@ -120,7 +125,7 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Atomic
 	return nil
 }
 
-func (q Query) verifyIssuer(pubSig *AtomicPubSignals) error {
+func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 	for _, issuer := range q.AllowedIssuers {
 		if issuer == "*" || issuer == pubSig.IssuerID.String() {
 			return nil
@@ -129,7 +134,7 @@ func (q Query) verifyIssuer(pubSig *AtomicPubSignals) error {
 	return ErrUnavailableIssuer
 }
 
-func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
+func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
 	schemaID := fmt.Sprintf("%s#%s", q.Context, q.Type)
 	querySchema := utils.CreateSchemaHash([]byte(schemaID))
 	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
@@ -138,7 +143,7 @@ func (q Query) verifySchemaID(pubSig *AtomicPubSignals) error {
 	return ErrSchemaID
 }
 
-func (q Query) verifyQuery(pubSig *AtomicPubSignals) error {
+func (q Query) verifyQuery(pubSig *CircuitOutputs) error {
 	_, predicate, err := extractQueryFields(q.Req)
 	if err != nil {
 		return err

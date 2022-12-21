@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -18,7 +19,7 @@ type AtomicQuerySigV2 struct {
 
 // VerifyQuery verifies query for atomic query mtp circuit.
 func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
-	err := query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
+	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,
@@ -38,8 +39,17 @@ func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaL
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
-	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
+func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
+	if err != nil {
+		return err
+	}
+	resolver, ok := stateResolvers[fmt.Sprintf("%s:%s", issuerDID.Blockchain, issuerDID.NetworkID)]
+	if !ok {
+		return errors.Errorf("%s resolver not found", resolver)
+	}
+
+	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
 	if err != nil {
 		return err
 	}
@@ -51,11 +61,13 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolver State
 	if c.IsRevocationChecked == 0 {
 		return nil
 	}
-	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
+	issuerNonRevStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
 	if err != nil {
 		return err
 	}
-	if !issuerNonRevStateResolved.Latest && time.Since(time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0)) > time.Hour {
+	if !issuerNonRevStateResolved.Latest && time.Since(
+		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
+	) > opts.AcceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 

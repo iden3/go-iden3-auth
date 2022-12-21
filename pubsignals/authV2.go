@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -21,9 +22,18 @@ func (c *AuthV2) VerifyQuery(_ context.Context, _ Query, _ loaders.SchemaLoader)
 }
 
 // VerifyStates verify AuthV2 tests.
-func (c *AuthV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
+func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+	userDID, err := core.ParseDIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+	chainInfo := fmt.Sprintf("%s:%s", userDID.Blockchain, userDID.NetworkID)
+	resolver, ok := stateResolvers[chainInfo]
+	if !ok {
+		return errors.Errorf("%s resolver not found", chainInfo)
+	}
 
-	resolvedState, err := stateResolver.ResolveGlobalRoot(ctx, c.GlobalRoot.BigInt())
+	resolvedState, err := resolver.ResolveGlobalRoot(ctx, c.GlobalRoot.BigInt())
 	if err != nil {
 		return err
 	}

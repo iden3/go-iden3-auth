@@ -2,7 +2,6 @@ package pubsignals
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -10,7 +9,13 @@ import (
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
+	"github.com/pkg/errors"
 )
+
+// VerifyOpts verifiers options.
+type VerifyOpts struct {
+	AcceptedStateTransitionDelay time.Duration
+}
 
 // AtomicQueryMTPV2 is a wrapper for circuits.AtomicQueryMTPV2PubSignals.
 type AtomicQueryMTPV2 struct {
@@ -19,7 +24,7 @@ type AtomicQueryMTPV2 struct {
 
 // VerifyQuery checks whether the proof matches the query.
 func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
-	return query.CheckRequest(ctx, schemaLoader, &AtomicPubSignals{
+	return query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,
@@ -35,25 +40,35 @@ func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaL
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.
-func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolver StateResolver) error {
-	issuerStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
+func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
+	if err != nil {
+		return err
+	}
+	resolver, ok := stateResolvers[fmt.Sprintf("%s:%s", issuerDID.Blockchain, issuerDID.NetworkID)]
+	if !ok {
+		return errors.Errorf("%s resolver not found", resolver)
+	}
+
+	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
 	if err != nil {
 		return err
 	}
 	if issuerStateResolved == nil {
 		return ErrIssuerClaimStateIsNotValid
 	}
-
 	// if IsRevocationChecked is set to 0. Skip validation revocation status of issuer.
 	if c.IsRevocationChecked == 0 {
 		return nil
 	}
-	issuerNonRevStateResolved, err := stateResolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
+	issuerNonRevStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
 	if err != nil {
 		return err
 	}
 
-	if !issuerNonRevStateResolved.Latest && time.Since(time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0)) > time.Hour {
+	if !issuerNonRevStateResolved.Latest && time.Since(
+		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
+	) > opts.AcceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 

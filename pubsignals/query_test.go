@@ -88,7 +88,7 @@ func TestCheckRequest_Success(t *testing.T) {
 	tests := []struct {
 		name   string
 		query  Query
-		pubSig *AtomicPubSignals
+		pubSig *CircuitOutputs
 	}{
 		{
 			name: "Check merkalized query",
@@ -102,7 +102,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 				ClaimPathKey: func() *big.Int {
@@ -129,7 +129,7 @@ func TestCheckRequest_Error(t *testing.T) {
 	tests := []struct {
 		name   string
 		query  Query
-		pubSig *AtomicPubSignals
+		pubSig *CircuitOutputs
 		expErr error
 	}{
 		{
@@ -137,7 +137,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			query: Query{
 				AllowedIssuers: []string{"123"},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID: &issuerID,
 			},
 			expErr: ErrUnavailableIssuer,
@@ -149,7 +149,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCAgeCredential",
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 			},
@@ -166,7 +166,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					"req2": struct{}{},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 			},
@@ -182,7 +182,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					"req1": 1,
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 			},
@@ -201,7 +201,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 			},
@@ -219,7 +219,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 				Operator:    3,
@@ -238,7 +238,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
 				Operator:    5,
@@ -258,7 +258,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         coreSchema,
 				ClaimPathKey:        big.NewInt(0),
@@ -281,7 +281,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &AtomicPubSignals{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         coreSchema,
 				Operator:            5,
