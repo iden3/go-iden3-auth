@@ -292,6 +292,30 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			expErr: errors.New("different slot index for claim"),
 		},
+		{
+			name: "Check revocation is required",
+			query: Query{
+				AllowedIssuers: []string{issuerID.String()},
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:           "KYCCountryOfResidenceCredential",
+				Req: map[string]interface{}{
+					"countryCode": map[string]interface{}{
+						"$nin": []interface{}{float64(20)},
+					},
+				},
+				SkipClaimRevocationCheck: false,
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:            &issuerID,
+				ClaimSchema:         coreSchema,
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(20)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 0,
+			},
+			expErr: errors.New("check revocation is required"),
+		},
 	}
 
 	for _, tt := range tests {
