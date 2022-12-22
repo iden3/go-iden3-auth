@@ -30,14 +30,14 @@ type ExtendedVerificationsOptions struct {
 //go:generate mockgen -destination=mock/StateGetterMock.go . StateGetter
 //nolint:revive // we have two different getters for the state in one pkg
 type StateGetter interface {
-	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (StateInfo, error)
+	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (StateV2StateInfo, error)
 }
 
 // GISTGetter return global state info by state
 //
 //go:generate mockgen -destination=mock/GISTGetterMock.go . GISTGetter
 type GISTGetter interface {
-	GetGISTRootInfo(opts *bind.CallOpts, state *big.Int) (RootInfo, error)
+	GetGISTRootInfo(opts *bind.CallOpts, state *big.Int) (SmtRootInfo, error)
 }
 
 // ResolvedState can be the state verification result
@@ -97,13 +97,11 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 // state is bigint string representation of global root
 func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (*ResolvedState, error) {
 	globalStateInfo, err := getter.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, state)
+	err = expectedError(err)
 	if err != nil {
 		return nil, err
 	}
 
-	if globalStateInfo.CreatedAtTimestamp.Cmp(zero) == 0 {
-		return nil, errors.New("gist state not registered in the smart contract")
-	}
 	if globalStateInfo.Root.Cmp(state) != 0 {
 		return nil, errors.New("gist info contains invalid state")
 	}
@@ -122,6 +120,19 @@ func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (
 		Latest:              true,
 		TransitionTimestamp: 0,
 	}, nil
+}
+
+func expectedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	//nolint: gocritic // template for future expansion
+	switch err.Error() {
+	case "execution reverted: Root does not exist":
+		err = errors.New("gist state doesn't exist on smart contract")
+	}
+	return err
 }
 
 // CheckGenesisStateID check if the state is genesis for the id.

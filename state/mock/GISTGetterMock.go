@@ -37,10 +37,10 @@ func (m *MockGISTGetter) EXPECT() *MockGISTGetterMockRecorder {
 }
 
 // GetGISTRootInfo mocks base method.
-func (m *MockGISTGetter) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (state.RootInfo, error) {
+func (m *MockGISTGetter) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (state.SmtRootInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGISTRootInfo", arg0, arg1)
-	ret0, _ := ret[0].(state.RootInfo)
+	ret0, _ := ret[0].(state.SmtRootInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

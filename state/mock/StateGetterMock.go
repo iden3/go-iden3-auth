@@ -37,10 +37,10 @@ func (m *MockStateGetter) EXPECT() *MockStateGetterMockRecorder {
 }
 
 // GetStateInfoById mocks base method.
-func (m *MockStateGetter) GetStateInfoById(arg0 *bind.CallOpts, arg1 *big.Int) (state.StateInfo, error) {
+func (m *MockStateGetter) GetStateInfoById(arg0 *bind.CallOpts, arg1 *big.Int) (state.StateV2StateInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStateInfoById", arg0, arg1)
-	ret0, _ := ret[0].(state.StateInfo)
+	ret0, _ := ret[0].(state.StateV2StateInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

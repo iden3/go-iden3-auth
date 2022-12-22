@@ -33,7 +33,7 @@ func TestResolve_Success(t *testing.T) {
 		{
 			name: "verify genesis state for user",
 			contractResponse: func(m *mock.MockStateGetter) {
-				res := state.StateInfo{
+				res := state.StateV2StateInfo{
 					State: big.NewInt(0),
 				}
 				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(res, nil)
@@ -50,7 +50,7 @@ func TestResolve_Success(t *testing.T) {
 		{
 			name: "local state is latest state",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					Id:    userID,
 					State: userFirstState,
 				}
@@ -67,7 +67,7 @@ func TestResolve_Success(t *testing.T) {
 		{
 			name: "latest state exists on blockchain",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					Id:                  userID,
 					State:               userSecondState,
 					ReplacedAtTimestamp: big.NewInt(1000),
@@ -110,7 +110,7 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "state is not genesis and not registered in the smart contract",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					State: big.NewInt(0),
 				}
 				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
@@ -122,7 +122,7 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "state not found in contract",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					Id:    userID,
 					State: big.NewInt(0),
 				}
@@ -135,7 +135,7 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "state info in contract contains invalid id",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					Id:    userFirstState, // use like invalid user ID.
 					State: userSecondState,
 				}
@@ -148,7 +148,7 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "unknown transition time from smart contract",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateInfo{
+				contractResponse := state.StateV2StateInfo{
 					Id:                  userID, // use like invalid user ID.
 					State:               userSecondState,
 					ReplacedAtTimestamp: big.NewInt(0),
@@ -187,7 +187,7 @@ func TestResolveGlobalRoot_Success(t *testing.T) {
 		{
 			name: "Last state has not been replaced",
 			contractResponse: func(m *mock.MockGISTGetter) {
-				ri := state.RootInfo{
+				ri := state.SmtRootInfo{
 					Root:               userFirstState,
 					CreatedAtTimestamp: big.NewInt(1),
 					ReplacedByRoot:     big.NewInt(0),
@@ -204,7 +204,7 @@ func TestResolveGlobalRoot_Success(t *testing.T) {
 		{
 			name: "Last state has been replaced",
 			contractResponse: func(m *mock.MockGISTGetter) {
-				ri := state.RootInfo{
+				ri := state.SmtRootInfo{
 					Root:                userFirstState,
 					CreatedAtTimestamp:  big.NewInt(3),
 					ReplacedByRoot:      big.NewInt(2),
@@ -248,26 +248,24 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 			name: "Contract call return an error",
 			contractResponse: func(m *mock.MockGISTGetter) {
 				err := errors.New("contract call error")
-				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(state.RootInfo{}, err)
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(state.SmtRootInfo{}, err)
 			},
 			userState:     userFirstState,
 			expectedError: "contract call error",
 		},
 		{
-			name: "State has not been wrote to contract",
+			name: "Contract call with expected error",
 			contractResponse: func(m *mock.MockGISTGetter) {
-				ri := state.RootInfo{
-					CreatedAtTimestamp: big.NewInt(0),
-				}
-				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(ri, nil)
+				err := errors.New("execution reverted: Root does not exist")
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(state.SmtRootInfo{}, err)
 			},
 			userState:     userFirstState,
-			expectedError: "gist state not registered in the smart contract",
+			expectedError: "gist state doesn't exist on smart contract",
 		},
 		{
 			name: "State has been wrote for another users",
 			contractResponse: func(m *mock.MockGISTGetter) {
-				ri := state.RootInfo{
+				ri := state.SmtRootInfo{
 					Root:               userSecondState,
 					CreatedAtTimestamp: big.NewInt(3),
 				}
@@ -279,7 +277,7 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 		{
 			name: "State was replaced, but replaced time is unknown",
 			contractResponse: func(m *mock.MockGISTGetter) {
-				ri := state.RootInfo{
+				ri := state.SmtRootInfo{
 					Root:                userFirstState,
 					CreatedAtTimestamp:  big.NewInt(3),
 					ReplacedByRoot:      userSecondState,
