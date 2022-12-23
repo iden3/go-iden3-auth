@@ -138,7 +138,11 @@ func (v *Verifier) VerifyAuthResponse(
 }
 
 // VerifyJWZ performs verification of jwz token
-func (v *Verifier) VerifyJWZ(ctx context.Context, token string, opts ...pubsignals.VerifyOpt) (t *jwz.Token, err error) {
+func (v *Verifier) VerifyJWZ(
+	ctx context.Context,
+	token string,
+	opts ...pubsignals.VerifyOpt,
+) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
 	if err != nil {
@@ -171,10 +175,14 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string, opts ...pubsigna
 }
 
 // FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage) (*protocol.AuthorizationResponseMessage, error) {
+func (v *Verifier) FullVerify(
+	ctx context.Context,
+	token string,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+) (*protocol.AuthorizationResponseMessage, error) {
 
-	//// verify jwz
-	t, err := v.VerifyJWZ(ctx, token)
+	t, err := v.VerifyJWZ(ctx, token, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +209,7 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 		return &authMsgResponse, err
 	}
 
-	// verify proof requests
-	err = v.VerifyAuthResponse(ctx, authMsgResponse, request)
+	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, opts...)
 	return &authMsgResponse, err
 }
 
