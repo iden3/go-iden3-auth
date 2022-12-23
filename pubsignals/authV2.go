@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -22,7 +23,7 @@ func (c *AuthV2) VerifyQuery(_ context.Context, _ Query, _ loaders.SchemaLoader)
 }
 
 // VerifyStates verify AuthV2 tests.
-func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	userDID, err := core.ParseDIDFromID(*c.UserID)
 	if err != nil {
 		return err
@@ -37,8 +38,13 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 	if err != nil {
 		return err
 	}
-	// only latest for users are supported
-	if !resolvedState.Latest {
+
+	cfg := defaultAuthVerifyOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
+	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.acceptedStateTransitionDelay {
 		return ErrGlobalStateIsNotValid
 	}
 	return nil

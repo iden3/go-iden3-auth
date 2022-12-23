@@ -21,39 +21,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// WithAcceptedStateTransitionDelay set time out for revocation.
-func WithAcceptedStateTransitionDelay(timeout time.Duration) func(v *Verifier) {
-	return func(v *Verifier) {
-		v.acceptedStateTransitionDelay = timeout
-	}
-}
-
 // Verifier is a struct for auth instance
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	claimSchemaLoader     loaders.SchemaLoader
 	stateResolver         map[string]pubsignals.StateResolver
-
-	acceptedStateTransitionDelay time.Duration
 }
 
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
 	claimSchemaLoader loaders.SchemaLoader,
-	resolver map[string]pubsignals.StateResolver,
-	opts ...func(*Verifier)) *Verifier {
+	resolver map[string]pubsignals.StateResolver) *Verifier {
 
-	v := &Verifier{
-		verificationKeyLoader:        keyLoader,
-		claimSchemaLoader:            claimSchemaLoader,
-		stateResolver:                resolver,
-		acceptedStateTransitionDelay: time.Hour,
+	return &Verifier{
+		verificationKeyLoader: keyLoader,
+		claimSchemaLoader:     claimSchemaLoader,
+		stateResolver:         resolver,
 	}
-	for _, o := range opts {
-		o(v)
-	}
-	return v
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -85,7 +70,12 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 }
 
 // VerifyAuthResponse performs verification of auth response based on auth request
-func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage) error {
+func (v *Verifier) VerifyAuthResponse(
+	ctx context.Context,
+	response protocol.AuthorizationResponseMessage,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt,
+) error {
 
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
@@ -138,9 +128,7 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return err
 		}
 
-		err = cv.VerifyStates(ctx, v.stateResolver, pubsignals.VerifyOpts{
-			AcceptedStateTransitionDelay: v.acceptedStateTransitionDelay,
-		})
+		err = cv.VerifyStates(ctx, v.stateResolver, opts...)
 		if err != nil {
 			return err
 		}
@@ -150,7 +138,7 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 }
 
 // VerifyJWZ performs verification of jwz token
-func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, err error) {
+func (v *Verifier) VerifyJWZ(ctx context.Context, token string, opts ...pubsignals.VerifyOpt) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
 	if err != nil {
@@ -174,9 +162,7 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 		return nil, err
 	}
 
-	err = circuitVerifier.VerifyStates(ctx, v.stateResolver, pubsignals.VerifyOpts{
-		AcceptedStateTransitionDelay: v.acceptedStateTransitionDelay,
-	})
+	err = circuitVerifier.VerifyStates(ctx, v.stateResolver, opts...)
 	if err != nil {
 		return nil, err
 	}

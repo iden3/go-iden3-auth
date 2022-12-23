@@ -39,7 +39,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaL
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
 	if err != nil {
 		return err
@@ -65,9 +65,15 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[
 	if err != nil {
 		return err
 	}
+
+	cfg := defaultProofVerifyOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	if !issuerNonRevStateResolved.Latest && time.Since(
 		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
-	) > opts.AcceptedStateTransitionDelay {
+	) > cfg.acceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 

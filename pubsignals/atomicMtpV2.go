@@ -12,11 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// VerifyOpts verifiers options.
-type VerifyOpts struct {
-	AcceptedStateTransitionDelay time.Duration
-}
-
 // AtomicQueryMTPV2 is a wrapper for circuits.AtomicQueryMTPV2PubSignals.
 type AtomicQueryMTPV2 struct {
 	circuits.AtomicQueryMTPV2PubSignals
@@ -40,7 +35,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaL
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.
-func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts VerifyOpts) error {
+func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
 	if err != nil {
 		return err
@@ -66,9 +61,14 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context, stateResolvers map[
 		return err
 	}
 
+	cfg := defaultProofVerifyOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	if !issuerNonRevStateResolved.Latest && time.Since(
 		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
-	) > opts.AcceptedStateTransitionDelay {
+	) > cfg.acceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 
