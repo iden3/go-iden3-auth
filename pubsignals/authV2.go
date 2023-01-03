@@ -18,7 +18,11 @@ type AuthV2 struct {
 }
 
 // VerifyQuery is not implemented for authV2 circuit.
-func (c *AuthV2) VerifyQuery(_ context.Context, _ Query, _ loaders.SchemaLoader) error {
+func (c *AuthV2) VerifyQuery(
+	_ context.Context,
+	_ Query,
+	_ loaders.SchemaLoader,
+	_ interface{}) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
 

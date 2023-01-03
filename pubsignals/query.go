@@ -33,7 +33,7 @@ var (
 // Query represents structure for query to atomic circuit.
 type Query struct {
 	AllowedIssuers           []string               `json:"allowedIssuers"`
-	Req                      map[string]interface{} `json:"req,omitempty"`
+	CredentialSubject        map[string]interface{} `json:"credentialSubject,omitempty"`
 	Context                  string                 `json:"context"`
 	Type                     string                 `json:"type"`
 	ClaimID                  string                 `json:"claimId,omitempty"`
@@ -56,7 +56,12 @@ type CircuitOutputs struct {
 }
 
 // CheckRequest checks if proof was created for this request.
-func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pubSig *CircuitOutputs) error {
+func (q Query) CheckRequest(
+	ctx context.Context,
+	loader loaders.SchemaLoader,
+	pubSig *CircuitOutputs,
+	disclosureValue interface{},
+) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
 		return err
 	}
@@ -65,7 +70,7 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 		return err
 	}
 
-	if err := q.verifyQuery(pubSig); err != nil {
+	if err := q.verifyQuery(pubSig, disclosureValue); err != nil {
 		return err
 	}
 
@@ -82,11 +87,11 @@ func (q Query) CheckRequest(ctx context.Context, loader loaders.SchemaLoader, pu
 }
 
 func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
-	if len(q.Req) == 0 {
+	if len(q.CredentialSubject) == 0 {
 		return nil
 	}
 
-	fieldName, _, err := extractQueryFields(q.Req)
+	fieldName, _, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
 		return err
 	}
@@ -122,6 +127,7 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 			return errors.New("different slot index for claim")
 		}
 	}
+
 	return nil
 }
 
@@ -143,10 +149,16 @@ func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
 	return ErrSchemaID
 }
 
-func (q Query) verifyQuery(pubSig *CircuitOutputs) error {
-	_, predicate, err := extractQueryFields(q.Req)
+func (q Query) verifyQuery(pubSig *CircuitOutputs, disclosureValue interface{}) error {
+	_, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
 		return err
+	}
+
+	if q.CredentialSubject != nil && len(predicate) == 0 {
+		if err := q.validateDisclosure(pubSig, disclosureValue); err != nil {
+			return err
+		}
 	}
 
 	values, operator, err := parseFieldPredicate(predicate)
@@ -180,6 +192,31 @@ func (q Query) verifyQuery(pubSig *CircuitOutputs) error {
 	}
 
 	return nil
+}
+
+func (q Query) validateDisclosure(pubSig *CircuitOutputs, disclosureValue interface{}) error {
+	if disclosureValue == nil {
+		return errors.New("selective disclosure value is missed")
+	}
+
+	if pubSig.Operator != circuits.EQ {
+		return errors.New("selective disclosure available only for equal operation")
+	}
+
+	if len(pubSig.Value) != 1 {
+		return errors.New("selective disclosure not available for array of values")
+	}
+
+	if pubSig.Value[0].Cmp(hash(disclosureValue)) != 0 {
+		return errors.New("different value between proof and disclosure value")
+	}
+
+	return nil
+}
+
+func hash(_ interface{}) *big.Int {
+	// TODO (illia-korotia): waiting Oleg's changes.
+	return big.NewInt(800)
 }
 
 func parseFieldPredicate(fieldPredicate map[string]interface{}) ([]*big.Int, int, error) {

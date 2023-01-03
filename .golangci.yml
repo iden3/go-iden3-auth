@@ -70,6 +70,9 @@ issues:
     - text: "package-comments: should have a package comment"
       linters:
         - revive
+    - text: "shadow: declaration of \"err\" shadows declaration"
+      linters:
+        - govet
     - path: _test\.go
       linters:
         - gosec

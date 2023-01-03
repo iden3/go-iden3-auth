@@ -18,7 +18,12 @@ type AtomicQueryMTPV2 struct {
 }
 
 // VerifyQuery checks whether the proof matches the query.
-func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
+func (c *AtomicQueryMTPV2) VerifyQuery(
+	ctx context.Context,
+	query Query,
+	schemaLoader loaders.SchemaLoader,
+	disclosureValue interface{},
+) error {
 	return query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
@@ -31,7 +36,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(ctx context.Context, query Query, schemaL
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	})
+	}, disclosureValue)
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.

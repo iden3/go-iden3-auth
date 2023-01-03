@@ -18,7 +18,12 @@ type AtomicQuerySigV2 struct {
 }
 
 // VerifyQuery verifies query for atomic query mtp circuit.
-func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader) error {
+func (c *AtomicQuerySigV2) VerifyQuery(
+	ctx context.Context,
+	query Query,
+	schemaLoader loaders.SchemaLoader,
+	disclosureValue interface{},
+) error {
 	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
@@ -31,7 +36,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(ctx context.Context, query Query, schemaL
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	})
+	}, disclosureValue)
 	if err != nil {
 		return err
 	}

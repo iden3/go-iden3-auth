@@ -108,7 +108,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
-		"req": map[string]interface{}{
+		"credentialSubject": map[string]interface{}{
 			"documentType": map[string]interface{}{
 				"$eq": 2,
 			},
@@ -264,7 +264,7 @@ func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
-		"req": map[string]interface{}{
+		"credentialSubject": map[string]interface{}{
 			"countryCode": map[string]interface{}{
 				"$nin": []int{
 					840,
@@ -436,7 +436,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 	mtpProofRequest.Optional = &opt
 	mtpProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
-		"req": map[string]interface{}{
+		"credentialSubject": map[string]interface{}{
 			"countryCode": map[string]interface{}{
 				"$nin": []int{
 					840,

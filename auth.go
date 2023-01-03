@@ -122,8 +122,10 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
+		var sd interface{}
+		// sd = response.Body.SelectiveDisclosure
 		// verify query
-		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader)
+		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, sd)
 		if err != nil {
 			return err
 		}
