@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,6 +12,11 @@ import (
 )
 
 var zero = big.NewInt(0)
+
+const (
+	gistNotFoundException     = "execution reverted: Root does not exist"
+	identityNotFoundException = "execution reverted: Identity does not exist"
+)
 
 // VerificationOptions is options for state verification
 type VerificationOptions struct {
@@ -61,16 +67,15 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 	}
 
 	stateInfo, err := getter.GetStateInfoById(&bind.CallOpts{Context: ctx}, id)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), identityNotFoundException) {
+		if isGenesis {
+			return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
+		}
+		return nil, errors.New("state is not genesis and not registered in the smart contract")
+	} else if err != nil {
 		return nil, err
 	}
 
-	if stateInfo.State.Cmp(zero) == 0 {
-		if !isGenesis {
-			return nil, errors.New("state is not genesis and not registered in the smart contract")
-		}
-		return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
-	}
 	if stateInfo.Id.Cmp(id) != 0 {
 		return nil, errors.New("transition info contains invalid id")
 	}
@@ -97,8 +102,9 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 // state is bigint string representation of global root
 func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (*ResolvedState, error) {
 	globalStateInfo, err := getter.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, state)
-	err = expectedError(err)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), gistNotFoundException) {
+		return nil, errors.New("gist state doesn't exist on smart contract")
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -120,19 +126,6 @@ func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (
 		Latest:              true,
 		TransitionTimestamp: 0,
 	}, nil
-}
-
-func expectedError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	//nolint: gocritic // template for future expansion
-	switch err.Error() {
-	case "execution reverted: Root does not exist":
-		err = errors.New("gist state doesn't exist on smart contract")
-	}
-	return err
 }
 
 // CheckGenesisStateID check if the state is genesis for the id.

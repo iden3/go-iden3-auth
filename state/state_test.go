@@ -33,10 +33,9 @@ func TestResolve_Success(t *testing.T) {
 		{
 			name: "verify genesis state for user",
 			contractResponse: func(m *mock.MockStateGetter) {
-				res := state.StateV2StateInfo{
-					State: big.NewInt(0),
-				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(res, nil)
+				res := state.StateV2StateInfo{}
+				err := errors.New("execution reverted: Identity does not exist")
+				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(res, err)
 			},
 			userID:    userID,
 			userState: userGenesisState,
@@ -110,23 +109,8 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "state is not genesis and not registered in the smart contract",
 			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateV2StateInfo{
-					State: big.NewInt(0),
-				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
-			},
-			userID:        userID,
-			userState:     userFirstState,
-			expectedError: "state is not genesis and not registered in the smart contract",
-		},
-		{
-			name: "state not found in contract",
-			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateV2StateInfo{
-					Id:    userID,
-					State: big.NewInt(0),
-				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
+				err := errors.New("execution reverted: Identity does not exist")
+				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(state.StateV2StateInfo{}, err)
 			},
 			userID:        userID,
 			userState:     userFirstState,
@@ -158,6 +142,17 @@ func TestResolve_Error(t *testing.T) {
 			userID:        userID,
 			userState:     userFirstState,
 			expectedError: "no information of transition for non-latest state",
+		},
+		{
+			name: "unknown error",
+			contractResponse: func(m *mock.MockStateGetter) {
+				contractResponse := state.StateV2StateInfo{}
+				err := errors.New("execution reverted: any reason")
+				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, err)
+			},
+			userID:        userID,
+			userState:     userFirstState,
+			expectedError: "execution reverted: any reason",
 		},
 	}
 
@@ -287,6 +282,16 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 			},
 			userState:     userFirstState,
 			expectedError: "state was replaced, but replaced time unknown",
+		},
+		{
+			name: "unknown error",
+			contractResponse: func(m *mock.MockGISTGetter) {
+				contractResponse := state.SmtRootInfo{}
+				err := errors.New("execution reverted: any reason")
+				m.EXPECT().GetGISTRootInfo(gomock.Any(), gomock.Any()).Return(contractResponse, err)
+			},
+			userState:     userFirstState,
+			expectedError: "execution reverted: any reason",
 		},
 	}
 
