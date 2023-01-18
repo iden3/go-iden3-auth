@@ -34,8 +34,8 @@ func TestResolve_Success(t *testing.T) {
 			name: "verify genesis state for user",
 			contractResponse: func(m *mock.MockStateGetter) {
 				res := state.StateV2StateInfo{}
-				err := errors.New("execution reverted: Identity does not exist")
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(res, err)
+				err := errors.New("execution reverted: State does not exist")
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(res, err)
 			},
 			userID:    userID,
 			userState: userGenesisState,
@@ -50,10 +50,11 @@ func TestResolve_Success(t *testing.T) {
 			name: "local state is latest state",
 			contractResponse: func(m *mock.MockStateGetter) {
 				contractResponse := state.StateV2StateInfo{
-					Id:    userID,
-					State: userFirstState,
+					Id:                  userID,
+					State:               userFirstState,
+					ReplacedAtTimestamp: big.NewInt(0),
 				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
 			},
 			userID:    userID,
 			userState: userFirstState,
@@ -71,7 +72,7 @@ func TestResolve_Success(t *testing.T) {
 					State:               userSecondState,
 					ReplacedAtTimestamp: big.NewInt(1000),
 				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
 			},
 			userID:    userID,
 			userState: userFirstState,
@@ -109,8 +110,8 @@ func TestResolve_Error(t *testing.T) {
 		{
 			name: "state is not genesis and not registered in the smart contract",
 			contractResponse: func(m *mock.MockStateGetter) {
-				err := errors.New("execution reverted: Identity does not exist")
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(state.StateV2StateInfo{}, err)
+				err := errors.New("execution reverted: State does not exist")
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(state.StateV2StateInfo{}, err)
 			},
 			userID:        userID,
 			userState:     userFirstState,
@@ -123,32 +124,18 @@ func TestResolve_Error(t *testing.T) {
 					Id:    userFirstState, // use like invalid user ID.
 					State: userSecondState,
 				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
 			},
 			userID:        userID,
 			userState:     userFirstState,
-			expectedError: "transition info contains invalid id",
-		},
-		{
-			name: "unknown transition time from smart contract",
-			contractResponse: func(m *mock.MockStateGetter) {
-				contractResponse := state.StateV2StateInfo{
-					Id:                  userID, // use like invalid user ID.
-					State:               userSecondState,
-					ReplacedAtTimestamp: big.NewInt(0),
-				}
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, nil)
-			},
-			userID:        userID,
-			userState:     userFirstState,
-			expectedError: "no information of transition for non-latest state",
+			expectedError: "state has been saved for a different ID",
 		},
 		{
 			name: "unknown error",
 			contractResponse: func(m *mock.MockStateGetter) {
 				contractResponse := state.StateV2StateInfo{}
 				err := errors.New("execution reverted: any reason")
-				m.EXPECT().GetStateInfoById(gomock.Any(), gomock.Any()).Return(contractResponse, err)
+				m.EXPECT().GetStateInfoByState(gomock.Any(), gomock.Any()).Return(contractResponse, err)
 			},
 			userID:        userID,
 			userState:     userFirstState,

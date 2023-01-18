@@ -14,8 +14,8 @@ import (
 var zero = big.NewInt(0)
 
 const (
-	gistNotFoundException     = "execution reverted: Root does not exist"
-	identityNotFoundException = "execution reverted: Identity does not exist"
+	gistNotFoundException  = "execution reverted: Root does not exist"
+	stateNotFoundException = "execution reverted: State does not exist"
 )
 
 // VerificationOptions is options for state verification
@@ -36,7 +36,7 @@ type ExtendedVerificationsOptions struct {
 //go:generate mockgen -destination=mock/StateGetterMock.go . StateGetter
 //nolint:revive // we have two different getters for the state in one pkg
 type StateGetter interface {
-	GetStateInfoById(opts *bind.CallOpts, id *big.Int) (StateV2StateInfo, error)
+	GetStateInfoByState(opts *bind.CallOpts, state *big.Int) (StateV2StateInfo, error)
 }
 
 // GISTGetter return global state info by state
@@ -54,11 +54,7 @@ type ResolvedState struct {
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
-// Resolve is used to resolve identity state
-// rpcURL - url to connect to the blockchain
-// contractAddress is an address of state contract
-// id is base58 identifier  e.g. id:11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s
-// state is bigint string representation of identity state
+// Resolve is used to resolve identity state.
 func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*ResolvedState, error) {
 	// сheck if id is genesis  - then we do need to resolve it.
 	isGenesis, err := CheckGenesisStateID(id, state)
@@ -66,8 +62,8 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 		return nil, err
 	}
 
-	stateInfo, err := getter.GetStateInfoById(&bind.CallOpts{Context: ctx}, id)
-	if err != nil && strings.Contains(err.Error(), identityNotFoundException) {
+	stateInfo, err := getter.GetStateInfoByState(&bind.CallOpts{Context: ctx}, state)
+	if err != nil && strings.Contains(err.Error(), stateNotFoundException) {
 		if isGenesis {
 			return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 		}
@@ -77,29 +73,22 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 	}
 
 	if stateInfo.Id.Cmp(id) != 0 {
-		return nil, errors.New("transition info contains invalid id")
+		return nil, errors.New("state has been saved for a different ID")
 	}
 
-	if stateInfo.State.Cmp(state) != 0 {
-		if stateInfo.ReplacedAtTimestamp.Cmp(zero) == 0 {
-			return nil, errors.New("no information of transition for non-latest state")
-		}
-		return &ResolvedState{
-			Latest:              false,
-			Genesis:             isGenesis,
-			State:               state.String(),
-			TransitionTimestamp: stateInfo.ReplacedAtTimestamp.Int64(),
-		}, nil
+	if stateInfo.ReplacedAtTimestamp.Cmp(zero) == 0 {
+		return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 	}
 
-	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
+	return &ResolvedState{
+		Latest:              false,
+		Genesis:             isGenesis,
+		State:               state.String(),
+		TransitionTimestamp: stateInfo.ReplacedAtTimestamp.Int64(),
+	}, nil
 }
 
-// ResolveGlobalRoot is used to resolve global root
-// rpcURL - url to connect to the blockchain
-// contractAddress is an address of state contract
-// state is bigint string representation of global root
+// ResolveGlobalRoot is used to resolve global root.
 func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (*ResolvedState, error) {
 	globalStateInfo, err := getter.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, state)
 	if err != nil && strings.Contains(err.Error(), gistNotFoundException) {
