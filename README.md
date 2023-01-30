@@ -75,7 +75,7 @@ The blockchain verification algorithm is used
    ``` golang
            var mtpProofRequest protocol.ZeroKnowledgeProofRequest
            mtpProofRequest.ID = 1
-           mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigCircuitID)
+           mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPCircuitID)
            mtpProofRequest.Rules = map[string]interface{}{
                "query": pubsignals.Query{
                    AllowedIssuers: []string{"*"},

@@ -3,31 +3,27 @@ package pubsignals
 import (
 	"context"
 	"fmt"
-	"math/big"
-	"time"
-
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
+	"math/big"
+	"time"
 )
 
-// AuthV2 is a wrapper for circuits.AuthV2PubSignals.
-type AuthV2 struct {
-	circuits.AuthV2PubSignals
+type AtomicSybilMTP struct {
+	circuits.SybilAtomicMTPPubSignals
 }
 
-// VerifyQuery is not implemented for authV2 circuit.
-func (c *AuthV2) VerifyQuery(
+func (c *AtomicSybilMTP) VerifyQuery(
 	_ context.Context,
 	_ Query,
 	_ loaders.SchemaLoader,
 	_ interface{}) error {
-	return errors.New("authV2 circuit doesn't support queries")
+	return errors.New("atomicSybilMTP circuit doesn't support queries")
 }
 
-// VerifyStates verify AuthV2 tests.
-func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
+func (c *AtomicSybilMTP) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	userDID, err := core.ParseDIDFromID(*c.UserID)
 	if err != nil {
 		return err
@@ -54,18 +50,17 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 	return nil
 }
 
-// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
-func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
+func (c *AtomicSybilMTP) VerifyIDOwnership(sender string, requestID *big.Int) error {
+	if c.RequestID.Cmp(requestID) != 0 {
+		return errors.New("invalid requestID in proof")
+	}
+
 	userDID, err := core.ParseDIDFromID(*c.UserID)
 	if err != nil {
 		return err
 	}
-
 	if sender != userDID.String() {
-		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, userDID)
-	}
-	if challenge.Cmp(c.Challenge) != 0 {
-		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
+		return fmt.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
 	}
 	return nil
 }

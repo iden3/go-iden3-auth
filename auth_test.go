@@ -101,12 +101,12 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
-	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-	mtpProofRequest.ID = 10
-	mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
+	var sigProofRequest protocol.ZeroKnowledgeProofRequest
+	sigProofRequest.ID = 10
+	sigProofRequest.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
 	opt := true
-	mtpProofRequest.Optional = &opt
-	mtpProofRequest.Query = map[string]interface{}{
+	sigProofRequest.Optional = &opt
+	sigProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
 		"credentialSubject": map[string]interface{}{
 			"documentType": map[string]interface{}{
@@ -117,7 +117,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 		"type":    "KYCAgeCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
-	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+	request.Body.Scope = append(request.Body.Scope, sigProofRequest)
 
 	userID := "did:polygonid:polygon:mumbai:2qPy2CHhCfXdZcQGZAQVtsgdfR5BghueMYBbeh3vEu"
 	responseUUID := uuid.New()
@@ -135,7 +135,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 		Scope: []protocol.ZeroKnowledgeProofResponse{
 			{
 				ID:        10,
-				CircuitID: mtpProofRequest.CircuitID,
+				CircuitID: sigProofRequest.CircuitID,
 				ZKProof: types.ZKProof{
 					Proof: &types.ProofData{
 						A: []string{
