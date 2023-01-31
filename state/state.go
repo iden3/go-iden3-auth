@@ -123,16 +123,7 @@ func CheckGenesisStateID(id, state *big.Int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	userDID, err := core.ParseDIDFromID(userID)
-	if err != nil {
-		return false, err
-	}
-
-	didType, err := core.BuildDIDType(userDID.Method, userDID.Blockchain, userDID.NetworkID)
-	if err != nil {
-		return false, err
-	}
-	identifier, err := core.IdGenesisFromIdenState(didType, state)
+	identifier, err := core.IdGenesisFromIdenState(userID.Type(), state)
 	if err != nil {
 		return false, err
 	}
