@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
@@ -22,7 +23,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader loaders.SchemaLoader,
-	disclosureValue interface{},
+	verifiablePresentation json.RawMessage,
 ) error {
 	return query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
@@ -36,7 +37,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, disclosureValue)
+	}, verifiablePresentation)
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.

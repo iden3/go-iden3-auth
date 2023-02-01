@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -17,7 +18,7 @@ type StateResolver interface {
 
 // Verifier is interface for verification of public signals of zkp
 type Verifier interface {
-	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader, disclosureValue interface{}) error
+	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader, verifiablePresentation json.RawMessage) error
 	VerifyStates(ctx context.Context, resolvers map[string]StateResolver, opts ...VerifyOpt) error
 	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 

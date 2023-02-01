@@ -1,7 +1,9 @@
 package pubsignals
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -60,7 +62,7 @@ func (q Query) CheckRequest(
 	ctx context.Context,
 	loader loaders.SchemaLoader,
 	pubSig *CircuitOutputs,
-	disclosureValue interface{},
+	verifiablePresentation json.RawMessage,
 ) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
 		return err
@@ -70,7 +72,7 @@ func (q Query) CheckRequest(
 		return err
 	}
 
-	if err := q.verifyQuery(pubSig, disclosureValue); err != nil {
+	if err := q.verifyQuery(pubSig, verifiablePresentation); err != nil {
 		return err
 	}
 
@@ -149,14 +151,15 @@ func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
 	return ErrSchemaID
 }
 
-func (q Query) verifyQuery(pubSig *CircuitOutputs, disclosureValue interface{}) error {
-	_, predicate, err := extractQueryFields(q.CredentialSubject)
+func (q Query) verifyQuery(pubSig *CircuitOutputs, verifiablePresentation json.RawMessage) error {
+	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
 		return err
 	}
 
 	if q.CredentialSubject != nil && len(predicate) == 0 {
-		if err := q.validateDisclosure(pubSig, disclosureValue); err != nil {
+		ctx := context.Background()
+		if err := q.validateDisclosure(ctx, pubSig, fieldName, verifiablePresentation); err != nil {
 			return err
 		}
 	}
@@ -194,8 +197,8 @@ func (q Query) verifyQuery(pubSig *CircuitOutputs, disclosureValue interface{}) 
 	return nil
 }
 
-func (q Query) validateDisclosure(pubSig *CircuitOutputs, disclosureValue interface{}) error {
-	if disclosureValue == nil {
+func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs, key string, verifiablePresentation json.RawMessage) error {
+	if verifiablePresentation == nil {
 		return errors.New("selective disclosure value is missed")
 	}
 
@@ -203,20 +206,54 @@ func (q Query) validateDisclosure(pubSig *CircuitOutputs, disclosureValue interf
 		return errors.New("selective disclosure available only for equal operation")
 	}
 
-	if len(pubSig.Value) != 1 {
-		return errors.New("selective disclosure not available for array of values")
+	for i := 1; i < len(pubSig.Value); i++ {
+		if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+			return errors.New("selective disclosure not available for array of values")
+		}
 	}
 
-	if pubSig.Value[0].Cmp(hash(disclosureValue)) != 0 {
+	mz, err := merklize.MerklizeJSONLD(ctx, bytes.NewBuffer(verifiablePresentation))
+	if err != nil {
+		return errors.Errorf("failed to merklize doc: %v", err)
+	}
+
+	merkalizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.%s", key))
+	if err != nil {
+		return errors.Errorf("failed build path to '%s' key: %v", key, err)
+	}
+
+	valueByPath, err := mz.RawValue(merkalizedPath)
+	if err != nil {
+		return errors.Errorf("failed get raw value: %v", err)
+	}
+
+	// all int values in JSON are float64 since mz.MkValue
+	// function supports only int representation convert float64
+	// to int with check accuracy of int
+	vt, ok := valueByPath.(float64)
+	if ok {
+		intVal := int64(vt)
+		if float64(intVal) != vt {
+			return errors.New("invalid int value")
+		}
+		valueByPath = intVal
+	}
+
+	mvValue, err := mz.MkValue(valueByPath)
+	if err != nil {
+		return errors.Errorf("failed mz value: %v", err)
+	}
+
+	mvBig, err := mvValue.MtEntry()
+	if err != nil {
+		return errors.Errorf("failed big.Int value mz from : %v", err)
+	}
+
+	if pubSig.Value[0].Cmp(mvBig) != 0 {
 		return errors.New("different value between proof and disclosure value")
 	}
 
 	return nil
-}
-
-func hash(_ interface{}) *big.Int {
-	// TODO (illia-korotia): waiting Oleg's changes.
-	return big.NewInt(800)
 }
 
 func parseFieldPredicate(fieldPredicate map[string]interface{}) ([]*big.Int, int, error) {

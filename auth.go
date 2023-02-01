@@ -122,10 +122,15 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
-		var sd interface{}
-		// sd = response.Body.SelectiveDisclosure
-		// verify query
-		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, sd)
+		rawMessage, err := proofResponse.VerifiablePresentation.MarshalJSON()
+		if err != nil {
+			return errors.Errorf("failed get VerifiablePresentation: %v", err)
+		}
+		if string(rawMessage) == "null" {
+			rawMessage = nil
+		}
+
+		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, rawMessage)
 		if err != nil {
 			return err
 		}
