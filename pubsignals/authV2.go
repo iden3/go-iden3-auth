@@ -39,7 +39,7 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 		return errors.Errorf("%s resolver not found", chainInfo)
 	}
 
-	resolvedState, err := resolver.ResolveGlobalRoot(ctx, c.GlobalRoot.BigInt())
+	resolvedState, err := resolver.ResolveGlobalRoot(ctx, c.GISTRoot.BigInt())
 	if err != nil {
 		return err
 	}
