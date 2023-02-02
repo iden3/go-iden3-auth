@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.2.0
-	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20221219124112-49e05babe6a8
+	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20230131001545-3999575266a8
 	github.com/iden3/go-iden3-core v0.1.1-0.20221220095125-4b274af11521
 	github.com/iden3/go-jwz v0.1.4-0.20221129141428-312a907ea598
 	github.com/iden3/go-rapidsnark/types v0.0.2
