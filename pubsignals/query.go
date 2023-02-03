@@ -3,6 +3,7 @@ package pubsignals
 import (
 	"context"
 	"fmt"
+	"github.com/iden3/go-merkletree-sql/v2"
 	"math/big"
 
 	"github.com/iden3/go-circuits"
@@ -39,6 +40,7 @@ type Query struct {
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
 	CRS                      *big.Int               `json:"crs,omitempty"`
+	GISTRoot                 *merkletree.Hash       `json:"gistRoot,omitempty"`
 }
 
 // CircuitOutputs pub signals from circuit.
@@ -55,6 +57,7 @@ type CircuitOutputs struct {
 	ValueArraySize      int
 	IsRevocationChecked int
 	CRS                 *big.Int
+	GISTRoot            *merkletree.Hash
 }
 
 // CheckRequest checks if proof was created for this request.
@@ -86,6 +89,10 @@ func (q Query) CheckRequest(
 	}
 
 	if err = q.verifyCRS(pubSig); err != nil {
+		return err
+	}
+
+	if err = q.verifyGISTRoot(pubSig); err != nil {
 		return err
 	}
 
@@ -144,6 +151,14 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 		}
 	}
 	return ErrUnavailableIssuer
+}
+
+func (q Query) verifyGISTRoot(pubSig *CircuitOutputs) error {
+	if q.GISTRoot == pubSig.GISTRoot || q.GISTRoot.String() == "*" {
+		return nil
+	}
+
+	return ErrInvalidValues
 }
 
 func (q Query) verifyCRS(pubSig *CircuitOutputs) error {
