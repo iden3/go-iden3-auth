@@ -16,11 +16,22 @@ type AtomicSybilMTP struct {
 }
 
 func (c *AtomicSybilMTP) VerifyQuery(
-	_ context.Context,
-	_ Query,
-	_ loaders.SchemaLoader,
-	_ interface{}) error {
-	return errors.New("atomicSybilMTP circuit doesn't support queries")
+	ctx context.Context,
+	query Query,
+	schemaLoader loaders.SchemaLoader,
+	disclosureValue interface{},
+) error {
+	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
+		IssuerID:       c.IssuerID,
+		ClaimSchema:    c.ClaimSchema,
+		Timestamp:      c.Timestamp,
+		ValueArraySize: c.ValueArraySize,
+		CRS:            c.CRS,
+	}, disclosureValue)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *AtomicSybilMTP) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
@@ -39,14 +50,40 @@ func (c *AtomicSybilMTP) VerifyStates(ctx context.Context, stateResolvers map[st
 		return err
 	}
 
-	cfg := defaultAuthVerifyOpts
+	authCfg := defaultAuthVerifyOpts
 	for _, o := range opts {
-		o(&cfg)
+		o(&authCfg)
 	}
 
-	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.acceptedStateTransitionDelay {
+	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > authCfg.acceptedStateTransitionDelay {
 		return ErrGlobalStateIsNotValid
 	}
+
+	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimIdenState.BigInt())
+	if err != nil {
+		return err
+	}
+
+	if issuerStateResolved == nil {
+		return ErrIssuerClaimStateIsNotValid
+	}
+
+	issuerNonRevStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerClaimNonRevState.BigInt())
+	if err != nil {
+		return err
+	}
+
+	proofCfg := defaultProofVerifyOpts
+	for _, o := range opts {
+		o(&proofCfg)
+	}
+
+	if !issuerNonRevStateResolved.Latest && time.Since(
+		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
+	) > proofCfg.acceptedStateTransitionDelay {
+		return ErrIssuerNonRevocationClaimStateIsNotValid
+	}
+
 	return nil
 }
 

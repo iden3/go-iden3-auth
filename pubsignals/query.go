@@ -38,6 +38,7 @@ type Query struct {
 	Type                     string                 `json:"type"`
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
+	CRS                      *big.Int               `json:"crs,omitempty"`
 }
 
 // CircuitOutputs pub signals from circuit.
@@ -53,6 +54,7 @@ type CircuitOutputs struct {
 	ClaimPathNotExists  int
 	ValueArraySize      int
 	IsRevocationChecked int
+	CRS                 *big.Int
 }
 
 // CheckRequest checks if proof was created for this request.
@@ -81,6 +83,10 @@ func (q Query) CheckRequest(
 	schemaBytes, _, err := loader.Load(ctx, q.Context)
 	if err != nil {
 		return fmt.Errorf("failed load schema by context: %w", err)
+	}
+
+	if err = q.verifyCRS(pubSig); err != nil {
+		return err
 	}
 
 	return q.verifyClaim(ctx, schemaBytes, pubSig)
@@ -138,6 +144,18 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 		}
 	}
 	return ErrUnavailableIssuer
+}
+
+func (q Query) verifyCRS(pubSig *CircuitOutputs) error {
+	if q.CRS == nil {
+		return nil
+	}
+
+	if q.CRS.Cmp(pubSig.CRS) == 0 {
+		return nil
+	}
+
+	return ErrInvalidValues
 }
 
 func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
