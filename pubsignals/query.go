@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/iden3/go-merkletree-sql/v2"
 
@@ -42,7 +43,7 @@ type Query struct {
 	Type                     string                 `json:"type"`
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
-	CRS                      *big.Int               `json:"crs,omitempty"`
+	CRS                      string                 `json:"crs,omitempty"`
 	GISTRoot                 *merkletree.Hash       `json:"gistRoot,omitempty"`
 }
 
@@ -82,7 +83,7 @@ func (q Query) CheckRequest(
 		return err
 	}
 
-	if !q.SkipClaimRevocationCheck && pubSig.IsRevocationChecked == 0 {
+	if (q.SkipClaimRevocationCheck == false) && (pubSig.IsRevocationChecked == 0) && (q.isQuerySybilResistance() == false) {
 		return errors.New("check revocation is required")
 	}
 
@@ -100,6 +101,14 @@ func (q Query) CheckRequest(
 	}
 
 	return q.verifyClaim(ctx, schemaBytes, pubSig)
+}
+
+func (q Query) isQuerySybilResistance() bool {
+	if len(q.CRS) > 0 && q.GISTRoot != nil {
+		return true
+	}
+
+	return false
 }
 
 func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
@@ -157,7 +166,7 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 }
 
 func (q Query) verifyGISTRoot(pubSig *CircuitOutputs) error {
-	if q.GISTRoot == pubSig.GISTRoot || q.GISTRoot.String() == "*" {
+	if strings.Compare(q.GISTRoot.String(), pubSig.GISTRoot.String()) == 0 || q.GISTRoot.String() == "*" {
 		return nil
 	}
 
@@ -165,11 +174,13 @@ func (q Query) verifyGISTRoot(pubSig *CircuitOutputs) error {
 }
 
 func (q Query) verifyCRS(pubSig *CircuitOutputs) error {
-	if q.CRS == nil {
+	if q.CRS == "" {
 		return nil
 	}
 
-	if q.CRS.Cmp(pubSig.CRS) == 0 {
+	crsStr := fmt.Sprintf("%d", pubSig.CRS)
+
+	if strings.Compare(q.CRS, crsStr) == 0 {
 		return nil
 	}
 
