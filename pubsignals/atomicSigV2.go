@@ -18,7 +18,7 @@ type AtomicQuerySigV2 struct {
 	circuits.AtomicQuerySigV2PubSignals
 }
 
-// VerifyQuery verifies query for atomic query mtp circuit.
+// VerifyQuery verifies query for atomic query sig circuit.
 func (c *AtomicQuerySigV2) VerifyQuery(
 	ctx context.Context,
 	query Query,

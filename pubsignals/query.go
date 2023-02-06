@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/iden3/go-merkletree-sql/v2"
 	"math/big"
+
+	"github.com/iden3/go-merkletree-sql/v2"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -90,11 +91,11 @@ func (q Query) CheckRequest(
 		return fmt.Errorf("failed load schema by context: %w", err)
 	}
 
-	if err = q.verifyCRS(pubSig); err != nil {
+	if err := q.verifyCRS(pubSig); err != nil {
 		return err
 	}
 
-	if err = q.verifyGISTRoot(pubSig); err != nil {
+	if err := q.verifyGISTRoot(pubSig); err != nil {
 		return err
 	}
 

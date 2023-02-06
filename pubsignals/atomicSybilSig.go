@@ -4,18 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
-	"math/big"
-	"time"
 )
 
+// AtomicSybilSig is a wrapper for circuits.AtomicSybilSig.
 type AtomicSybilSig struct {
 	circuits.SybilAtomicSigPubSignals
 }
 
+// VerifyQuery verifies query for atomic query sig circuit.
 func (c *AtomicSybilSig) VerifyQuery(
 	ctx context.Context,
 	query Query,
@@ -35,6 +38,7 @@ func (c *AtomicSybilSig) VerifyQuery(
 	return nil
 }
 
+// VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *AtomicSybilSig) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
 	if err != nil {
@@ -78,6 +82,7 @@ func (c *AtomicSybilSig) VerifyStates(ctx context.Context, stateResolvers map[st
 	return nil
 }
 
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AtomicSybilSig) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")

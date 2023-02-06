@@ -4,18 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"time"
+
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
-	"math/big"
-	"time"
 )
 
+// AtomicSybilMTP is a wrapper for circuits.AtomicSybilMTP.
 type AtomicSybilMTP struct {
 	circuits.SybilAtomicMTPPubSignals
 }
 
+// VerifyQuery verifies query for atomic query mtp circuit.
 func (c *AtomicSybilMTP) VerifyQuery(
 	ctx context.Context,
 	query Query,
@@ -35,6 +38,7 @@ func (c *AtomicSybilMTP) VerifyQuery(
 	return nil
 }
 
+// VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *AtomicSybilMTP) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	userDID, err := core.ParseDIDFromID(*c.UserID)
 	if err != nil {
@@ -88,6 +92,7 @@ func (c *AtomicSybilMTP) VerifyStates(ctx context.Context, stateResolvers map[st
 	return nil
 }
 
+// VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AtomicSybilMTP) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")
