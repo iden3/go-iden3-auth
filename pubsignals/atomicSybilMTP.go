@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -19,7 +20,7 @@ func (c *AtomicSybilMTP) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader loaders.SchemaLoader,
-	disclosureValue interface{},
+	disclosureValue json.RawMessage,
 ) error {
 	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:       c.IssuerID,
