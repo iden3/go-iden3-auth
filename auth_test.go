@@ -644,3 +644,94 @@ func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
 	assert.Equal(t, message, request.Body.Message)
 }
+
+func TestVerifyMessageWithMTPProof_Sybil(t *testing.T) {
+
+}
+
+func TestVerifyMessageWithSigProof_Sybil(t *testing.T) {
+	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var sigProofRequest protocol.ZeroKnowledgeProofRequest
+	sigProofRequest.ID = 83339
+	sigProofRequest.CircuitID = string(circuits.SybilSigCircuitID)
+	opt := true
+	sigProofRequest.Optional = &opt
+	sigProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":           "KYCAgeCredential",
+		"crs":            "1555",
+		"gistRoot":       "*",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, sigProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qCcHSp8NzU2fAEDkVXZRH7jDE3BDhJkEmhh4HHFjq"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        83339,
+				CircuitID: sigProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"8990557141940165361637889459275523756824003017519636742778748512873252617956",
+							"1510055563069991435398603936233615930833165215165284439298441294530808636392",
+							"1",
+						},
+						B: [][]string{
+							{
+								"3180439859743997025560348452469014056050606158722513227833883495153970214249",
+								"5240732783228318157947906417803277661660348955653070680601411039347433937367",
+							},
+							{
+								"10723769260865738360723752310663665756342526464327723177566834006713672790026",
+								"20048682947284347030929046533357012811122156447250743567026570993454145056493",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"21080295209792310481444218515708802306169453486738405556480966230496096231227",
+							"2055334793731643910053402011161314571769948964253738070204521668073307547102",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"18950418071419400922414782312223483968476222961870115543277775273891897861286",
+						"6515752464606573801888914066745600191704950933026326911264078774581604792075",
+						"21243908886899439496727111971550047844277794636712722665340971641531994626",
+						"18950418071419400922414782312223483968476222961870115543277775273891897861286",
+						"74977327600848231385663280181476307657",
+						"19061444061750305025005439496206606885344694933630220417508768223424787511155",
+						"1555",
+						"83339",
+						"24881925113117474550181377872147091108262942489540344683992139585244697090",
+						"1675683041",
+					},
+				},
+			},
+		},
+	}
+
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
+	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
+	require.Nil(t, err)
+
+}
