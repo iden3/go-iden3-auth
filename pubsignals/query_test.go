@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math/big"
 	"testing"
@@ -84,12 +85,24 @@ func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byt
 `), "json-ld", nil
 }
 
+var vp = []byte(`{
+	"@context": [
+		"https://www.w3.org/2018/credentials/v1",
+		"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld"
+	],
+	"@type": "VerifiablePresentation",
+	"verifiableCredential": {
+		"@type": "KYCCountryOfResidenceCredential",
+		"countryCode": 800
+	}
+}`)
+
 func TestCheckRequest_Success(t *testing.T) {
 	tests := []struct {
-		name            string
-		query           Query
-		pubSig          *CircuitOutputs
-		disclosureValue interface{}
+		name   string
+		query  Query
+		pubSig *CircuitOutputs
+		vp     json.RawMessage
 	}{
 		{
 			name: "Check merkalized query",
@@ -138,13 +151,13 @@ func TestCheckRequest_Success(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			disclosureValue: "800",
+			vp: vp,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.disclosureValue)
+			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.NoError(t, err)
 		})
 	}
@@ -152,11 +165,11 @@ func TestCheckRequest_Success(t *testing.T) {
 
 func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 	tests := []struct {
-		name            string
-		query           Query
-		pubSig          *CircuitOutputs
-		disclosureValue interface{}
-		expErr          error
+		name   string
+		query  Query
+		pubSig *CircuitOutputs
+		vp     json.RawMessage
+		expErr error
 	}{
 		{
 			name: "Empty disclosure value for disclosure request",
@@ -168,7 +181,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			disclosureValue: nil,
+			vp: nil,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
@@ -193,7 +206,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			disclosureValue: big.NewInt(800),
+			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
@@ -218,7 +231,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			disclosureValue: big.NewInt(800),
+			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
@@ -243,7 +256,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			disclosureValue: big.NewInt(800),
+			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
@@ -268,7 +281,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			disclosureValue: big.NewInt(800),
+			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: coreSchema,
@@ -281,13 +294,13 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("proof was generated for another path"),
+			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.disclosureValue)
+			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}

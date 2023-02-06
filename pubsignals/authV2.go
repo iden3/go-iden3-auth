@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
@@ -22,7 +23,7 @@ func (c *AuthV2) VerifyQuery(
 	_ context.Context,
 	_ Query,
 	_ loaders.SchemaLoader,
-	_ interface{}) error {
+	_ json.RawMessage) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
 

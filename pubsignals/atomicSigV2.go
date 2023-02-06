@@ -2,6 +2,7 @@ package pubsignals
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"time"
@@ -22,7 +23,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader loaders.SchemaLoader,
-	disclosureValue interface{},
+	verifiablePresentation json.RawMessage,
 ) error {
 	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
@@ -36,7 +37,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, disclosureValue)
+	}, verifiablePresentation)
 	if err != nil {
 		return err
 	}

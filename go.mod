@@ -9,12 +9,13 @@ require (
 	github.com/iden3/go-circuits v1.0.1-alpha.2.0.20230125203117-dc8c68c06da2
 	github.com/iden3/go-iden3-core v0.1.1-0.20221220095125-4b274af11521
 	github.com/iden3/go-jwz v0.1.4-0.20221129141428-312a907ea598
+	github.com/iden3/go-merkletree-sql/v2 v2.0.0
 	github.com/iden3/go-rapidsnark/types v0.0.2
 	github.com/iden3/go-rapidsnark/verifier v0.0.4-0.20221129112904-b9f8680ca8e2
-	github.com/iden3/go-schema-processor v0.2.1-0.20221202150832-91826307609c
-	github.com/iden3/iden3comm v0.1.3-0.20221219195853-695a902bcacd
+	github.com/iden3/go-schema-processor v0.2.1-0.20230131131734-af0be3ae6938
+	github.com/iden3/iden3comm v0.1.3-0.20230201125721-33ff0a9703cd
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.7.4
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
@@ -31,7 +32,6 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.13 // indirect
-	github.com/iden3/go-merkletree-sql/v2 v2.0.0 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.8-0.20221129112904-b9f8680ca8e2 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.4-0.20221129112904-b9f8680ca8e2 // indirect
 	github.com/ipfs/go-cid v0.0.7 // indirect
@@ -51,7 +51,7 @@ require (
 	github.com/multiformats/go-multibase v0.0.3 // indirect
 	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/piprate/json-gold v0.4.1 // indirect
+	github.com/piprate/json-gold v0.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/qri-io/jsonpointer v0.1.1 // indirect
