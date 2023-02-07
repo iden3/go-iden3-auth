@@ -31,7 +31,18 @@ var (
 	// ErrValuesSize proof was created for different values.
 	ErrValuesSize = errors.New("query asked proof about more values")
 	// ErrInvalidValues proof was created for different values.
-	ErrInvalidValues = errors.New("proof was generated for anther values")
+	ErrInvalidValues = errors.New("proof was generated for another values")
+	// ErrCRSQuerySetup when query is set up with empty crs but verification call was made
+	ErrCRSQuerySetup = errors.New("CRS wasn't set up in the query, but there was a try to verify it")
+	// ErrGISTQuerySetup when query is set up with empty gist root but verification call was made
+	ErrGISTQuerySetup = errors.New("GIST Root wasn't set up in the query, but there was a try to verify it")
+	// ErrInvalidCRSUsed proof was created with different CRS
+	ErrInvalidCRSUsed = errors.New("proof was generated with different CRS")
+	// ErrInvalidGISTRootUsed proof was created with different gist root
+	ErrInvalidGISTRootUsed = errors.New("proof was generated with different Gist Root")
+
+	// ErrCRSInvalidFormat when CRS is not a valid big integer
+	ErrCRSInvalidFormat = errors.New("invalid format of CRS in the query")
 )
 
 // Query represents structure for query to atomic circuit.
@@ -59,8 +70,6 @@ type CircuitOutputs struct {
 	ClaimPathNotExists  int
 	ValueArraySize      int
 	IsRevocationChecked int
-	CRS                 *big.Int
-	GISTRoot            *merkletree.Hash
 }
 
 // CheckRequest checks if proof was created for this request.
@@ -70,11 +79,11 @@ func (q Query) CheckRequest(
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
 ) error {
-	if err := q.verifyIssuer(pubSig); err != nil {
+	if err := q.verifyIssuer(pubSig.IssuerID); err != nil {
 		return err
 	}
 
-	if err := q.verifySchemaID(pubSig); err != nil {
+	if err := q.verifySchemaID(pubSig.ClaimSchema); err != nil {
 		return err
 	}
 
@@ -82,7 +91,7 @@ func (q Query) CheckRequest(
 		return err
 	}
 
-	if !q.SkipClaimRevocationCheck && (pubSig.IsRevocationChecked == 0) && !q.isQuerySybilResistance() {
+	if !q.SkipClaimRevocationCheck && (pubSig.IsRevocationChecked == 0) {
 		return errors.New("check revocation is required")
 	}
 
@@ -91,27 +100,11 @@ func (q Query) CheckRequest(
 		return fmt.Errorf("failed load schema by context: %w", err)
 	}
 
-	if err := q.verifyCRS(pubSig); err != nil {
-		return err
-	}
-
-	if err := q.verifyGISTRoot(pubSig); err != nil {
-		return err
-	}
-
 	return q.verifyClaim(ctx, schemaBytes, pubSig)
 }
 
-func (q Query) isQuerySybilResistance() bool {
-	if len(q.CRS) > 0 && q.GISTRoot != nil {
-		return true
-	}
-
-	return false
-}
-
 func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
-	if len(q.CredentialSubject) == 0 {
+	if q.CredentialSubject == nil || len(q.CredentialSubject) == 0 {
 		return nil
 	}
 
@@ -155,51 +148,52 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 	return nil
 }
 
-func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
+func (q Query) verifyIssuer(issuerID *core.ID) error {
 	for _, issuer := range q.AllowedIssuers {
-		if issuer == "*" || issuer == pubSig.IssuerID.String() {
+		if issuer == "*" || issuer == issuerID.String() {
 			return nil
 		}
 	}
 	return ErrUnavailableIssuer
 }
 
-func (q Query) verifyGISTRoot(pubSig *CircuitOutputs) error {
+func (q Query) verifyGISTRoot(gistRootOutput *merkletree.Hash) error {
+
 	if q.GISTRoot == nil {
+		return ErrGISTQuerySetup
+	}
+
+	if q.GISTRoot.String() == gistRootOutput.String() || q.GISTRoot.String() == "*" {
 		return nil
 	}
 
-	if q.GISTRoot.String() == pubSig.GISTRoot.String() || q.GISTRoot.String() == "*" {
-		return nil
-	}
-
-	return ErrInvalidValues
+	return ErrInvalidGISTRootUsed
 }
 
-func (q Query) verifyCRS(pubSig *CircuitOutputs) error {
-	if q.CRS == "" {
-		return nil
+func (q Query) verifyCRS(crsOutput *big.Int) error {
+
+	_, ok := new(big.Int).SetString(q.CRS, 10)
+	if !ok {
+		return ErrCRSInvalidFormat
 	}
 
-	crsStr := fmt.Sprintf("%d", pubSig.CRS)
-
-	if q.CRS == crsStr {
+	if q.CRS == crsOutput.String() {
 		return nil
 	}
-
-	return ErrInvalidValues
+	return ErrInvalidCRSUsed
 }
 
-func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
+func (q Query) verifySchemaID(claimSchema core.SchemaHash) error {
 	schemaID := fmt.Sprintf("%s#%s", q.Context, q.Type)
 	querySchema := utils.CreateSchemaHash([]byte(schemaID))
-	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
+	if querySchema.BigInt().Cmp(claimSchema.BigInt()) == 0 {
 		return nil
 	}
 	return ErrSchemaID
 }
 
 func (q Query) verifyQuery(pubSig *CircuitOutputs, verifiablePresentation json.RawMessage) error {
+
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
 		return err

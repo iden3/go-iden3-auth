@@ -25,17 +25,23 @@ func (c *AtomicSybilSig) VerifyQuery(
 	schemaLoader loaders.SchemaLoader,
 	disclosureValue json.RawMessage,
 ) error {
-	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
-		IssuerID:       c.IssuerID,
-		ClaimSchema:    c.ClaimSchema,
-		Timestamp:      c.Timestamp,
-		ValueArraySize: c.ValueArraySize,
-		CRS:            c.CRS,
-		GISTRoot:       c.GISTRoot,
-	}, disclosureValue)
-	if err != nil {
+
+	if err := query.verifyIssuer(c.IssuerID); err != nil {
 		return err
 	}
+
+	if err := query.verifySchemaID(c.ClaimSchema); err != nil {
+		return err
+	}
+
+	if err := query.verifyCRS(c.CRS); err != nil {
+		return err
+	}
+
+	if err := query.verifyGISTRoot(c.GISTRoot); err != nil {
+		return err
+	}
+
 	return nil
 }
 

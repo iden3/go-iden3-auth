@@ -650,12 +650,12 @@ func TestVerifyMessageWithMTPProof_Sybil(t *testing.T) {
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
-	var sigProofRequest protocol.ZeroKnowledgeProofRequest
-	sigProofRequest.ID = 83339
-	sigProofRequest.CircuitID = string(circuits.SybilMTPCircuitID)
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 83339
+	mtpProofRequest.CircuitID = string(circuits.SybilMTPCircuitID)
 	opt := true
-	sigProofRequest.Optional = &opt
-	sigProofRequest.Query = map[string]interface{}{
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
 		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 		"type":           "KYCAgeCredential",
@@ -663,7 +663,7 @@ func TestVerifyMessageWithMTPProof_Sybil(t *testing.T) {
 		"gistRoot":       "15900769184189005891999491908033838744270120512592381537649980222328098160384",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
-	request.Body.Scope = append(request.Body.Scope, sigProofRequest)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
 	userID := "did:polygonid:polygon:mumbai:2qCcHSp8NzU2fAEDkVXZRH7jDE3BDhJkEmhh4HHFjq"
 	responseUUID := uuid.New()
@@ -681,7 +681,7 @@ func TestVerifyMessageWithMTPProof_Sybil(t *testing.T) {
 		Scope: []protocol.ZeroKnowledgeProofResponse{
 			{
 				ID:        83339,
-				CircuitID: sigProofRequest.CircuitID,
+				CircuitID: mtpProofRequest.CircuitID,
 				ZKProof: types.ZKProof{
 					Proof: &types.ProofData{
 						A: []string{
@@ -739,7 +739,7 @@ func TestVerifyMessageWithSigProof_Sybil(t *testing.T) {
 	var sigProofRequest protocol.ZeroKnowledgeProofRequest
 	sigProofRequest.ID = 83339
 	sigProofRequest.CircuitID = string(circuits.SybilSigCircuitID)
-	opt := true
+	opt := false
 	sigProofRequest.Optional = &opt
 	sigProofRequest.Query = map[string]interface{}{
 		"allowedIssuers": []string{"*"},
