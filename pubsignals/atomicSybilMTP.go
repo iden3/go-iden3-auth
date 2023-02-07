@@ -31,6 +31,7 @@ func (c *AtomicSybilMTP) VerifyQuery(
 		Timestamp:      c.Timestamp,
 		ValueArraySize: c.ValueArraySize,
 		CRS:            c.CRS,
+		GISTRoot:       c.GISTRoot,
 	}, disclosureValue)
 	if err != nil {
 		return err

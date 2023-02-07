@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/iden3/go-merkletree-sql/v2"
 
@@ -83,7 +82,7 @@ func (q Query) CheckRequest(
 		return err
 	}
 
-	if (q.SkipClaimRevocationCheck == false) && (pubSig.IsRevocationChecked == 0) && (q.isQuerySybilResistance() == false) {
+	if !q.SkipClaimRevocationCheck && (pubSig.IsRevocationChecked == 0) && !q.isQuerySybilResistance() {
 		return errors.New("check revocation is required")
 	}
 
@@ -166,7 +165,11 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 }
 
 func (q Query) verifyGISTRoot(pubSig *CircuitOutputs) error {
-	if strings.Compare(q.GISTRoot.String(), pubSig.GISTRoot.String()) == 0 || q.GISTRoot.String() == "*" {
+	if q.GISTRoot == nil {
+		return nil
+	}
+
+	if q.GISTRoot.String() == pubSig.GISTRoot.String() || q.GISTRoot.String() == "*" {
 		return nil
 	}
 
@@ -180,7 +183,7 @@ func (q Query) verifyCRS(pubSig *CircuitOutputs) error {
 
 	crsStr := fmt.Sprintf("%d", pubSig.CRS)
 
-	if strings.Compare(q.CRS, crsStr) == 0 {
+	if q.CRS == crsStr {
 		return nil
 	}
 

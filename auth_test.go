@@ -646,7 +646,89 @@ func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 }
 
 func TestVerifyMessageWithMTPProof_Sybil(t *testing.T) {
+	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
 
+	var sigProofRequest protocol.ZeroKnowledgeProofRequest
+	sigProofRequest.ID = 83339
+	sigProofRequest.CircuitID = string(circuits.SybilMTPCircuitID)
+	opt := true
+	sigProofRequest.Optional = &opt
+	sigProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":           "KYCAgeCredential",
+		"crs":            "3111",
+		"gistRoot":       "15900769184189005891999491908033838744270120512592381537649980222328098160384",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, sigProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qCcHSp8NzU2fAEDkVXZRH7jDE3BDhJkEmhh4HHFjq"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        83339,
+				CircuitID: sigProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"3310153267210046275787377858404671687296143974882852611158964856127227719366",
+							"18029678252619687316796009182251911756914930424018155378995968664257509908131",
+							"1",
+						},
+						B: [][]string{
+							{
+								"18168063501765076280362591412317770496849567577799269252430804865112924689604",
+								"9733716664417773239259605486644435768197369060769306540782003765662007869316",
+							},
+							{
+								"16241274508089849660194705820479761306780313059182363622186303771941530717419",
+								"2924255623468646661349139768045110838463964414353330163681314877372455179612",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"11826380165924192125648692824618651228888584575030363591311656553813144636049",
+							"10786042093033562697659225658315736986467773822080842152284525088374041971311",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"21243908886899439496727111971550047844277794636712722665340971641531994626",
+						"9398140734157606483356379073024284845314414522515651018190933041410239625764",
+						"2866158879120952107115784903976781069285966573864730298228332293299779653869",
+						"2866158879120952107115784903976781069285966573864730298228332293299779653869",
+						"74977327600848231385663280181476307657",
+						"15900769184189005891999491908033838744270120512592381537649980222328098160384",
+						"3111",
+						"83339",
+						"24881925113117474550181377872147091108262942489540344683992139585244697090",
+						"1675723938",
+					},
+				},
+			},
+		},
+	}
+
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
+	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
+	require.Nil(t, err)
 }
 
 func TestVerifyMessageWithSigProof_Sybil(t *testing.T) {
@@ -714,16 +796,16 @@ func TestVerifyMessageWithSigProof_Sybil(t *testing.T) {
 						Protocol: "groth16",
 					},
 					PubSignals: []string{
-						"18950418071419400922414782312223483968476222961870115543277775273891897861286", // 0 - issuerAuthState
-						"9398140734157606483356379073024284845314414522515651018190933041410239625764",  // 1 - sybilID
-						"21243908886899439496727111971550047844277794636712722665340971641531994626",    // 2 - userID
-						"2866158879120952107115784903976781069285966573864730298228332293299779653869",  // 3 - issuerClaimNonRevState
-						"74977327600848231385663280181476307657",                                        // 4 - claimSchema
-						"18845653003614068876832710996329460079999251311121297585472029517224367708999", // 5 - gistRoot
-						"3111",  // 6 - crs
-						"83339", // 7 - requestID
-						"24881925113117474550181377872147091108262942489540344683992139585244697090", // 8 - issuerID
-						"1675703993", // 9 - timestamp
+						"18950418071419400922414782312223483968476222961870115543277775273891897861286",
+						"9398140734157606483356379073024284845314414522515651018190933041410239625764",
+						"21243908886899439496727111971550047844277794636712722665340971641531994626",
+						"2866158879120952107115784903976781069285966573864730298228332293299779653869",
+						"74977327600848231385663280181476307657",
+						"18845653003614068876832710996329460079999251311121297585472029517224367708999",
+						"3111",
+						"83339",
+						"24881925113117474550181377872147091108262942489540344683992139585244697090",
+						"1675703993",
 					},
 				},
 			},
@@ -733,16 +815,4 @@ func TestVerifyMessageWithSigProof_Sybil(t *testing.T) {
 	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
 	require.Nil(t, err)
-
-	// expected order:
-	// 0 - issuerAuthState
-	// 1 - sybilID
-	// 2 - userID
-	// 3 - issuerClaimNonRevState
-	// 4 - claimSchema
-	// 5 - gistRoot
-	// 6 - crs
-	// 7 - requestID
-	// 8 - issuerID
-	// 9 - timestamp
 }
