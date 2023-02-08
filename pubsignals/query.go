@@ -57,8 +57,8 @@ type CircuitOutputs struct {
 	IsRevocationChecked int
 }
 
-// CheckRequest checks if proof was created for this request.
-func (q Query) CheckRequest(
+// Check checks if proof was created for this query.
+func (q Query) Check(
 	ctx context.Context,
 	loader loaders.SchemaLoader,
 	pubSig *CircuitOutputs,
@@ -72,7 +72,7 @@ func (q Query) CheckRequest(
 		return err
 	}
 
-	if err := q.verifyQuery(pubSig, verifiablePresentation); err != nil {
+	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation); err != nil {
 		return err
 	}
 
@@ -155,7 +155,7 @@ func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
 	return ErrSchemaID
 }
 
-func (q Query) verifyQuery(pubSig *CircuitOutputs, verifiablePresentation json.RawMessage) error {
+func (q Query) verifyCredentialSubject(pubSig *CircuitOutputs, verifiablePresentation json.RawMessage) error {
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
 		return err

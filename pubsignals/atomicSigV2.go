@@ -25,7 +25,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 	schemaLoader loaders.SchemaLoader,
 	verifiablePresentation json.RawMessage,
 ) error {
-	err := query.CheckRequest(ctx, schemaLoader, &CircuitOutputs{
+	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,

@@ -159,7 +159,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.NoError(t, err)
 		})
 	}
@@ -302,7 +302,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
@@ -503,7 +503,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
