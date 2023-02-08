@@ -462,7 +462,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 
 }
 
-func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
+func TestVerifyAuthResponseWithEmptyReq_ErrorCase(t *testing.T) {
 
 	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
@@ -613,7 +613,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 
 	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	err := authInstance.VerifyAuthResponse(context.Background(), resp, authReq)
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, pubsignals.ErrRequestOperator)
 }
 
 func TestCreateAuthorizationRequest(t *testing.T) {

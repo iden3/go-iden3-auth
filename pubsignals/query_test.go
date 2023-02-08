@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -12,7 +13,8 @@ import (
 )
 
 var (
-	iid, _      = new(big.Int).SetString("24321776247489977391892714204849454424732134960326243894281082684329361408", 10)
+	issuerDID   = "did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"
+	iid, _      = new(big.Int).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
 	issuerID, _ = core.IDFromInt(iid)
 
 	schemaHashInt, _ = big.NewInt(0).SetString("336615423900919464193075592850483704600", 10)
@@ -326,7 +328,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Invalid Schema ID",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCAgeCredential",
 			},
@@ -339,7 +341,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Multiply query",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -356,7 +358,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Failed params in request",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -372,7 +374,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Multiple predicates in one request",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -391,7 +393,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another query",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -410,7 +412,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another values",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -430,7 +432,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Proof was generated for another path",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -453,7 +455,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Different slot index",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -476,7 +478,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		{
 			name: "Check revocation is required",
 			query: Query{
-				AllowedIssuers: []string{issuerID.String()},
+				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
@@ -503,6 +505,99 @@ func TestCheckRequest_Error(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.query.CheckRequest(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
 			require.EqualError(t, err, tt.expErr.Error())
+		})
+	}
+}
+
+func TestVerifyQuery_Success(t *testing.T) {
+	tests := []struct {
+		name   string
+		query  Query
+		pubSig *CircuitOutputs
+	}{
+		{
+			name: "Issuer DID is valid ID from public signals",
+			query: Query{
+				AllowedIssuers: []string{"did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"},
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID: func() *core.ID {
+					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
+					userID, _ := core.IDFromInt(i)
+					return &userID
+				}(),
+			},
+		},
+		{
+			name: "All issuers are allowed",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID: func() *core.ID {
+					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
+					userID, _ := core.IDFromInt(i)
+					return &userID
+				}(),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.query.verifyIssuer(tt.pubSig)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestVerifyQuery_Error(t *testing.T) {
+	tests := []struct {
+		name   string
+		query  Query
+		pubSig *CircuitOutputs
+		err    error
+	}{
+		{
+			name: "Invalid issuer in public signals",
+			query: Query{
+				AllowedIssuers: []string{"did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"},
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID: func() *core.ID {
+					i, _ := big.NewInt(0).SetString("42", 10)
+					userID, _ := core.IDFromInt(i)
+					return &userID
+				}(),
+			},
+		},
+		{
+			name: "Issuer not found",
+			query: Query{
+				AllowedIssuers: []string{
+					"did:polygonid:polygon:mumbai:2qMe71smt9D591WQdKvkbJBSQfEUQXtvyPmzoCqDd7",
+					"did:polygonid:polygon:mumbai:2qPvUBjKWgqADsAr2diJabs1NkqNJii482E2y1ZciQ",
+				},
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID: func() *core.ID {
+					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
+					userID, _ := core.IDFromInt(i)
+					return &userID
+				}(),
+			},
+			err: ErrUnavailableIssuer,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.query.verifyIssuer(tt.pubSig)
+			fmt.Println("err", err)
+			require.Error(t, err)
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
+			}
 		})
 	}
 }

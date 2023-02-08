@@ -134,8 +134,12 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 }
 
 func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
+	userDID, err := core.ParseDIDFromID(*pubSig.IssuerID)
+	if err != nil {
+		return err
+	}
 	for _, issuer := range q.AllowedIssuers {
-		if issuer == "*" || issuer == pubSig.IssuerID.String() {
+		if issuer == "*" || issuer == userDID.String() {
 			return nil
 		}
 	}
@@ -162,6 +166,7 @@ func (q Query) verifyQuery(pubSig *CircuitOutputs, verifiablePresentation json.R
 		if err := q.validateDisclosure(ctx, pubSig, fieldName, verifiablePresentation); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	values, operator, err := parseFieldPredicate(predicate)
@@ -169,11 +174,12 @@ func (q Query) verifyQuery(pubSig *CircuitOutputs, verifiablePresentation json.R
 		return err
 	}
 
-	if operator == circuits.NOOP {
-		return nil
-	}
 	if operator != pubSig.Operator {
 		return ErrRequestOperator
+	}
+
+	if operator == circuits.NOOP {
+		return nil
 	}
 
 	if len(values) > len(pubSig.Value) {
