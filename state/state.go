@@ -3,13 +3,19 @@ package state
 import (
 	"context"
 	"math/big"
+	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	core "github.com/iden3/go-iden3-core"
-	"github.com/iden3/go-merkletree-sql"
 	"github.com/pkg/errors"
+)
+
+var zero = big.NewInt(0)
+
+const (
+	gistNotFoundException  = "execution reverted: Root does not exist"
+	stateNotFoundException = "execution reverted: State does not exist"
 )
 
 // VerificationOptions is options for state verification
@@ -25,24 +31,19 @@ type ExtendedVerificationsOptions struct {
 	AcceptedStateTransitionDelay time.Duration
 }
 
-//go:generate mockgen -destination=mock/blockchainCallerMock.go . BlockchainCaller
-
-const (
-	getStateContractMethod          = "getState"
-	getTransitionInfoContractMethod = "getTransitionInfo"
-
-	errCallArgumentEncodedErrorMessage = "wrong arguments were provided"
-)
-
-// BlockchainCaller is an interface for smart contract call
-type BlockchainCaller interface {
-	// CallContract  cals smart contract. For read operation with single bigInt param
-	CallContract(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)
+// StateGetter return user's state info by user's ID
+//
+//go:generate mockgen -destination=mock/StateGetterMock.go . StateGetter
+//nolint:revive // we have two different getters for the state in one pkg
+type StateGetter interface {
+	GetStateInfoByState(opts *bind.CallOpts, state *big.Int) (StateV2StateInfo, error)
 }
 
-// Unmarshaler is used for contract call result parser
-type Unmarshaler interface {
-	Unmarshal([]interface{}) error
+// GISTGetter return global state info by state
+//
+//go:generate mockgen -destination=mock/GISTGetterMock.go . GISTGetter
+type GISTGetter interface {
+	GetGISTRootInfo(opts *bind.CallOpts, state *big.Int) (SmtRootInfo, error)
 }
 
 // ResolvedState can be the state verification result
@@ -53,106 +54,79 @@ type ResolvedState struct {
 	TransitionTimestamp int64  `json:"transition_timestamp"`
 }
 
-// Resolve is used to resolve identity state
-// rpcURL - url to connect to the blockchain
-// contractAddress is an address of state contract
-// id is base58 identifier  e.g. id:11A2HgCZ1pUcY8HoNDMjNWEBQXZdUnL3YVnVCUvR5s
-// state is bigint string representation of identity state
-func Resolve(ctx context.Context, c BlockchainCaller, contractAddress string, id, state *big.Int) (*ResolvedState, error) {
-	stateContract := new(State)
-
-	isGenesis, err := checkGenesisStateID(id, state)
-	// сheck if id is genesis
+// Resolve is used to resolve identity state.
+func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*ResolvedState, error) {
+	// сheck if id is genesis  - then we do need to resolve it.
+	isGenesis, err := CheckGenesisStateID(id, state)
 	if err != nil {
 		return nil, err
 	}
 
-	// get latest state for id from contract
-	err = contractCall(ctx, c, contractAddress, getStateContractMethod, id, stateContract)
-	if err != nil {
-		return nil, err
-	}
-
-	if stateContract.Int64() == 0 {
-		if !isGenesis {
-			return nil, errors.New("state is not genesis and not registered in the smart contract")
+	stateInfo, err := getter.GetStateInfoByState(&bind.CallOpts{Context: ctx}, state)
+	if err != nil && strings.Contains(err.Error(), stateNotFoundException) {
+		if isGenesis {
+			return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 		}
+		return nil, errors.New("state is not genesis and not registered in the smart contract")
+	} else if err != nil {
+		return nil, err
+	}
+
+	if stateInfo.Id.Cmp(id) != 0 {
+		return nil, errors.New("state has been saved for a different ID")
+	}
+
+	if stateInfo.ReplacedAtTimestamp.Cmp(zero) == 0 {
 		return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 	}
-	if stateContract.String() != state.String() {
 
-		// The non-empty state is returned, and it’s not equal to the state that the user has provided.
-		// Get the time of the latest state and compare it to the transition time of state provided by the user.
-		// The verification party can make a decision if it can accept this state based on that time frame
+	return &ResolvedState{
+		Latest:              false,
+		Genesis:             isGenesis,
+		State:               state.String(),
+		TransitionTimestamp: stateInfo.ReplacedAtTimestamp.Int64(),
+	}, nil
+}
 
-		transitionInfo := &TransitionInfo{}
-		err = contractCall(ctx, c, contractAddress, getTransitionInfoContractMethod, state, transitionInfo)
-		if err != nil {
-			return nil, err
-		}
+// ResolveGlobalRoot is used to resolve global root.
+func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (*ResolvedState, error) {
+	globalStateInfo, err := getter.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, state)
+	if err != nil && strings.Contains(err.Error(), gistNotFoundException) {
+		return nil, errors.New("gist state doesn't exist on smart contract")
+	} else if err != nil {
+		return nil, err
+	}
 
-		if transitionInfo.ID.Cmp(id) != 0 {
-			return nil, errors.New("transition info contains invalid id")
-		}
-
-		if transitionInfo.ReplacedAtTimestamp.Int64() == 0 {
-			return nil, errors.New("no information of transition for non-latest state")
+	if globalStateInfo.Root.Cmp(state) != 0 {
+		return nil, errors.New("gist info contains invalid state")
+	}
+	if globalStateInfo.ReplacedByRoot.Cmp(zero) != 0 {
+		if globalStateInfo.ReplacedAtTimestamp.Cmp(zero) == 0 {
+			return nil, errors.New("state was replaced, but replaced time unknown")
 		}
 		return &ResolvedState{
-			Latest:              false,
-			Genesis:             isGenesis,
 			State:               state.String(),
-			TransitionTimestamp: transitionInfo.ReplacedAtTimestamp.Int64(),
+			Latest:              false,
+			TransitionTimestamp: globalStateInfo.ReplacedAtTimestamp.Int64(),
 		}, nil
 	}
-
-	// The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough, so we work with the latest user state.
-	return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
+	return &ResolvedState{
+		State:               state.String(),
+		Latest:              true,
+		TransitionTimestamp: 0,
+	}, nil
 }
 
-func contractCall(ctx context.Context, c BlockchainCaller, contractAddress, contractFunction string, param *big.Int, result Unmarshaler) error {
-
-	data, err := StateABI.Pack(contractFunction, param)
-	if data == nil {
-		return errors.WithMessagef(err, "%s function: %s, param %v", errCallArgumentEncodedErrorMessage, contractFunction, param)
-	}
-	addr := common.HexToAddress(contractAddress)
-	// 3. get state from contract
-	res, err := c.CallContract(ctx, ethereum.CallMsg{
-		To:   &addr,
-		Data: data,
-	}, nil)
+// CheckGenesisStateID check if the state is genesis for the id.
+func CheckGenesisStateID(id, state *big.Int) (bool, error) {
+	userID, err := core.IDFromInt(id)
 	if err != nil {
-		return err
+		return false, err
 	}
-
-	outputs, err := StateABI.Unpack(contractFunction, res)
-	if err != nil {
-		return err
-	}
-
-	return result.Unmarshal(outputs)
-}
-
-func checkGenesisStateID(id, state *big.Int) (bool, error) {
-
-	stateHash, err := merkletree.NewHashFromBigInt(state)
+	identifier, err := core.IdGenesisFromIdenState(userID.Type(), state)
 	if err != nil {
 		return false, err
 	}
 
-	IDFromState, err := core.IdGenesisFromIdenState(core.TypeDefault, stateHash.BigInt())
-	if err != nil {
-		return false, err
-	}
-
-	idBytes := merkletree.NewElemBytesFromBigInt(id)
-	IDFromParam, err := core.IDFromBytes(idBytes[:31])
-	if err != nil {
-		return false, err
-	}
-	if IDFromState.String() != IDFromParam.String() {
-		return false, nil
-	}
-	return true, nil
+	return id.Cmp(identifier.BigInt()) == 0, nil
 }

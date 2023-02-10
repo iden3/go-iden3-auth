@@ -79,7 +79,7 @@ The blockchain verification algorithm is used
            mtpProofRequest.Rules = map[string]interface{}{
                "query": pubsignals.Query{
                    AllowedIssuers: []string{"*"},
-                   Req: map[string]interface{}{
+                   CredentialSubject: map[string]interface{}{
                        "birthday": map[string]interface{}{
                            "$lt": []int{20000101},
                        },

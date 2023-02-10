@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
@@ -13,75 +14,75 @@ import (
 	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/iden3/go-circuits"
+	"github.com/stretchr/testify/require"
 )
 
 var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./testdata"}
 var schemaLoader = &mockMemorySchemaLoader{}
 
 /*
-	mock for schema loader
+mock for schema loader
 */
 type mockMemorySchemaLoader struct {
 }
 
-func (r *mockMemorySchemaLoader) Load(_ context.Context, _ protocol.Schema) (schema []byte, ext string, err error) {
+func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byte, ext string, err error) {
 	return []byte(`{
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc.json-ld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "serialization": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/serialization.md#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "serialization:IndexDataSlotA"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "serialization:IndexDataSlotB"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc.json-ld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "serialization": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/serialization.md#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "serialization:IndexDataSlotA"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "serialization:IndexDataSlotB"
-          }
-        }
-      }
-    }
-  ]
-}
-`), "json-ld", nil
+	"@context": [
+	  {
+		"@version": 1.1,
+		"@protected": true,
+		"id": "@id",
+		"type": "@type",
+		"KYCAgeCredential": {
+		  "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCAgeCredential",
+		  "@context": {
+			"@version": 1.1,
+			"@protected": true,
+			"id": "@id",
+			"type": "@type",
+			"kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
+			"xsd": "http://www.w3.org/2001/XMLSchema#",
+			"birthday": {
+			  "@id": "kyc-vocab:birthday",
+			  "@type": "xsd:integer"
+			},
+			"documentType": {
+			  "@id": "kyc-vocab:documentType",
+			  "@type": "xsd:integer"
+			}
+		  }
+		},
+		"KYCCountryOfResidenceCredential": {
+		  "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential",
+		  "@context": {
+			"@version": 1.1,
+			"@protected": true,
+			"id": "@id",
+			"type": "@type",
+			"kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
+			"xsd": "http://www.w3.org/2001/XMLSchema#",
+			"countryCode": {
+			  "@id": "kyc-vocab:countryCode",
+			  "@type": "xsd:integer"
+			},
+			"documentType": {
+			  "@id": "kyc-vocab:documentType",
+			  "@type": "xsd:integer"
+			}
+		  }
+		}
+	  }
+	]
+  }`), "json-ld", nil
 }
 
 /*
-	mock for state resolver
+mock for state resolver
 */
-var stateResolver = &mockStateResolver{}
+var stateResolvers = map[string]pubsignals.StateResolver{
+	"polygon:mumbai": &mockStateResolver{},
+}
 
 type mockStateResolver struct {
 }
@@ -90,87 +91,34 @@ func (r *mockStateResolver) Resolve(_ context.Context, id, s *big.Int) (*state.R
 	return &state.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
 }
 
-func TestCreateAuthorizationRequest(t *testing.T) {
-
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
-	callbackURL := "https://test.com/callback"
-	reason := "basic authentication"
-
-	request := CreateAuthorizationRequest(reason, sender, callbackURL)
-	assert.Len(t, request.Body.Scope, 0)
-	assert.Equal(t, callbackURL, request.Body.CallbackURL)
-	assert.Equal(t, sender, request.From)
-
+func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*state.ResolvedState, error) {
+	return &state.ResolvedState{Latest: true, TransitionTimestamp: 0}, nil
 }
 
-func TestCreateAuthorizationRequestWithZKP(t *testing.T) {
-
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
-	callbackURL := "https://test.com/callback"
-	reason := "age verification"
-
-	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-
-	mtpProofRequest.ID = 1
-	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPCircuitID)
-	mtpProofRequest.Rules = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Req: map[string]interface{}{
-				"$lt": "24042000",
-			},
-			Schema: protocol.Schema{
-				URL:  "http://schema.url",
-				Type: "KYCAgeCredential",
-			},
-		},
-	}
-
-	request := CreateAuthorizationRequest(reason, sender, callbackURL)
-	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
-
-	assert.Len(t, request.Body.Scope, 1)
-	assert.Equal(t, callbackURL, request.Body.CallbackURL)
-	assert.Equal(t, sender, request.From)
-	assert.ObjectsAreEqual(request.Body.Scope[0], mtpProofRequest)
-
-}
-
-func TestVerifyMessageWithMTPProof(t *testing.T) {
-
-	// request
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
+	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
 	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-	mtpProofRequest.ID = 1
-	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPCircuitID)
+	mtpProofRequest.ID = 10
+	mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
 	opt := true
 	mtpProofRequest.Optional = &opt
-	mtpProofRequest.Rules = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Req: map[string]interface{}{
-				"countryCode": map[string]interface{}{
-					"$nin": []int{
-						840,
-						120,
-						340,
-						509,
-					},
-				},
-			},
-			Schema: protocol.Schema{
-				URL:  "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
-				Type: "KYCCountryOfResidenceCredential",
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"documentType": map[string]interface{}{
+				"$eq": 2,
 			},
 		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":    "KYCAgeCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
-	userID := "119tqceWdRd2F6WnAyVuFQRFjK3WUXq2LorSPyG9LJ"
+	userID := "did:polygonid:polygon:mumbai:2qPy2CHhCfXdZcQGZAQVtsgdfR5BghueMYBbeh3vEu"
 	responseUUID := uuid.New()
 
 	// response
@@ -185,45 +133,209 @@ func TestVerifyMessageWithMTPProof(t *testing.T) {
 		Message: "message to sign",
 		Scope: []protocol.ZeroKnowledgeProofResponse{
 			{
-				ID:        1,
+				ID:        10,
 				CircuitID: mtpProofRequest.CircuitID,
 				ZKProof: types.ZKProof{
 					Proof: &types.ProofData{
 						A: []string{
-							"13391792855876064159961972635593293420107384528568051553464431930751949164223",
-							"1340234156514424371412608292854628119646495446034903157290847790338828365967",
+							"9389088925084362941182847197191684819148768623682376516852007431947991724989",
+							"10568259185686785381482458779260308393741768509936906972837778621156057089175",
 							"1",
 						},
 						B: [][]string{
 							{
-								"15691819979475232094559173077222615349107673259729880872754546424435804210780",
-								"5096136697484789888414648180385423591377893199387718567394854201118306816266",
+								"18124518804005049977040972239644901379850438882307354898206467796069627773948",
+								"20337465054461875016981540168126209362569486189420367572442053617649167439202",
 							},
 							{
-								"14415469551251600097134734841213894130439560682036739798548029076915189571196",
-								"20090000223414166057341085632483118175324868197522334211992129524912673014962",
+								"1123201787975741753421527461074128184903399365080547359104572298983368672215",
+								"4548444000521702193082320071242238613966357808459869880760834322961625467904",
 							},
 							{
 								"1",
 								"0",
 							}},
 						C: []string{
-							"11415503132297310226070909779026062469592946937699661170150988764296705860650",
-							"10455420445628565470154609245999512669023398128793538476867561521321358405677",
+							"21413255921749477147380863320680340935992194551925147727466515372811521631932",
+							"17996692242791045240315166989962741859942785648600151787186333244524731532834",
 							"1",
 						},
 						Protocol: "groth16",
 					},
 					PubSignals: []string{
-						"379949150130214723420589610911161895495647789006649785264738141299135414272",
-						"18656147546666944484453899241916469544090258810192803949522794490493271005313",
 						"1",
-						"17339270624307006522829587570402128825147845744601780689258033623056405933706",
-						"26599707002460144379092755370384635496563807452878989192352627271768342528",
-						"17339270624307006522829587570402128825147845744601780689258033623056405933706",
-						"1642074362",
-						"106590880073303418818490710639556704462",
+						"18463205224409045257121573279869541972513923822404277784072747464647315970",
+						"19957126849313370387584567286711121936986032218550948293907888124760980319382",
+						"10",
+						"23549948072705994376874672497327914995985875946961888995821665795035566594",
+						"1",
+						"19957126849313370387584567286711121936986032218550948293907888124760980319382",
+						"1671536992",
+						"74977327600848231385663280181476307657",
+						"0",
+						"17040667407194471738958340146498954457187839778402591036538781364266841966",
+						"0",
+						"1",
 						"2",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+					},
+				},
+			},
+		},
+	}
+
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
+	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
+	require.Nil(t, err)
+}
+
+func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
+	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 10
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"countryCode": map[string]interface{}{
+				"$nin": []int{
+					840,
+					120,
+					340,
+					509,
+				},
+			},
+		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":    "KYCCountryOfResidenceCredential",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qNAbfxams2N4enwgBhj7yvPUbDrLwC2bsBZYZCTQR"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        10,
+				CircuitID: mtpProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"9517112492422486418344671523752691163637612305590571624363668885796911150333",
+							"8855938450276251202387073646943136306720422603123854769235151758541434807968",
+							"1",
+						},
+						B: [][]string{
+							{
+								"18880568320884466923930564925565727939067628655227999252296084923782755860476",
+								"8724893415197458543695192455798597402395044930214471497778888748319129905479",
+							},
+							{
+								"9807559381041464075347519433137353143151890330916363861193891037865993320923",
+								"6995202980453256069532771522391679223085808426805857698209331232672383046019",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"16453660244095377174525331937765624986258178472608723119429308977591704509298",
+							"7523187725705152586426891868747265746542072544935310991409893207335385519512",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"1",
+						"25054465935916343733470065977393556898165832783214621882239050035846517250",
+						"10",
+						"25054465935916343733470065977393556898165832783214621882239050035846517250",
+						"7120485770008490579908343167068999806468056401802904713650068500000641772574",
+						"1",
+						"7120485770008490579908343167068999806468056401802904713650068500000641772574",
+						"1671543597",
+						"336615423900919464193075592850483704600",
+						"0",
+						"17002437119434618783545694633038537380726339994244684348913844923422470806844",
+						"0",
 						"5",
 						"840",
 						"120",
@@ -295,86 +407,76 @@ func TestVerifyMessageWithMTPProof(t *testing.T) {
 		},
 	}
 
-	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	err := authInstance.VerifyAuthResponse(context.Background(), message, request)
-	assert.Nil(t, err)
-
+	require.Nil(t, err)
 }
 
 func TestVerifier_VerifyJWZ(t *testing.T) {
 
-	token := ` eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aCIsImNyaXQiOlsiY2lyY3VpdElkIl0sInR5cCI6IkpXWiJ9.eyJpZCI6ImE1NGI3YjJkLWJmMTUtNGU2NC1iZmQ1LTMxYzIwM2U3ZjIzYiIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1wbGFpbi1qc29uIiwidHlwZSI6Imh0dHBzOi8vaWRlbjMtY29tbXVuaWNhdGlvbi5pby9hdXRob3JpemF0aW9uLzEuMC9yZXNwb25zZSIsInRoaWQiOiJlZTkyYWIxMi0yNjcxLTQ1N2UtYWE1ZS04MTU4YzIwNWE5ODUiLCJib2R5Ijp7Im1lc3NhZ2UiOiJtZXNzYWdlIHRvIHNpZ24iLCJzY29wZSI6W3siaWQiOjEsImNpcmN1aXRfaWQiOiJjcmVkZW50aWFsQXRvbWljUXVlcnlNVFAiLCJwcm9vZiI6eyJwaV9hIjpbIjEzMzkxNzkyODU1ODc2MDY0MTU5OTYxOTcyNjM1NTkzMjkzNDIwMTA3Mzg0NTI4NTY4MDUxNTUzNDY0NDMxOTMwNzUxOTQ5MTY0MjIzIiwiMTM0MDIzNDE1NjUxNDQyNDM3MTQxMjYwODI5Mjg1NDYyODExOTY0NjQ5NTQ0NjAzNDkwMzE1NzI5MDg0Nzc5MDMzODgyODM2NTk2NyIsIjEiXSwicGlfYiI6W1siMTU2OTE4MTk5Nzk0NzUyMzIwOTQ1NTkxNzMwNzcyMjI2MTUzNDkxMDc2NzMyNTk3Mjk4ODA4NzI3NTQ1NDY0MjQ0MzU4MDQyMTA3ODAiLCI1MDk2MTM2Njk3NDg0Nzg5ODg4NDE0NjQ4MTgwMzg1NDIzNTkxMzc3ODkzMTk5Mzg3NzE4NTY3Mzk0ODU0MjAxMTE4MzA2ODE2MjY2Il0sWyIxNDQxNTQ2OTU1MTI1MTYwMDA5NzEzNDczNDg0MTIxMzg5NDEzMDQzOTU2MDY4MjAzNjczOTc5ODU0ODAyOTA3NjkxNTE4OTU3MTE5NiIsIjIwMDkwMDAwMjIzNDE0MTY2MDU3MzQxMDg1NjMyNDgzMTE4MTc1MzI0ODY4MTk3NTIyMzM0MjExOTkyMTI5NTI0OTEyNjczMDE0OTYyIl0sWyIxIiwiMCJdXSwicGlfYyI6WyIxMTQxNTUwMzEzMjI5NzMxMDIyNjA3MDkwOTc3OTAyNjA2MjQ2OTU5Mjk0NjkzNzY5OTY2MTE3MDE1MDk4ODc2NDI5NjcwNTg2MDY1MCIsIjEwNDU1NDIwNDQ1NjI4NTY1NDcwMTU0NjA5MjQ1OTk5NTEyNjY5MDIzMzk4MTI4NzkzNTM4NDc2ODY3NTYxNTIxMzIxMzU4NDA1Njc3IiwiMSJdLCJwcm90b2NvbCI6Imdyb3RoMTYifSwicHViX3NpZ25hbHMiOlsiMzc5OTQ5MTUwMTMwMjE0NzIzNDIwNTg5NjEwOTExMTYxODk1NDk1NjQ3Nzg5MDA2NjQ5Nzg1MjY0NzM4MTQxMjk5MTM1NDE0MjcyIiwiMTg2NTYxNDc1NDY2NjY5NDQ0ODQ0NTM4OTkyNDE5MTY0Njk1NDQwOTAyNTg4MTAxOTI4MDM5NDk1MjI3OTQ0OTA0OTMyNzEwMDUzMTMiLCIxIiwiMTczMzkyNzA2MjQzMDcwMDY1MjI4Mjk1ODc1NzA0MDIxMjg4MjUxNDc4NDU3NDQ2MDE3ODA2ODkyNTgwMzM2MjMwNTY0MDU5MzM3MDYiLCIyNjU5OTcwNzAwMjQ2MDE0NDM3OTA5Mjc1NTM3MDM4NDYzNTQ5NjU2MzgwNzQ1Mjg3ODk4OTE5MjM1MjYyNzI3MTc2ODM0MjUyOCIsIjE3MzM5MjcwNjI0MzA3MDA2NTIyODI5NTg3NTcwNDAyMTI4ODI1MTQ3ODQ1NzQ0NjAxNzgwNjg5MjU4MDMzNjIzMDU2NDA1OTMzNzA2IiwiMTY0MjA3NDM2MiIsIjEwNjU5MDg4MDA3MzMwMzQxODgxODQ5MDcxMDYzOTU1NjcwNDQ2MiIsIjIiLCI1IiwiODQwIiwiMTIwIiwiMzQwIiwiNTA5IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIl19XX0sImZyb20iOiIxMTl0cWNlV2RSZDJGNlduQXlWdUZRUkZqSzNXVVhxMkxvclNQeUc5TEoiLCJ0byI6IjExMjVHSnFndzZZRXNLRndqNjNHWTg3TU14UEw5a3dES3hQVWl3TUxOWiJ9.eyJwcm9vZiI6eyJwaV9hIjpbIjk0NDkxMDYwMTY0NDk2ODA1ODc1ODgyNjg4NDA1NzAyNjc0NjM4NzE5NTI2MDAzMDY5ODE1ODc5OTE1OTE0MDU4MDk3NzU1NjQ4NCIsIjE5MDM2ODk1MTYyNTU1OTM0NDA3NjE0OTYzNDE0MzQ3NjY0MDAyMDQwMjA3MTk1MjA4NDI4NTM3ODg3Njc3NTI3ODc4OTU5ODg5NTEiLCIxIl0sInBpX2IiOltbIjg5ODQ4NDMwODMwNTk5Nzk5OTAxNjIzOTIzNzc3MTQ4MzkzMzMyOTIxMTE1NDM2Mjg5NzIwNjY5NTYyMTA3MDgxMDg4MDE1Njk3NSIsIjYxMTI0NTUyMTQ3MDg1MTc1NzAxMTEwMTA5NDUwMjE1OTQzMjkxNDk2MzY1OTc3NDE0NDk3MDE3NTcwNzcxMDIyMTMxNjk0MTU1OTAiXSxbIjExNjU2MDAxMzA0NTE2OTAwNTM5MzY4NzM3OTA3MTg5MzEwNjk5MTkyNzAxNjA1OTA0MDkwNDkyNTgxNzk0NTUyMjI2MTExODc4OTcwIiwiMTk2MzgwODk5NjMzMDI1MjYyNzI3ODM0NTA3NDQ1NjA4MTM3NTQyODYyMzA4Mjc3ODcxNDkwNTU4NjA1NDk2OTE1MjEwMTI4MTQ4MDkiXSxbIjEiLCIwIl1dLCJwaV9jIjpbIjEzODgwNDM2MjkzOTA4MTQyODU2MzYwMTg3NTQxNDQ1ODA4Mzc3ODI4Njg4MzA0NzUzOTMwNTA2NjA2ODM3MDczNzg3OTYzMDQ2NzcwIiwiMjU2MTI0Nzc2OTEyNTU5OTgwOTg5NTg1MjQ4OTM4MjQ2MTM2OTAzMjc1ODQwOTc3OTEzNjU4MDM4MTQxNTc0MjI3OTkyNTI2Mjk4OCIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2In0sInB1Yl9zaWduYWxzIjpbIjgzMzM5MDgzNTc1NjE2MTIxOTc1OTM0MDE1NDY5NzMyODg0Mjk5ODE0NDY3MDIyMzMwNjU1MTg3MTUzNzg5OTM1MDMzNjQzNDgyNzIiLCIxODY1NjE0NzU0NjY2Njk0NDQ4NDQ1Mzg5OTI0MTkxNjQ2OTU0NDA5MDI1ODgxMDE5MjgwMzk0OTUyMjc5NDQ5MDQ5MzI3MTAwNTMxMyIsIjM3OTk0OTE1MDEzMDIxNDcyMzQyMDU4OTYxMDkxMTE2MTg5NTQ5NTY0Nzc4OTAwNjY0OTc4NTI2NDczODE0MTI5OTEzNTQxNDI3MiJdfQ`
+	token := ` eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aFYyIiwiY3JpdCI6WyJjaXJjdWl0SWQiXSwidHlwIjoiSldaIn0.bWVzc2FnZQ.eyJwcm9vZiI6eyJwaV9hIjpbIjE2Njg0NTgxNTM5NDI0MjgzMjc5NjAxMzg1MjE5Mzc0MjkzNjQ5MDg5OTgzNjMyNzg1NTk4OTc1ODkxMzM2Njg4NzEzNjc5ODYyNTgzIiwiMTAzNjU5ODAzMDYzMzYyOTUxMDkwNDQ0OTUxNTkwMjIzOTkyMzMwNjU5NzU4MjMzMTk3NTc5MDMwMjQ3ODczNTIxMzE4OTkzODQzMDEiLCIxIl0sInBpX2IiOltbIjQ4MjM0OTk3NTQ0NTk4MjQ2NjM4NTA4NjE0NjgzNzU1MjM2NDc3NzgxNDgwMzI3NDIwNzM2NTA1NTA0MjM4NjU0OTU2NDI1MDMwMTYiLCIxNzUxMDQ5NzY1MzMyODk2MjM5Nzk2NDkwNDczNTAyOTU4ODIxOTQyMjU2NzY2MjMyNDU5OTQ5Mjg4NzMwMTQ4NjAyNjkwNDM3MDc0NSJdLFsiNjYzMzg3NTY3NzY5Mzc2MTQ2MDM0ODIzNTM2OTIxNDgwMTkwNjUyNjg3OTI4MTg2MDY4NDQ0ODA4MzYxMTIwMjA2MjA1MDc1NzUzMSIsIjg3NTgwNzE3MDUwNjUzNTQ0OTY3Mzc5NzAzODY5ODMyNTA2Nzg4OTc4Mjc3NjMxODkxODc4ODk4NDAyMjgxNDE3NTg4MjMwNTE1MjIiXSxbIjEiLCIwIl1dLCJwaV9jIjpbIjExMDg0NjQ4MzIyNzc1MTMyOTEwNTI0MTE4Mjg0ODgwOTI3MTk3MjE0NjgwMjU3MTU5NDA0MzU5MDQ0MDM0MTAzMTAyMDYzMDEzMTc3IiwiMzY2NjExNjkxODg0MDMzMDU5MzA5MjcyNjI2ODY0NjMzNjczMjY2MTY0MjI3NjE3NDc0NzczMzk1NjU3MjA1NjgzNDQ3MjYzNDYxNSIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2In0sInB1Yl9zaWduYWxzIjpbIjI1MDU0NDY1OTM1OTE2MzQzNzMzNDcwMDY1OTc3MzkzNTU2ODk4MTY1ODMyNzgzMjE0NjIxODgyMjM5MDUwMDM1ODQ2NTE3MjUwIiwiMTA0NTczNjMzMTkwMjQ4MTQ0NjY5NDQyNjYxMTE5MTc1ODkyNTgzOTE2MzczNDM0OTA5MTM0MTM5NjUxMzcwMzIxNzg3MTg0MDgxMTYiLCI1MzA0Njg1OTQ1NTI0MTc3MjA4MzQ5NDczNzc3MjMzOTcwNjk2NTU1ODA0NzQwNzM2MTU4NjA2ODI1MTE2ODA2MDgwMDU0NjA0Mzg1Il19 `
 
-	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	parsedToken, err := authInstance.VerifyJWZ(context.Background(), token)
-	assert.NoError(t, err)
-	assert.Equal(t, parsedToken.Alg, "groth16")
+	require.NoError(t, err)
+	require.Equal(t, parsedToken.Alg, "groth16")
 }
 
 func TestVerifier_FullVerify(t *testing.T) {
-
 	// request
 	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
 	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-	mtpProofRequest.ID = 1
-	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPCircuitID)
+	mtpProofRequest.ID = 10
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
 	opt := true
 	mtpProofRequest.Optional = &opt
-	mtpProofRequest.Rules = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Req: map[string]interface{}{
-				"countryCode": map[string]interface{}{
-					"$nin": []int{
-						840,
-						120,
-						340,
-						509,
-					},
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"countryCode": map[string]interface{}{
+				"$nin": []int{
+					840,
+					120,
+					340,
+					509,
 				},
 			},
-			Schema: protocol.Schema{
-				URL:  "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
-				Type: "KYCCountryOfResidenceCredential",
-			},
 		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":    "KYCCountryOfResidenceCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 	request.ID = "28494007-9c49-4f1a-9694-7700c08865bf"
 	request.ThreadID = "ee92ab12-2671-457e-aa5e-8158c205a985" // because it's used in the response
 
-	token := ` eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aCIsImNyaXQiOlsiY2lyY3VpdElkIl0sInR5cCI6IkpXWiJ9.eyJpZCI6ImE1NGI3YjJkLWJmMTUtNGU2NC1iZmQ1LTMxYzIwM2U3ZjIzYiIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1wbGFpbi1qc29uIiwidHlwZSI6Imh0dHBzOi8vaWRlbjMtY29tbXVuaWNhdGlvbi5pby9hdXRob3JpemF0aW9uLzEuMC9yZXNwb25zZSIsInRoaWQiOiJlZTkyYWIxMi0yNjcxLTQ1N2UtYWE1ZS04MTU4YzIwNWE5ODUiLCJib2R5Ijp7Im1lc3NhZ2UiOiJtZXNzYWdlIHRvIHNpZ24iLCJzY29wZSI6W3siaWQiOjEsImNpcmN1aXRfaWQiOiJjcmVkZW50aWFsQXRvbWljUXVlcnlNVFAiLCJwcm9vZiI6eyJwaV9hIjpbIjEzMzkxNzkyODU1ODc2MDY0MTU5OTYxOTcyNjM1NTkzMjkzNDIwMTA3Mzg0NTI4NTY4MDUxNTUzNDY0NDMxOTMwNzUxOTQ5MTY0MjIzIiwiMTM0MDIzNDE1NjUxNDQyNDM3MTQxMjYwODI5Mjg1NDYyODExOTY0NjQ5NTQ0NjAzNDkwMzE1NzI5MDg0Nzc5MDMzODgyODM2NTk2NyIsIjEiXSwicGlfYiI6W1siMTU2OTE4MTk5Nzk0NzUyMzIwOTQ1NTkxNzMwNzcyMjI2MTUzNDkxMDc2NzMyNTk3Mjk4ODA4NzI3NTQ1NDY0MjQ0MzU4MDQyMTA3ODAiLCI1MDk2MTM2Njk3NDg0Nzg5ODg4NDE0NjQ4MTgwMzg1NDIzNTkxMzc3ODkzMTk5Mzg3NzE4NTY3Mzk0ODU0MjAxMTE4MzA2ODE2MjY2Il0sWyIxNDQxNTQ2OTU1MTI1MTYwMDA5NzEzNDczNDg0MTIxMzg5NDEzMDQzOTU2MDY4MjAzNjczOTc5ODU0ODAyOTA3NjkxNTE4OTU3MTE5NiIsIjIwMDkwMDAwMjIzNDE0MTY2MDU3MzQxMDg1NjMyNDgzMTE4MTc1MzI0ODY4MTk3NTIyMzM0MjExOTkyMTI5NTI0OTEyNjczMDE0OTYyIl0sWyIxIiwiMCJdXSwicGlfYyI6WyIxMTQxNTUwMzEzMjI5NzMxMDIyNjA3MDkwOTc3OTAyNjA2MjQ2OTU5Mjk0NjkzNzY5OTY2MTE3MDE1MDk4ODc2NDI5NjcwNTg2MDY1MCIsIjEwNDU1NDIwNDQ1NjI4NTY1NDcwMTU0NjA5MjQ1OTk5NTEyNjY5MDIzMzk4MTI4NzkzNTM4NDc2ODY3NTYxNTIxMzIxMzU4NDA1Njc3IiwiMSJdLCJwcm90b2NvbCI6Imdyb3RoMTYifSwicHViX3NpZ25hbHMiOlsiMzc5OTQ5MTUwMTMwMjE0NzIzNDIwNTg5NjEwOTExMTYxODk1NDk1NjQ3Nzg5MDA2NjQ5Nzg1MjY0NzM4MTQxMjk5MTM1NDE0MjcyIiwiMTg2NTYxNDc1NDY2NjY5NDQ0ODQ0NTM4OTkyNDE5MTY0Njk1NDQwOTAyNTg4MTAxOTI4MDM5NDk1MjI3OTQ0OTA0OTMyNzEwMDUzMTMiLCIxIiwiMTczMzkyNzA2MjQzMDcwMDY1MjI4Mjk1ODc1NzA0MDIxMjg4MjUxNDc4NDU3NDQ2MDE3ODA2ODkyNTgwMzM2MjMwNTY0MDU5MzM3MDYiLCIyNjU5OTcwNzAwMjQ2MDE0NDM3OTA5Mjc1NTM3MDM4NDYzNTQ5NjU2MzgwNzQ1Mjg3ODk4OTE5MjM1MjYyNzI3MTc2ODM0MjUyOCIsIjE3MzM5MjcwNjI0MzA3MDA2NTIyODI5NTg3NTcwNDAyMTI4ODI1MTQ3ODQ1NzQ0NjAxNzgwNjg5MjU4MDMzNjIzMDU2NDA1OTMzNzA2IiwiMTY0MjA3NDM2MiIsIjEwNjU5MDg4MDA3MzMwMzQxODgxODQ5MDcxMDYzOTU1NjcwNDQ2MiIsIjIiLCI1IiwiODQwIiwiMTIwIiwiMzQwIiwiNTA5IiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIl19XX0sImZyb20iOiIxMTl0cWNlV2RSZDJGNlduQXlWdUZRUkZqSzNXVVhxMkxvclNQeUc5TEoiLCJ0byI6IjExMjVHSnFndzZZRXNLRndqNjNHWTg3TU14UEw5a3dES3hQVWl3TUxOWiJ9.eyJwcm9vZiI6eyJwaV9hIjpbIjk0NDkxMDYwMTY0NDk2ODA1ODc1ODgyNjg4NDA1NzAyNjc0NjM4NzE5NTI2MDAzMDY5ODE1ODc5OTE1OTE0MDU4MDk3NzU1NjQ4NCIsIjE5MDM2ODk1MTYyNTU1OTM0NDA3NjE0OTYzNDE0MzQ3NjY0MDAyMDQwMjA3MTk1MjA4NDI4NTM3ODg3Njc3NTI3ODc4OTU5ODg5NTEiLCIxIl0sInBpX2IiOltbIjg5ODQ4NDMwODMwNTk5Nzk5OTAxNjIzOTIzNzc3MTQ4MzkzMzMyOTIxMTE1NDM2Mjg5NzIwNjY5NTYyMTA3MDgxMDg4MDE1Njk3NSIsIjYxMTI0NTUyMTQ3MDg1MTc1NzAxMTEwMTA5NDUwMjE1OTQzMjkxNDk2MzY1OTc3NDE0NDk3MDE3NTcwNzcxMDIyMTMxNjk0MTU1OTAiXSxbIjExNjU2MDAxMzA0NTE2OTAwNTM5MzY4NzM3OTA3MTg5MzEwNjk5MTkyNzAxNjA1OTA0MDkwNDkyNTgxNzk0NTUyMjI2MTExODc4OTcwIiwiMTk2MzgwODk5NjMzMDI1MjYyNzI3ODM0NTA3NDQ1NjA4MTM3NTQyODYyMzA4Mjc3ODcxNDkwNTU4NjA1NDk2OTE1MjEwMTI4MTQ4MDkiXSxbIjEiLCIwIl1dLCJwaV9jIjpbIjEzODgwNDM2MjkzOTA4MTQyODU2MzYwMTg3NTQxNDQ1ODA4Mzc3ODI4Njg4MzA0NzUzOTMwNTA2NjA2ODM3MDczNzg3OTYzMDQ2NzcwIiwiMjU2MTI0Nzc2OTEyNTU5OTgwOTg5NTg1MjQ4OTM4MjQ2MTM2OTAzMjc1ODQwOTc3OTEzNjU4MDM4MTQxNTc0MjI3OTkyNTI2Mjk4OCIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2In0sInB1Yl9zaWduYWxzIjpbIjgzMzM5MDgzNTc1NjE2MTIxOTc1OTM0MDE1NDY5NzMyODg0Mjk5ODE0NDY3MDIyMzMwNjU1MTg3MTUzNzg5OTM1MDMzNjQzNDgyNzIiLCIxODY1NjE0NzU0NjY2Njk0NDQ4NDQ1Mzg5OTI0MTkxNjQ2OTU0NDA5MDI1ODgxMDE5MjgwMzk0OTUyMjc5NDQ5MDQ5MzI3MTAwNTMxMyIsIjM3OTk0OTE1MDEzMDIxNDcyMzQyMDU4OTYxMDkxMTE2MTg5NTQ5NTY0Nzc4OTAwNjY0OTc4NTI2NDczODE0MTI5OTEzNTQxNDI3MiJdfQ`
+	token := ` eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aFYyIiwiY3JpdCI6WyJjaXJjdWl0SWQiXSwidHlwIjoiSldaIn0.eyJpZCI6IjI3NGI1ODE5LWMxNDctNGExNy1iNGUxLTRmZDJhOWNmNTdhNSIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1wbGFpbi1qc29uIiwidHlwZSI6Imh0dHBzOi8vaWRlbjMtY29tbXVuaWNhdGlvbi5pby9hdXRob3JpemF0aW9uLzEuMC9yZXNwb25zZSIsInRoaWQiOiI4NWFjMjc3Yi0xYWZlLTQzY2EtYWNmZC1mOTM5ZTAwODBkZDYiLCJib2R5Ijp7Im1lc3NhZ2UiOiJtZXNzYWdlIHRvIHNpZ24iLCJzY29wZSI6W3siaWQiOjEwLCJjaXJjdWl0SWQiOiJjcmVkZW50aWFsQXRvbWljUXVlcnlNVFBWMiIsInByb29mIjp7InBpX2EiOlsiOTUxNzExMjQ5MjQyMjQ4NjQxODM0NDY3MTUyMzc1MjY5MTE2MzYzNzYxMjMwNTU5MDU3MTYyNDM2MzY2ODg4NTc5NjkxMTE1MDMzMyIsIjg4NTU5Mzg0NTAyNzYyNTEyMDIzODcwNzM2NDY5NDMxMzYzMDY3MjA0MjI2MDMxMjM4NTQ3NjkyMzUxNTE3NTg1NDE0MzQ4MDc5NjgiLCIxIl0sInBpX2IiOltbIjE4ODgwNTY4MzIwODg0NDY2OTIzOTMwNTY0OTI1NTY1NzI3OTM5MDY3NjI4NjU1MjI3OTk5MjUyMjk2MDg0OTIzNzgyNzU1ODYwNDc2IiwiODcyNDg5MzQxNTE5NzQ1ODU0MzY5NTE5MjQ1NTc5ODU5NzQwMjM5NTA0NDkzMDIxNDQ3MTQ5Nzc3ODg4ODc0ODMxOTEyOTkwNTQ3OSJdLFsiOTgwNzU1OTM4MTA0MTQ2NDA3NTM0NzUxOTQzMzEzNzM1MzE0MzE1MTg5MDMzMDkxNjM2Mzg2MTE5Mzg5MTAzNzg2NTk5MzMyMDkyMyIsIjY5OTUyMDI5ODA0NTMyNTYwNjk1MzI3NzE1MjIzOTE2NzkyMjMwODU4MDg0MjY4MDU4NTc2OTgyMDkzMzEyMzI2NzIzODMwNDYwMTkiXSxbIjEiLCIwIl1dLCJwaV9jIjpbIjE2NDUzNjYwMjQ0MDk1Mzc3MTc0NTI1MzMxOTM3NzY1NjI0OTg2MjU4MTc4NDcyNjA4NzIzMTE5NDI5MzA4OTc3NTkxNzA0NTA5Mjk4IiwiNzUyMzE4NzcyNTcwNTE1MjU4NjQyNjg5MTg2ODc0NzI2NTc0NjU0MjA3MjU0NDkzNTMxMDk5MTQwOTg5MzIwNzMzNTM4NTUxOTUxMiIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2In0sInB1Yl9zaWduYWxzIjpbIjEiLCIyNTA1NDQ2NTkzNTkxNjM0MzczMzQ3MDA2NTk3NzM5MzU1Njg5ODE2NTgzMjc4MzIxNDYyMTg4MjIzOTA1MDAzNTg0NjUxNzI1MCIsIjEwIiwiMjUwNTQ0NjU5MzU5MTYzNDM3MzM0NzAwNjU5NzczOTM1NTY4OTgxNjU4MzI3ODMyMTQ2MjE4ODIyMzkwNTAwMzU4NDY1MTcyNTAiLCI3MTIwNDg1NzcwMDA4NDkwNTc5OTA4MzQzMTY3MDY4OTk5ODA2NDY4MDU2NDAxODAyOTA0NzEzNjUwMDY4NTAwMDAwNjQxNzcyNTc0IiwiMSIsIjcxMjA0ODU3NzAwMDg0OTA1Nzk5MDgzNDMxNjcwNjg5OTk4MDY0NjgwNTY0MDE4MDI5MDQ3MTM2NTAwNjg1MDAwMDA2NDE3NzI1NzQiLCIxNjcxNTQzNTk3IiwiMzM2NjE1NDIzOTAwOTE5NDY0MTkzMDc1NTkyODUwNDgzNzA0NjAwIiwiMCIsIjE3MDAyNDM3MTE5NDM0NjE4NzgzNTQ1Njk0NjMzMDM4NTM3MzgwNzI2MzM5OTk0MjQ0Njg0MzQ4OTEzODQ0OTIzNDIyNDcwODA2ODQ0IiwiMCIsIjUiLCI4NDAiLCIxMjAiLCIzNDAiLCI1MDkiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiXX1dfSwiZnJvbSI6ImRpZDpwb2x5Z29uaWQ6cG9seWdvbjptdW1iYWk6MnFOQWJmeGFtczJONGVud2dCaGo3eXZQVWJEckx3QzJic0JaWVpDVFFSIiwidG8iOiIxMTI1R0pxZ3c2WUVzS0Z3ajYzR1k4N01NeFBMOWt3REt4UFVpd01Ub1IifQ.eyJwcm9vZiI6eyJwaV9hIjpbIjgwMzM1NzQwMzc0MjEyOTIxMDY4Mzk5MjkwMTg5ODA4MzcxMDM3NTY2NTA4MTkyMTgzNjgzODYyOTAxNTY1MzY0MTIyNTY5MjQwOTUiLCI1MjA2ODkzODk0MTg2ODE1Mjg1MzIyNjQ3MDUwOTkyNDk0ODQwNzc1MDUwMTM2MzgwMjYyMjM2MTkyNTIwNzQ2ODY1OTA3OTczNDIyIiwiMSJdLCJwaV9iIjpbWyIyMTQzNzU0OTcxNTU3NzA2MzkzNDM3NTM3ODcyMDQwMzIxMzIzNDExODM5MDQ3NjQyMzI3MDY2NTQxNzUwMDA3ODU2ODg2NDE1NzIzOCIsIjY5MTQ0MjkxMTM0ODEwMDQyODYwODcxOTc3MTI4NjgzNjIzMTcwMTQyMTk2MjA3NDg0NjQ4OTgyMjI1MDU2NjA5MzgyMjQ4NDk4MDciXSxbIjEyMzUwMDk4MjEzMjk2OTM4NTM3Mzk0NTEwODQ0MzAyODM3NTk4MTUyOTQ1NTA5NzExNzk2OTg4MzM0MjAzOTY2NzU2MzY2OTQ1NTA4IiwiMjcwOTE5NDc5NjcyNTEzMzA1ODM4Mzc5MTczMjM2NDIxMjA3MTkyNDg2MTQxMjIyOTU4NjUzNTk3Njc1NTc1MjM4NzQyNjUyNzg0MyJdLFsiMSIsIjAiXV0sInBpX2MiOlsiMTkwMTQ3MzM1MTgwNTE1Nzg1MDk3Nzc4MzQ0ODEwMjg3NzkzODc1NDI0NjAwMjE5MzI3OTk1MTUxNzY4Mzk1NzE2MDI5MDU0ODQyNTIiLCIyMTUwNDg1MzA5MDQ0MTc3MDMzMzA2NDI4NDk3MjY1MDE3NDI2OTc5MjA3OTg1MTY1Mzk3NzczMjc0MjcyMDY2ODExNDAwMjk1OTQ5MCIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2In0sInB1Yl9zaWduYWxzIjpbIjI1MDU0NDY1OTM1OTE2MzQzNzMzNDcwMDY1OTc3MzkzNTU2ODk4MTY1ODMyNzgzMjE0NjIxODgyMjM5MDUwMDM1ODQ2NTE3MjUwIiwiODE4ODQ4NTI3MDk2MTY2NzYwMTc3MjQ5OTE2ODMwNzU2MDEyNDYxNzM5MjE3NzcxODQyODUxODg3NjgyNjU4MjAzNzk0NjU4MzI2NCIsIjUzMDQ2ODU5NDU1MjQxNzcyMDgzNDk0NzM3NzcyMzM5NzA2OTY1NTU4MDQ3NDA3MzYxNTg2MDY4MjUxMTY4MDYwODAwNTQ2MDQzODUiXX0`
 
-	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	_, err := authInstance.FullVerify(context.Background(), token, request)
 	assert.Nil(t, err)
 
 }
 
-func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
+func TestVerifyAuthResponseWithEmptyReq_ErrorCase(t *testing.T) {
 
 	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
-	userID := "119tqceWdRd2F6WnAyVuFQRFjK3WUXq2LorSPyG9LJ"
+	userID := "did:polygonid:polygon:mumbai:2qNAbfxams2N4enwgBhj7yvPUbDrLwC2bsBZYZCTQR"
 	var zkReq protocol.ZeroKnowledgeProofRequest
-	zkReq.ID = 1
-	zkReq.CircuitID = string(circuits.AtomicQueryMTPCircuitID)
+	zkReq.ID = 10
+	zkReq.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
 	opt := true
 	zkReq.Optional = &opt
-	zkReq.Rules = map[string]interface{}{
-		"query": pubsignals.Query{
-			AllowedIssuers: []string{"*"},
-			Schema: protocol.Schema{
-				URL:  "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
-				Type: "KYCCountryOfResidenceCredential",
-			},
-		},
+	zkReq.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"type":           "KYCCountryOfResidenceCredential",
 	}
 
 	authReq := CreateAuthorizationRequestWithMessage(reason, "test", verifierID, callbackURL)
@@ -392,50 +494,53 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 			Message: "test",
 			Scope: []protocol.ZeroKnowledgeProofResponse{
 				{
-					ID:        1,
-					CircuitID: string(circuits.AtomicQueryMTPCircuitID),
+					ID:        10,
+					CircuitID: string(circuits.AtomicQueryMTPV2CircuitID),
 					ZKProof: types.ZKProof{
 						Proof: &types.ProofData{
 							A: []string{
-								"9742806134969392226546322490560630802447930806537100408086160321763928272376",
-								"21455791203277003434494375277451189817937636213176444019767120099596514163982",
+								"9517112492422486418344671523752691163637612305590571624363668885796911150333",
+								"8855938450276251202387073646943136306720422603123854769235151758541434807968",
 								"1",
 							},
 							B: [][]string{
 								{
-									"10380825203862480352812509276126714433521593951138343399902602814224203230644",
-									"3258713202006941217475014546591342349864153477480289203741647764981122849969",
+									"18880568320884466923930564925565727939067628655227999252296084923782755860476",
+									"8724893415197458543695192455798597402395044930214471497778888748319129905479",
 								},
 								{
-									"1822645146824926970539316997069683858010941097218414131904374790154170166572",
-									"10353710770765315368364178270577963995559055291780726291909607243297495512681",
+									"9807559381041464075347519433137353143151890330916363861193891037865993320923",
+									"6995202980453256069532771522391679223085808426805857698209331232672383046019",
 								},
 								{
 									"1",
 									"0",
 								}},
 							C: []string{
-								"9484567403290042082168690530225028055268796074940883562365588128103915644358",
-								"6661326208907807355087503512595101570698136414120018064634575604679380099060",
+								"16453660244095377174525331937765624986258178472608723119429308977591704509298",
+								"7523187725705152586426891868747265746542072544935310991409893207335385519512",
 								"1",
 							},
 							Protocol: "groth16",
 						},
 						PubSignals: []string{
-							"379949150130214723420589610911161895495647789006649785264738141299135414272",
-							"18656147546666944484453899241916469544090258810192803949522794490493271005313",
 							"1",
-							"17339270624307006522829587570402128825147845744601780689258033623056405933706",
-							"26599707002460144379092755370384635496563807452878989192352627271768342528",
-							"17339270624307006522829587570402128825147845744601780689258033623056405933706",
-							"1642074362",
-							"106590880073303418818490710639556704462",
+							"25054465935916343733470065977393556898165832783214621882239050035846517250",
+							"10",
+							"25054465935916343733470065977393556898165832783214621882239050035846517250",
+							"7120485770008490579908343167068999806468056401802904713650068500000641772574",
+							"1",
+							"7120485770008490579908343167068999806468056401802904713650068500000641772574",
+							"1671543597",
+							"336615423900919464193075592850483704600",
 							"0",
+							"17002437119434618783545694633038537380726339994244684348913844923422470806844",
 							"0",
-							"0",
-							"0",
-							"0",
-							"0",
+							"5",
+							"840",
+							"120",
+							"340",
+							"509",
 							"0",
 							"0",
 							"0",
@@ -505,7 +610,36 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 		To:   authReq.From,
 	}
 
-	authInstance := Verifier{verificationKeyloader, schemaLoader, stateResolver}
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
 	err := authInstance.VerifyAuthResponse(context.Background(), resp, authReq)
-	assert.NoError(t, err)
+	assert.ErrorIs(t, err, pubsignals.ErrRequestOperator)
+}
+
+func TestCreateAuthorizationRequest(t *testing.T) {
+
+	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	callbackURL := "https://test.com/callback"
+	reason := "basic authentication"
+
+	request := CreateAuthorizationRequest(reason, sender, callbackURL)
+	assert.Len(t, request.Body.Scope, 0)
+	assert.Equal(t, callbackURL, request.Body.CallbackURL)
+	assert.Equal(t, sender, request.From)
+	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
+
+}
+
+func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
+
+	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	callbackURL := "https://test.com/callback"
+	reason := "basic authentication"
+	message := "message"
+
+	request := CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL)
+	assert.Len(t, request.Body.Scope, 0)
+	assert.Equal(t, callbackURL, request.Body.CallbackURL)
+	assert.Equal(t, sender, request.From)
+	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
+	assert.Equal(t, message, request.Body.Message)
 }

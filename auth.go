@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
@@ -24,12 +25,20 @@ import (
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	claimSchemaLoader     loaders.SchemaLoader
-	stateResolver         pubsignals.StateResolver
+	stateResolver         map[string]pubsignals.StateResolver
 }
 
 // NewVerifier returns setup instance of auth library
-func NewVerifier(keyLoader loaders.VerificationKeyLoader, claimSchemaLoader loaders.SchemaLoader, resolver pubsignals.StateResolver) *Verifier {
-	return &Verifier{verificationKeyLoader: keyLoader, claimSchemaLoader: claimSchemaLoader, stateResolver: resolver}
+func NewVerifier(
+	keyLoader loaders.VerificationKeyLoader,
+	claimSchemaLoader loaders.SchemaLoader,
+	resolver map[string]pubsignals.StateResolver) *Verifier {
+
+	return &Verifier{
+		verificationKeyLoader: keyLoader,
+		claimSchemaLoader:     claimSchemaLoader,
+		stateResolver:         resolver,
+	}
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -41,7 +50,8 @@ func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.Aut
 }
 
 // CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
-func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL string) protocol.AuthorizationRequestMessage {
+func CreateAuthorizationRequestWithMessage(reason, message, sender,
+	callbackURL string) protocol.AuthorizationRequestMessage {
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
@@ -60,7 +70,12 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender, callbackURL 
 }
 
 // VerifyAuthResponse performs verification of auth response based on auth request
-func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.AuthorizationResponseMessage, request protocol.AuthorizationRequestMessage) error {
+func (v *Verifier) VerifyAuthResponse(
+	ctx context.Context,
+	response protocol.AuthorizationResponseMessage,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt,
+) error {
 
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
@@ -90,7 +105,7 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 		}
 
 		// prepare query from request
-		queryBytes, err := json.Marshal(proofRequest.Rules["query"])
+		queryBytes, err := json.Marshal(proofRequest.Query)
 		if err != nil {
 			return err
 		}
@@ -107,13 +122,20 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 			return err
 		}
 
-		// verify query
-		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader)
+		rawMessage, err := proofResponse.VerifiablePresentation.MarshalJSON()
+		if err != nil {
+			return errors.Errorf("failed get VerifiablePresentation: %v", err)
+		}
+		if string(rawMessage) == "null" {
+			rawMessage = nil
+		}
+
+		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, rawMessage)
 		if err != nil {
 			return err
 		}
 
-		err = cv.VerifyStates(ctx, v.stateResolver)
+		err = cv.VerifyStates(ctx, v.stateResolver, opts...)
 		if err != nil {
 			return err
 		}
@@ -123,7 +145,11 @@ func (v *Verifier) VerifyAuthResponse(ctx context.Context, response protocol.Aut
 }
 
 // VerifyJWZ performs verification of jwz token
-func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, err error) {
+func (v *Verifier) VerifyJWZ(
+	ctx context.Context,
+	token string,
+	opts ...pubsignals.VerifyOpt,
+) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
 	if err != nil {
@@ -147,19 +173,23 @@ func (v *Verifier) VerifyJWZ(ctx context.Context, token string) (t *jwz.Token, e
 		return nil, err
 	}
 
-	err = circuitVerifier.VerifyStates(ctx, v.stateResolver)
+	err = circuitVerifier.VerifyStates(ctx, v.stateResolver, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return
+	return t, err
 }
 
 // FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(ctx context.Context, token string, request protocol.AuthorizationRequestMessage) (*protocol.AuthorizationResponseMessage, error) {
+func (v *Verifier) FullVerify(
+	ctx context.Context,
+	token string,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+) (*protocol.AuthorizationResponseMessage, error) {
 
-	//// verify jwz
-	t, err := v.VerifyJWZ(ctx, token)
+	t, err := v.VerifyJWZ(ctx, token, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,8 +216,7 @@ func (v *Verifier) FullVerify(ctx context.Context, token string, request protoco
 		return &authMsgResponse, err
 	}
 
-	// verify proof requests
-	err = v.VerifyAuthResponse(ctx, authMsgResponse, request)
+	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, opts...)
 	return &authMsgResponse, err
 }
 
@@ -198,7 +227,11 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 	if err != nil {
 		return err
 	}
-	stateVerificationRes, err := state.Resolve(ctx, client, opts.Contract, id, s)
+	stateGetter, err := state.NewStateCaller(common.HexToAddress(opts.Contract), client)
+	if err != nil {
+		return err
+	}
+	stateVerificationRes, err := state.Resolve(ctx, stateGetter, id, s)
 	if err != nil {
 		return err
 	}
