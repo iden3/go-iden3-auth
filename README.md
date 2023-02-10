@@ -39,7 +39,7 @@ Verification keys must be provided using `KeyLoader` interface
 
 ### Query verification 
 
-Proof for each atomic circuit contains public signals that allow extracting user and issuer identifiers, states, signature challenges, etc.
+Proof for each atomic circuit contains public signals that allow extracting user and issuer identifiers, states, signature, challenges, etc.
 
 Circuit public signals marshallers are defined in the go-circuits library.
 
@@ -48,16 +48,21 @@ Circuit public signals marshallers are defined in the go-circuits library.
 The blockchain verification algorithm is used
 
 1. Gets state from the blockchain (address of id state contract and URL must be provided by the caller of the library):
-  1. Empty state is returned - it means that identity state hasn’t been updated or updated state hasn’t been published. We need to compare id and state. If they are different it’s not a genesis state of identity then it’s not valid.
-  2. The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough and we work with the latest user state.
-  3. The non-empty state is returned and it’s not equal to the state that the user has provided. Gets the transition time of the state. The verification party can make a decision if it can accept this state based on that time frame
+   1. Empty state is returned - it means that identity state hasn’t been updated or updated state hasn’t been published. We need to compare id and state. If they are different it’s not a genesis state of identity then it’s not valid.
+   2. The non-empty state is returned and equals to the state in provided proof which means that the user state is fresh enough and we work with the latest user state.
+   3. The non-empty state is returned and it’s not equal to the state that the user has provided. Gets the transition time of the state. The verification party can make a decision if it can accept this state based on that time frame.
 
 2. Only latest states for user are valid. Any existing issuer state for claim issuance is valid.
 
+### Verification of GIST
 
+The blockchain verification algorithm is used
 
-
-
+1. Get GIST from the blockchain (address of id state contract and URL must be provided by the caller of the library):
+   1. Empty state is returned - it means that GIST state hasn’t been updated or updated GIST hasn’t been published. We need to retrun an error.
+   2. A non-empty GIST is returned, equal to the GIST is provided by the user, it means the user is using the latest state.
+   3. The non-empty GIST is returned and it’s not equal to the GIST is provided by a user. Gets the transition time of the GIST. The verification party can make a decision if it can accept this state based on that time frame.
+2. Only latest states for user are valid. Any existing issuer state for claim issuance is valid.
 ## How to use:
 1. `go get https://github.com/iden3/go-iden3-auth`
 2. Request generation:
@@ -73,33 +78,26 @@ The blockchain verification algorithm is used
    ``` 
    if you want request specific proof (example):
    ``` golang
-           var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-           mtpProofRequest.ID = 1
-           mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigCircuitID)
-           mtpProofRequest.Rules = map[string]interface{}{
-               "query": pubsignals.Query{
-                   AllowedIssuers: []string{"*"},
-                   CredentialSubject: map[string]interface{}{
-                       "birthday": map[string]interface{}{
-                           "$lt": []int{20000101},
-                       },
-                   },
-                   Schema: protocol.Schema{
-                       URL:  "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
-                       Type: "KYCAgeCredential",
-                   },
-               },
-           }
+			var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+			mtpProofRequest.ID = 1
+			mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
+			mtpProofRequest.Query = map[string]interface{}{
+				"allowedIssuers": []string{"*"},
+				"credentialSubject": map[string]interface{}{
+					"countryCode": map[string]interface{}{
+						"$nin": []int{840, 120, 340, 509},
+					},
+				},
+				"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld",
+				"type":    "KYCCountryOfResidenceCredential",
+			}
            request.Body.Scope = append(request.Body.Scope, mtpProofRequest)       
-   ``` 
-
-
+   ```
 3. Token verification
 
-   
    Init Verifier:
    
-   ```
+   ```go
                     verificationKeyloader := &loaders.FSKeyLoader{Dir: keyDIR}
                     resolver := state.ETHResolver{
                         RPCUrl:   "<rpc url>",
@@ -107,17 +105,15 @@ The blockchain verification algorithm is used
                     }
                     verifier := auth.NewVerifier(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolver)
    ```
+4. FullVerify:
 
+   ```go
+         authResponse, err := verifier.FullVerify(r.Context(), string(tokenBytes),
+         authRequest.(protocol.AuthorizationRequestMessage))
+         userId = authResponse.from // msg sender
+   ``` 
 
-FullVerify
-
-``` golang
-		authResponse, err := verifier.FullVerify(r.Context(), string(tokenBytes),
-		authRequest.(protocol.AuthorizationRequestMessage))
-		userId = authResponse.from // msg sender
-``` 
-
-Verify manually if thread id is used a session id to match request with `VerifyJWZ / VerifyAuthResponse` functions
+   Verify manually if thread id is used a session id to match request with `VerifyJWZ / VerifyAuthResponse` functions
 
 ### Notes on prover optimization for x86_64 hardware
 
