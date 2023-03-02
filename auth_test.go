@@ -15,6 +15,11 @@ import (
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	// we have multiimport since two different libraries use the same package
+	// with different versions
+	// Same issue https://github.com/flashbots/mev-boost-relay/pull/227/files
+	_ "github.com/btcsuite/btcd/btcutil"
 )
 
 var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./testdata"}

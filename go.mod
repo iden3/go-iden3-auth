@@ -3,6 +3,7 @@ module github.com/iden3/go-iden3-auth
 go 1.18
 
 require (
+	github.com/btcsuite/btcd/btcutil v1.1.2
 	github.com/ethereum/go-ethereum v1.11.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
@@ -19,11 +20,12 @@ require (
 
 require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
+	github.com/btcsuite/btcd v0.23.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/blake512 v1.0.0 // indirect
-	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -59,7 +61,6 @@ require (
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/qri-io/jsonpointer v0.1.1 // indirect
 	github.com/qri-io/jsonschema v0.2.1 // indirect
-	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
