@@ -195,8 +195,8 @@ func (q Query) verifyCredentialSubject(
 		return nil
 	}
 
-	if fieldType == ld.XSDString {
-		return errors.New("xsd:string type is supported only for disclosure request")
+	if fieldType != "" && !isTypeSupportedForNonSC(fieldType) {
+		return errors.Errorf("%s type is supported only for disclosure request", fieldType)
 	}
 
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
@@ -351,4 +351,22 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	values = append(values, hashedValue)
 
 	return values, nil
+}
+
+// by default all types except boolean, integer, dateTime will consider as string types
+// but string type is possible only for selective disclosure request
+func isTypeSupportedForNonSC(t string) bool {
+	switch t {
+	case ld.XSDBoolean:
+		return true
+	case ld.XSDInteger,
+		ld.XSDNS + "nonNegativeInteger",
+		ld.XSDNS + "nonPositiveInteger",
+		ld.XSDNS + "negativeInteger",
+		ld.XSDNS + "positiveInteger":
+		return true
+	case ld.XSDNS + "dateTime":
+		return true
+	}
+	return false
 }

@@ -627,7 +627,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("xsd:string type is supported only for disclosure request"),
+			expErr: errors.New("http://www.w3.org/2001/XMLSchema#string type is supported only for disclosure request"),
 		},
 	}
 
