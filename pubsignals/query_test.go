@@ -125,26 +125,37 @@ func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byt
 
 var vp = []byte(`{
 	"@context": [
-		"https://www.w3.org/2018/credentials/v1",
-		"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld"
+		"https://www.w3.org/2018/credentials/v1"
 	],
 	"@type": "VerifiablePresentation",
 	"verifiableCredential": {
-		"@type": "KYCCountryOfResidenceCredential",
-		"countryCode": 800
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld"
+		],
+		"@type": ["VerifiableCredential","KYCCountryOfResidenceCredential"],
+		"credentialSubject": {
+			"type": "KYCCountryOfResidenceCredential",
+			"countryCode": 800
+		}
 	}
 }`)
 
-// TODO(illia-korotia): update link in context after providing new schema.
 var vpEmployee = []byte(`{
 	"@context": [
-		"https://www.w3.org/2018/credentials/v1",
-		"https://gist.githubusercontent.com/ilya-korotya/55630d9b93fc526f96bba3734153939e/raw/cebe9e357861a64635a79fee4fa79fb67b27a58b/test"
+		"https://www.w3.org/2018/credentials/v1"
 	],
 	"@type": "VerifiablePresentation",
 	"verifiableCredential": {
-		"@type": "KYCEmployee",
-		"position": "SSI Consultant"
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld"
+		],
+		"@type": ["VerifiableCredential","KYCCountryOfResidenceCredential"],
+		"credentialSubject": {
+			"@type": "KYCEmployee",
+			"position": "SSI Consultant"
+		}
 	}
 }`)
 
@@ -426,7 +437,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
+			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://www.w3.org/2018/credentials#credentialSubject / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
 		},
 	}
 
