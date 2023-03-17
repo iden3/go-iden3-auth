@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -16,6 +17,24 @@ import (
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
+
+var allOperations = map[int]struct{}{
+	circuits.EQ:  {},
+	circuits.LT:  {},
+	circuits.GT:  {},
+	circuits.IN:  {},
+	circuits.NIN: {},
+	circuits.NE:  {},
+}
+
+var availabelTypesOperations = map[string]map[int]struct{}{
+	ld.XSDBoolean:                        {circuits.EQ: {}, circuits.NE: {}},
+	ld.XSDInteger:                        allOperations,
+	ld.XSDInteger + "nonNegativeInteger": allOperations,
+	ld.XSDInteger + "positiveInteger":    allOperations,
+	ld.XSDString:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDNS + "dateTime":                allOperations,
+}
 
 // PathToSubjectType path to description of subject type.
 const PathToSubjectType = "https://www.w3.org/2018/credentials#credentialSubject"
@@ -31,6 +50,8 @@ var (
 	ErrValuesSize = errors.New("query asked proof about more values")
 	// ErrInvalidValues proof was created for different values.
 	ErrInvalidValues = errors.New("proof was generated for anther values")
+	// ErrNegativeValue only positive integers allowed.
+	ErrNegativeValue = errors.New("negative values not supported")
 )
 
 // Query represents structure for query to atomic circuit.
@@ -195,10 +216,6 @@ func (q Query) verifyCredentialSubject(
 		return nil
 	}
 
-	if fieldType != "" && !isTypeSupportedForNonSC(fieldType) {
-		return errors.Errorf("%s type is supported only for disclosure request", fieldType)
-	}
-
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
 	if err != nil {
 		return err
@@ -296,6 +313,10 @@ func parseFieldPredicate(
 			return nil, 0, errors.New("query operator is not supported")
 		}
 
+		if !isValidOperation(fieldType, operator) {
+			return nil, 0, errors.Errorf("invalid operation '%s' for field type '%s'", op, fieldType)
+		}
+
 		values, err = getValuesAsArray(v, fieldType)
 		if err != nil {
 			return nil, 0, err
@@ -335,6 +356,9 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	if ok {
 		values = make([]*big.Int, len(listOfValues))
 		for i, item := range listOfValues {
+			if !isPositiveIneger(item) {
+				return nil, ErrNegativeValue
+			}
 			hashedValue, err := merklize.HashValue(valueType, item)
 			if err != nil {
 				return nil, err
@@ -344,6 +368,9 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 		return values, nil
 	}
 
+	if !isPositiveIneger(v) {
+		return nil, ErrNegativeValue
+	}
 	hashedValue, err := merklize.HashValue(valueType, v)
 	if err != nil {
 		return nil, err
@@ -353,20 +380,28 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	return values, nil
 }
 
-// by default all types except boolean, integer, dateTime will consider as string types
-// but string type is possible only for selective disclosure request
-func isTypeSupportedForNonSC(t string) bool {
-	switch t {
-	case ld.XSDBoolean:
-		return true
-	case ld.XSDInteger,
-		ld.XSDNS + "nonNegativeInteger",
-		ld.XSDNS + "nonPositiveInteger",
-		ld.XSDNS + "negativeInteger",
-		ld.XSDNS + "positiveInteger":
-		return true
-	case ld.XSDNS + "dateTime":
+func isPositiveIneger(v interface{}) bool {
+	number, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
+	if err != nil {
+		// value is not a number
 		return true
 	}
-	return false
+	return number >= 0
+}
+
+func isValidOperation(typ string, op int) bool {
+	if op == circuits.NOOP {
+		return true
+	}
+
+	ops, ok := availabelTypesOperations[typ]
+	if !ok {
+		// by default all unknown types will be considered as string
+		ops = availabelTypesOperations[ld.XSDString]
+		_, ok = ops[op]
+		return ok
+	}
+
+	_, ok = ops[op]
+	return ok
 }

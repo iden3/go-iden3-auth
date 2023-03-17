@@ -256,6 +256,35 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			vp: vpEmployee,
 		},
+		{
+			name: "EQ operator for xsd:string type",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"position": map[string]interface{}{
+						"$eq": "Software Engineer",
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCEmployee",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: KYCEmployeeSchema,
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
+					return v
+				}(),
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := big.NewInt(0).SetString("7481731651336040098616464366227645531920423822088928207225802836605991806542", 10)
+					return []*big.Int{v}
+				}(),
+				Merklized:           1,
+				IsRevocationChecked: 1,
+			},
+			vp: vpEmployee,
+		},
 	}
 
 	for _, tt := range tests {
@@ -601,33 +630,52 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("check revocation is required"),
 		},
 		{
-			name: "Non disclosuer request with xsd:string type",
+			name: "Unsupported lt operator for xsd:boolean",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCEmployee",
 				CredentialSubject: map[string]interface{}{
-					"position": map[string]interface{}{
-						"$eq": "SSI Consultant",
+					"ZKPexperiance": map[string]interface{}{
+						"$lt": 20,
 					},
 				},
+				SkipClaimRevocationCheck: false,
 			},
 			pubSig: &CircuitOutputs{
-				IssuerID:    &issuerID,
-				ClaimSchema: KYCEmployeeSchema,
-				ClaimPathKey: func() *big.Int {
-					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
-					return v
-				}(),
-				Operator: 1,
-				Value: func() []*big.Int {
-					v, _ := big.NewInt(0).SetString("957410455271905675920624030785024750144198809104092676617070098470852489834", 10)
-					return []*big.Int{v}
-				}(),
-				Merklized:           1,
-				IsRevocationChecked: 1,
+				IssuerID:            &issuerID,
+				ClaimSchema:         KYCEmployeeSchema,
+				Operator:            2,
+				Value:               []*big.Int{big.NewInt(20)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 0,
 			},
-			expErr: errors.New("http://www.w3.org/2001/XMLSchema#string type is supported only for disclosure request"),
+			expErr: errors.New("invalid operation '$lt' for field type 'http://www.w3.org/2001/XMLSchema#boolean'"),
+		},
+		{
+			name: "Negative value in request",
+			query: Query{
+				AllowedIssuers: []string{issuerDID},
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:           "KYCEmployee",
+				CredentialSubject: map[string]interface{}{
+					"documentType": map[string]interface{}{
+						"$eq": -1,
+					},
+				},
+				SkipClaimRevocationCheck: false,
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:            &issuerID,
+				ClaimSchema:         KYCEmployeeSchema,
+				Operator:            1,
+				Value:               []*big.Int{big.NewInt(-1)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 0,
+			},
+			expErr: ErrNegativeValue,
 		},
 	}
 
