@@ -276,7 +276,7 @@ func (q Query) validateDisclosure(
 		return errors.Errorf("failed to merklize doc: %v", err)
 	}
 
-	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.%s", key))
+	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
 	if err != nil {
 		return errors.Errorf("failed build path to '%s' key: %v", key, err)
 	}
