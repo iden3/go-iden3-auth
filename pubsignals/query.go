@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -16,6 +17,24 @@ import (
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
+
+var allOperations = map[int]struct{}{
+	circuits.EQ:  {},
+	circuits.LT:  {},
+	circuits.GT:  {},
+	circuits.IN:  {},
+	circuits.NIN: {},
+	circuits.NE:  {},
+}
+
+var availabelTypesOperations = map[string]map[int]struct{}{
+	ld.XSDBoolean:                        {circuits.EQ: {}, circuits.NE: {}},
+	ld.XSDInteger:                        allOperations,
+	ld.XSDInteger + "nonNegativeInteger": allOperations,
+	ld.XSDInteger + "positiveInteger":    allOperations,
+	ld.XSDString:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDNS + "dateTime":                allOperations,
+}
 
 // PathToSubjectType path to description of subject type.
 const PathToSubjectType = "https://www.w3.org/2018/credentials#credentialSubject"
@@ -31,6 +50,8 @@ var (
 	ErrValuesSize = errors.New("query asked proof about more values")
 	// ErrInvalidValues proof was created for different values.
 	ErrInvalidValues = errors.New("proof was generated for anther values")
+	// ErrNegativeValue only positive integers allowed.
+	ErrNegativeValue = errors.New("negative values not supported")
 )
 
 // Query represents structure for query to atomic circuit.
@@ -195,10 +216,6 @@ func (q Query) verifyCredentialSubject(
 		return nil
 	}
 
-	if fieldType == ld.XSDString {
-		return errors.New("xsd:string type is supported only for disclosure request")
-	}
-
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
 	if err != nil {
 		return err
@@ -259,7 +276,7 @@ func (q Query) validateDisclosure(
 		return errors.Errorf("failed to merklize doc: %v", err)
 	}
 
-	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.%s", key))
+	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
 	if err != nil {
 		return errors.Errorf("failed build path to '%s' key: %v", key, err)
 	}
@@ -294,6 +311,10 @@ func parseFieldPredicate(
 		operator, ok = circuits.QueryOperators[op]
 		if !ok {
 			return nil, 0, errors.New("query operator is not supported")
+		}
+
+		if !isValidOperation(fieldType, operator) {
+			return nil, 0, errors.Errorf("invalid operation '%s' for field type '%s'", op, fieldType)
 		}
 
 		values, err = getValuesAsArray(v, fieldType)
@@ -335,6 +356,9 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	if ok {
 		values = make([]*big.Int, len(listOfValues))
 		for i, item := range listOfValues {
+			if !isPositiveInteger(item) {
+				return nil, ErrNegativeValue
+			}
 			hashedValue, err := merklize.HashValue(valueType, item)
 			if err != nil {
 				return nil, err
@@ -344,6 +368,9 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 		return values, nil
 	}
 
+	if !isPositiveInteger(v) {
+		return nil, ErrNegativeValue
+	}
 	hashedValue, err := merklize.HashValue(valueType, v)
 	if err != nil {
 		return nil, err
@@ -351,4 +378,30 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	values = append(values, hashedValue)
 
 	return values, nil
+}
+
+func isPositiveInteger(v interface{}) bool {
+	number, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
+	if err != nil {
+		// value is not a number
+		return true
+	}
+	return number >= 0
+}
+
+func isValidOperation(typ string, op int) bool {
+	if op == circuits.NOOP {
+		return true
+	}
+
+	ops, ok := availabelTypesOperations[typ]
+	if !ok {
+		// by default all unknown types will be considered as string
+		ops = availabelTypesOperations[ld.XSDString]
+		_, ok = ops[op]
+		return ok
+	}
+
+	_, ok = ops[op]
+	return ok
 }
