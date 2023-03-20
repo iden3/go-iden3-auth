@@ -356,7 +356,7 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	if ok {
 		values = make([]*big.Int, len(listOfValues))
 		for i, item := range listOfValues {
-			if !isPositiveIneger(item) {
+			if !isPositiveInteger(item) {
 				return nil, ErrNegativeValue
 			}
 			hashedValue, err := merklize.HashValue(valueType, item)
@@ -368,7 +368,7 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 		return values, nil
 	}
 
-	if !isPositiveIneger(v) {
+	if !isPositiveInteger(v) {
 		return nil, ErrNegativeValue
 	}
 	hashedValue, err := merklize.HashValue(valueType, v)
@@ -380,7 +380,7 @@ func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
 	return values, nil
 }
 
-func isPositiveIneger(v interface{}) bool {
+func isPositiveInteger(v interface{}) bool {
 	number, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
 	if err != nil {
 		// value is not a number
