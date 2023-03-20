@@ -17,8 +17,13 @@ var (
 	iid, _      = new(big.Int).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
 	issuerID, _ = core.IDFromInt(iid)
 
-	schemaHashInt, _ = big.NewInt(0).SetString("336615423900919464193075592850483704600", 10)
-	coreSchema       = core.NewSchemaHashFromInt(schemaHashInt)
+	schemaHashKYCEmployee, _ = big.NewInt(0).SetString("40507426258035268209384482717564233104", 10)
+	KYCEmployeeSchema        = core.NewSchemaHashFromInt(schemaHashKYCEmployee)
+
+	schemaHashKYCCountry, _ = big.NewInt(0).SetString("336615423900919464193075592850483704600", 10)
+	KYCCountrySchema        = core.NewSchemaHashFromInt(schemaHashKYCCountry)
+
+	bigIntTrueHash, _ = big.NewInt(0).SetString("18586133768512220936620570745912940619677854269274689475585506675881198879027", 10)
 )
 
 type mockMemorySchemaLoader struct {
@@ -80,6 +85,37 @@ func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byt
             "@type": "xsd:integer"
           }
         }
+      },
+	  "KYCEmployee": {
+        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCEmployee",
+        "@context": {
+          "@version": 1.1,
+          "@protected": true,
+          "id": "@id",
+          "type": "@type",
+          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
+          "xsd": "http://www.w3.org/2001/XMLSchema#",
+          "documentType": {
+            "@id": "kyc-vocab:documentType",
+            "@type": "xsd:integer"
+          },
+          "ZKPexperiance": {
+            "@id": "kyc-vocab:hasZKPexperiance",
+            "@type": "xsd:boolean"
+          },
+          "hireDate": {
+            "@id": "kyc-vocab:hireDate",
+            "@type": "xsd:dateTime"
+          },
+          "position": {
+            "@id": "kyc-vocab:position",
+            "@type": "xsd:string"
+          },
+          "salary": {
+            "@id": "kyc-vocab:salary",
+            "@type": "xsd:double"
+          }
+        }
       }
     }
   ]
@@ -89,13 +125,37 @@ func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byt
 
 var vp = []byte(`{
 	"@context": [
-		"https://www.w3.org/2018/credentials/v1",
-		"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld"
+		"https://www.w3.org/2018/credentials/v1"
 	],
 	"@type": "VerifiablePresentation",
 	"verifiableCredential": {
-		"@type": "KYCCountryOfResidenceCredential",
-		"countryCode": 800
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld"
+		],
+		"@type": ["VerifiableCredential","KYCCountryOfResidenceCredential"],
+		"credentialSubject": {
+			"type": "KYCCountryOfResidenceCredential",
+			"countryCode": 800
+		}
+	}
+}`)
+
+var vpEmployee = []byte(`{
+	"@context": [
+		"https://www.w3.org/2018/credentials/v1"
+	],
+	"@type": "VerifiablePresentation",
+	"verifiableCredential": {
+		"@context": [
+			"https://www.w3.org/2018/credentials/v1",
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld"
+		],
+		"@type": ["VerifiableCredential","KYCCountryOfResidenceCredential"],
+		"credentialSubject": {
+			"@type": "KYCEmployee",
+			"position": "SSI Consultant"
+		}
 	}
 }`)
 
@@ -120,7 +180,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -143,7 +203,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -154,6 +214,87 @@ func TestCheckRequest_Success(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			vp: vp,
+		},
+		{
+			name: "Query with boolean type",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"ZKPexperiance": map[string]interface{}{
+						"$eq": true,
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCEmployee",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: KYCEmployeeSchema,
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("1944808975288007371356450257872165609440470546066507760733183342797918372827", 10)
+					return v
+				}(),
+				Operator:            1,
+				Value:               []*big.Int{bigIntTrueHash},
+				Merklized:           1,
+				IsRevocationChecked: 1,
+			},
+		},
+		{
+			name: "Selective disclosure with xsd:string type",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"position": map[string]interface{}{},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCEmployee",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: KYCEmployeeSchema,
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
+					return v
+				}(),
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := big.NewInt(0).SetString("957410455271905675920624030785024750144198809104092676617070098470852489834", 10)
+					return []*big.Int{v}
+				}(),
+				Merklized:           1,
+				IsRevocationChecked: 1,
+			},
+			vp: vpEmployee,
+		},
+		{
+			name: "EQ operator for xsd:string type",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"position": map[string]interface{}{
+						"$eq": "Software Engineer",
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCEmployee",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: KYCEmployeeSchema,
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
+					return v
+				}(),
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := big.NewInt(0).SetString("7481731651336040098616464366227645531920423822088928207225802836605991806542", 10)
+					return []*big.Int{v}
+				}(),
+				Merklized:           1,
+				IsRevocationChecked: 1,
+			},
+			vp: vpEmployee,
 		},
 	}
 
@@ -186,7 +327,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: nil,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -211,7 +352,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -236,7 +377,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -261,7 +402,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -286,7 +427,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -296,7 +437,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
+			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://www.w3.org/2018/credentials#credentialSubject / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
 		},
 	}
 
@@ -334,7 +475,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 			},
 			expErr: ErrSchemaID,
 		},
@@ -351,7 +492,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 			},
 			expErr: errors.New("multiple requests not supported"),
 		},
@@ -367,7 +508,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 			},
 			expErr: errors.New("failed cast type map[string]interface"),
 		},
@@ -386,12 +527,12 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 			},
 			expErr: errors.New("multiple predicates for one field not supported"),
 		},
 		{
-			name: "Proof was generated for another query",
+			name: "Proof was generated for another query operator",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
@@ -404,7 +545,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				Operator:    3,
 			},
 			expErr: ErrRequestOperator,
@@ -416,14 +557,14 @@ func TestCheckRequest_Error(t *testing.T) {
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
-					"countyCode": map[string]interface{}{
+					"countryCode": map[string]interface{}{
 						"$nin": []interface{}{float64(20)},
 					},
 				},
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: coreSchema,
+				ClaimSchema: KYCCountrySchema,
 				Operator:    5,
 				Value:       []*big.Int{big.NewInt(40)},
 			},
@@ -443,7 +584,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         coreSchema,
+				ClaimSchema:         KYCCountrySchema,
 				ClaimPathKey:        big.NewInt(0),
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
@@ -466,7 +607,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         coreSchema,
+				ClaimSchema:         KYCCountrySchema,
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           0,
@@ -490,7 +631,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         coreSchema,
+				ClaimSchema:         KYCCountrySchema,
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           0,
@@ -498,6 +639,54 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 0,
 			},
 			expErr: errors.New("check revocation is required"),
+		},
+		{
+			name: "Unsupported lt operator for xsd:boolean",
+			query: Query{
+				AllowedIssuers: []string{issuerDID},
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:           "KYCEmployee",
+				CredentialSubject: map[string]interface{}{
+					"ZKPexperiance": map[string]interface{}{
+						"$lt": 20,
+					},
+				},
+				SkipClaimRevocationCheck: false,
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:            &issuerID,
+				ClaimSchema:         KYCEmployeeSchema,
+				Operator:            2,
+				Value:               []*big.Int{big.NewInt(20)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 0,
+			},
+			expErr: errors.New("invalid operation '$lt' for field type 'http://www.w3.org/2001/XMLSchema#boolean'"),
+		},
+		{
+			name: "Negative value in request",
+			query: Query{
+				AllowedIssuers: []string{issuerDID},
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:           "KYCEmployee",
+				CredentialSubject: map[string]interface{}{
+					"documentType": map[string]interface{}{
+						"$eq": -1,
+					},
+				},
+				SkipClaimRevocationCheck: false,
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:            &issuerID,
+				ClaimSchema:         KYCEmployeeSchema,
+				Operator:            1,
+				Value:               []*big.Int{big.NewInt(-1)},
+				Merklized:           0,
+				SlotIndex:           0,
+				IsRevocationChecked: 0,
+			},
+			expErr: ErrNegativeValue,
 		},
 	}
 
