@@ -142,16 +142,19 @@ var vp = []byte(`{
 }`)
 
 var vpEmployee = []byte(`{
+	"@type": "VerifiablePresentation",
 	"@context": [
 		"https://www.w3.org/2018/credentials/v1"
 	],
-	"@type": "VerifiablePresentation",
 	"verifiableCredential": {
 		"@context": [
 			"https://www.w3.org/2018/credentials/v1",
 			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld"
 		],
-		"@type": ["VerifiableCredential","KYCCountryOfResidenceCredential"],
+		"@type": [
+			"VerifiableCredential",
+			"KYCEmployee"
+		],
 		"credentialSubject": {
 			"@type": "KYCEmployee",
 			"position": "SSI Consultant"
@@ -437,7 +440,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("failed get raw value: value not found at 'https://www.w3.org/2018/credentials#verifiableCredential / https://www.w3.org/2018/credentials#credentialSubject / https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType'"),
+			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
 		},
 	}
 

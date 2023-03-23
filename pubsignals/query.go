@@ -208,7 +208,6 @@ func (q Query) verifyCredentialSubject(
 			ctx,
 			pubSig,
 			fieldName,
-			fieldType,
 			verifiablePresentation,
 		); err != nil {
 			return err
@@ -254,7 +253,6 @@ func (q Query) validateDisclosure(
 	ctx context.Context,
 	pubSig *CircuitOutputs,
 	key string,
-	fieldType string,
 	verifiablePresentation json.RawMessage,
 ) error {
 	if verifiablePresentation == nil {
@@ -281,12 +279,15 @@ func (q Query) validateDisclosure(
 		return errors.Errorf("failed build path to '%s' key: %v", key, err)
 	}
 
-	valueByPath, err := mz.RawValue(merklizedPath)
+	proof, valueByPath, err := mz.Proof(ctx, merklizedPath)
 	if err != nil {
 		return errors.Errorf("failed get raw value: %v", err)
 	}
+	if !proof.Existence {
+		return errors.Errorf("path '%v' doesn't exist in document", merklizedPath.Parts())
+	}
 
-	mvBig, err := merklize.HashValue(fieldType, valueByPath)
+	mvBig, err := valueByPath.MtEntry()
 	if err != nil {
 		return errors.Errorf("failed to hash value: %v", err)
 	}

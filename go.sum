@@ -120,6 +120,10 @@ github.com/iden3/go-schema-processor v1.1.3-0.20230314154050-48d3dc624731 h1:hQz
 github.com/iden3/go-schema-processor v1.1.3-0.20230314154050-48d3dc624731/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
 github.com/iden3/go-schema-processor v1.1.3-0.20230315163735-40696f801b6c h1:/3yUUIbBS+muXJLFnZho+SM8DTahbklvFr5a5NOt7Tk=
 github.com/iden3/go-schema-processor v1.1.3-0.20230315163735-40696f801b6c/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
+github.com/iden3/go-schema-processor v1.1.4-0.20230322183443-2452c72814ec h1:EApxVgvM86WcX3p1kd8snSlQh09alyAmAPLGs0b0Vnc=
+github.com/iden3/go-schema-processor v1.1.4-0.20230322183443-2452c72814ec/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
+github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1 h1:ZF0G+difSPokc1M57yKLRvSZFRp9vh6Kg3sQpnEZqL0=
+github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
 github.com/iden3/iden3comm v1.0.0-beta.1 h1:/RCtOe6yitzFr6a+VKbcQZoiJIw8j4bjTVTuNq/f2Ok=
 github.com/iden3/iden3comm v1.0.0-beta.1/go.mod h1:jhj1N7+6uaRVHnIjyKqSLO6oCXS6rPvNVUMlq8ydk64=
 github.com/ipfs/go-cid v0.3.2 h1:OGgOd+JCFM+y1DjWPmVH+2/4POtpDzwcr7VgnB7mZXc=
