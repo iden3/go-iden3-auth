@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/iden3/contracts-abi/state/go/abi"
 )
 
 // ETHResolver resolver for eth blockchains
@@ -29,7 +30,7 @@ func (r ETHResolver) Resolve(ctx context.Context, id, state *big.Int) (*Resolved
 		return nil, err
 	}
 	defer client.Close()
-	getter, err := NewStateCaller(r.ContractAddress, client)
+	getter, err := abi.NewStateCaller(r.ContractAddress, client)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (r ETHResolver) ResolveGlobalRoot(ctx context.Context, state *big.Int) (*Re
 		return nil, err
 	}
 	defer client.Close()
-	getter, err := NewStateCaller(r.ContractAddress, client)
+	getter, err := abi.NewStateCaller(r.ContractAddress, client)
 	if err != nil {
 		return nil, err
 	}

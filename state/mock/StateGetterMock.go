@@ -10,7 +10,7 @@ import (
 
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gomock "github.com/golang/mock/gomock"
-	state "github.com/iden3/go-iden3-auth/state"
+	abi "github.com/iden3/contracts-abi/state/go/abi"
 )
 
 // MockStateGetter is a mock of StateGetter interface.
@@ -36,17 +36,17 @@ func (m *MockStateGetter) EXPECT() *MockStateGetterMockRecorder {
 	return m.recorder
 }
 
-// GetStateInfoByState mocks base method.
-func (m *MockStateGetter) GetStateInfoByState(arg0 *bind.CallOpts, arg1 *big.Int) (state.StateV2StateInfo, error) {
+// GetStateInfoByIdAndState mocks base method.
+func (m *MockStateGetter) GetStateInfoByIdAndState(arg0 *bind.CallOpts, arg1, arg2 *big.Int) (abi.IStateStateInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetStateInfoByState", arg0, arg1)
-	ret0, _ := ret[0].(state.StateV2StateInfo)
+	ret := m.ctrl.Call(m, "GetStateInfoByIdAndState", arg0, arg1, arg2)
+	ret0, _ := ret[0].(abi.IStateStateInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetStateInfoByState indicates an expected call of GetStateInfoByState.
-func (mr *MockStateGetterMockRecorder) GetStateInfoByState(arg0, arg1 interface{}) *gomock.Call {
+// GetStateInfoByIdAndState indicates an expected call of GetStateInfoByIdAndState.
+func (mr *MockStateGetterMockRecorder) GetStateInfoByIdAndState(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateInfoByState", reflect.TypeOf((*MockStateGetter)(nil).GetStateInfoByState), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStateInfoByIdAndState", reflect.TypeOf((*MockStateGetter)(nil).GetStateInfoByIdAndState), arg0, arg1, arg2)
 }

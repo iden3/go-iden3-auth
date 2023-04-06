@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
+	"github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
 	"github.com/iden3/go-iden3-auth/proofs"
@@ -227,7 +228,7 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 	if err != nil {
 		return err
 	}
-	stateGetter, err := state.NewStateCaller(common.HexToAddress(opts.Contract), client)
+	stateGetter, err := abi.NewStateCaller(common.HexToAddress(opts.Contract), client)
 	if err != nil {
 		return err
 	}

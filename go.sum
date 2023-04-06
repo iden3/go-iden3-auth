@@ -54,8 +54,8 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 h1:HbphB4TFFXpv7MNrT52FGrrgVXF1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0/go.mod h1:DZGJHZMqrU4JJqFAWUS2UO1+lbSKsdiOoYi9Zzey7Fc=
 github.com/decred/dcrd/lru v1.0.0/go.mod h1:mxKOwFd7lFjN2GZYsiz/ecgqR6kkYAl+0pz0tEMk218=
 github.com/edsrzf/mmap-go v1.0.0 h1:CEBF7HpRnUCSJgGUb5h1Gm7e3VkmVDrR8lvWVLtrOFw=
-github.com/ethereum/go-ethereum v1.11.4 h1:KG81SnUHXWk8LJB3mBcHg/E2yLvXoiPmRMCIRxgx3cE=
-github.com/ethereum/go-ethereum v1.11.4/go.mod h1:it7x0DWnTDMfVFdXcU6Ti4KEFQynLHVRarcSlPr0HBo=
+github.com/ethereum/go-ethereum v1.11.5 h1:3M1uan+LAUvdn+7wCEFrcMM4LJTeuxDrPTg/f31a5QQ=
+github.com/ethereum/go-ethereum v1.11.5/go.mod h1:it7x0DWnTDMfVFdXcU6Ti4KEFQynLHVRarcSlPr0HBo=
 github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 h1:FtmdgXiUlNeRsoNMFlKLDt+S+6hbjVMEW6RGQ7aUf7c=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
@@ -96,8 +96,11 @@ github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/hashicorp/go-bexpr v0.1.10 h1:9kuI5PFotCboP3dkDYFr/wi0gg0QVbSNz5oFRpxn4uE=
 github.com/holiman/bloomfilter/v2 v2.0.3 h1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=
 github.com/holiman/uint256 v1.2.0 h1:gpSYcPLWGv4sG43I2mVLiDZCNDh/EpGjSk8tmtxitHM=
+github.com/holiman/uint256 v1.2.0/go.mod h1:y4ga/t+u+Xwd7CpDgZESaRcWy0I7XMlTMA25ApIH5Jw=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/huin/goupnp v1.0.3 h1:N8No57ls+MnjlB+JPiCVSOyy/ot7MJTqlo7rn+NYSqQ=
+github.com/iden3/contracts-abi/state/go/abi v0.0.0-20230405152923-4a25f6f1f0f4 h1:iPvYa/AhhGo3juoUFDm/fBE2CZKy4WfQu7JY90tRf9Q=
+github.com/iden3/contracts-abi/state/go/abi v0.0.0-20230405152923-4a25f6f1f0f4/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
 github.com/iden3/go-circuits v1.0.2 h1:6hxPbaxS1YaSZh36K5I8Nb1WAnUdYC9VK5Hqgyhh1EY=
 github.com/iden3/go-circuits v1.0.2/go.mod h1:FPomaHjcVj4H4Czs2PKRoJphWcCc68dh8PDKhNDFZ+U=
 github.com/iden3/go-iden3-core v1.0.1 h1:Oc/xPI/F7WDoMoZUAUIZrJ1VnYRP0JWkjl9OujDvxRM=
@@ -116,12 +119,6 @@ github.com/iden3/go-rapidsnark/verifier v0.0.4-0.20221129112904-b9f8680ca8e2 h1:
 github.com/iden3/go-rapidsnark/verifier v0.0.4-0.20221129112904-b9f8680ca8e2/go.mod h1:A3R3qr+8QiQtFBghrx94VJrOIr+9mdgrrbmFzJyS9Sg=
 github.com/iden3/go-rapidsnark/witness v0.0.4-0.20221129112904-b9f8680ca8e2 h1:fOgHvwd8K0ifG7Epz9ucU9xv2CX+gk5oIH5QJ/hThXs=
 github.com/iden3/go-rapidsnark/witness v0.0.4-0.20221129112904-b9f8680ca8e2/go.mod h1:ZRd4PX8vJX/2aJ/1XRvtwMon5F7phDRX6C7v/BYBrwE=
-github.com/iden3/go-schema-processor v1.1.3-0.20230314154050-48d3dc624731 h1:hQzCkFRba5hTf45v+hSf5GDCS8zFqeobfn8YLafz2n8=
-github.com/iden3/go-schema-processor v1.1.3-0.20230314154050-48d3dc624731/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
-github.com/iden3/go-schema-processor v1.1.3-0.20230315163735-40696f801b6c h1:/3yUUIbBS+muXJLFnZho+SM8DTahbklvFr5a5NOt7Tk=
-github.com/iden3/go-schema-processor v1.1.3-0.20230315163735-40696f801b6c/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
-github.com/iden3/go-schema-processor v1.1.4-0.20230322183443-2452c72814ec h1:EApxVgvM86WcX3p1kd8snSlQh09alyAmAPLGs0b0Vnc=
-github.com/iden3/go-schema-processor v1.1.4-0.20230322183443-2452c72814ec/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
 github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1 h1:ZF0G+difSPokc1M57yKLRvSZFRp9vh6Kg3sQpnEZqL0=
 github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
 github.com/iden3/iden3comm v1.0.0-beta.1 h1:/RCtOe6yitzFr6a+VKbcQZoiJIw8j4bjTVTuNq/f2Ok=
