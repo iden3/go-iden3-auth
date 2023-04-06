@@ -4,9 +4,10 @@ go 1.18
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.2
-	github.com/ethereum/go-ethereum v1.11.4
+	github.com/ethereum/go-ethereum v1.11.5
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
+	github.com/iden3/contracts-abi/state/go/abi v0.0.0-20230405152923-4a25f6f1f0f4
 	github.com/iden3/go-circuits v1.0.2
 	github.com/iden3/go-iden3-core v1.0.1
 	github.com/iden3/go-jwz v1.0.0-beta.0
@@ -33,6 +34,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/holiman/uint256 v1.2.0 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.14 // indirect
 	github.com/iden3/go-merkletree-sql/v2 v2.0.2 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.9 // indirect

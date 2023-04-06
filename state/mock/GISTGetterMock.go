@@ -10,7 +10,7 @@ import (
 
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gomock "github.com/golang/mock/gomock"
-	state "github.com/iden3/go-iden3-auth/state"
+	abi "github.com/iden3/contracts-abi/state/go/abi"
 )
 
 // MockGISTGetter is a mock of GISTGetter interface.
@@ -37,10 +37,10 @@ func (m *MockGISTGetter) EXPECT() *MockGISTGetterMockRecorder {
 }
 
 // GetGISTRootInfo mocks base method.
-func (m *MockGISTGetter) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (state.SmtRootInfo, error) {
+func (m *MockGISTGetter) GetGISTRootInfo(arg0 *bind.CallOpts, arg1 *big.Int) (abi.IStateGistRootInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGISTRootInfo", arg0, arg1)
-	ret0, _ := ret[0].(state.SmtRootInfo)
+	ret0, _ := ret[0].(abi.IStateGistRootInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/iden3/contracts-abi/state/go/abi"
 	core "github.com/iden3/go-iden3-core"
 	"github.com/pkg/errors"
 )
@@ -36,14 +37,14 @@ type ExtendedVerificationsOptions struct {
 //go:generate mockgen -destination=mock/StateGetterMock.go . StateGetter
 //nolint:revive // we have two different getters for the state in one pkg
 type StateGetter interface {
-	GetStateInfoByState(opts *bind.CallOpts, state *big.Int) (StateV2StateInfo, error)
+	GetStateInfoByIdAndState(opts *bind.CallOpts, id, state *big.Int) (abi.IStateStateInfo, error)
 }
 
 // GISTGetter return global state info by state
 //
 //go:generate mockgen -destination=mock/GISTGetterMock.go . GISTGetter
 type GISTGetter interface {
-	GetGISTRootInfo(opts *bind.CallOpts, state *big.Int) (SmtRootInfo, error)
+	GetGISTRootInfo(opts *bind.CallOpts, root *big.Int) (abi.IStateGistRootInfo, error)
 }
 
 // ResolvedState can be the state verification result
@@ -62,7 +63,7 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 		return nil, err
 	}
 
-	stateInfo, err := getter.GetStateInfoByState(&bind.CallOpts{Context: ctx}, state)
+	stateInfo, err := getter.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id, state)
 	if err != nil && strings.Contains(err.Error(), stateNotFoundException) {
 		if isGenesis {
 			return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
