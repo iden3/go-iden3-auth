@@ -147,7 +147,7 @@ var stateResolvers = map[string]pubsignals.StateResolver{
 type mockStateResolver struct {
 }
 
-func (r *mockStateResolver) Resolve(_ context.Context, id, s *big.Int) (*state.ResolvedState, error) {
+func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*state.ResolvedState, error) {
 	return &state.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
 }
 
@@ -158,7 +158,7 @@ func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*s
 func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	// TODO(illia-korotia): for non merklized claim and schema don't know about xsd:types
 	t.Skip("skipping test")
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -314,7 +314,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 }
 
 func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -486,7 +486,7 @@ func TestVerifier_VerifyJWZ(t *testing.T) {
 
 func TestVerifier_FullVerify(t *testing.T) {
 	// request
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
@@ -524,7 +524,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 
 func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -678,7 +678,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 
 func TestCreateAuthorizationRequest(t *testing.T) {
 
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	sender := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 
@@ -692,7 +692,7 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 
 func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	sender := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 	message := "message"
@@ -703,4 +703,35 @@ func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 	assert.Equal(t, sender, request.From)
 	assert.Equal(t, protocol.AuthorizationRequestMessageType, request.Type)
 	assert.Equal(t, message, request.Body.Message)
+}
+
+func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
+	// request
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	callbackURL := "https://test.com/callback"
+	reason := "age verification"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 1
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"birthday": map[string]interface{}{},
+		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld",
+		"type":    "KYCAgeCredential",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+	request.ID = "28494007-9c49-4f1a-9694-7700c08865bf"
+	request.ThreadID = "ee92ab12-2671-457e-aa5e-8158c205a985" // because it's used in the response
+
+	token := `eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aFYyIiwiY3JpdCI6WyJjaXJjdWl0SWQiXSwidHlwIjoiYXBwbGljYXRpb24vaWRlbjMtemtwLWpzb24ifQ.eyJpZCI6ImE2ZWM2ZTE5LWQwYzAtNDUxYi04NDg3LWRhODAwZGMzMDgxOCIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1wbGFpbi1qc29uIiwidHlwZSI6Imh0dHBzOi8vaWRlbjMtY29tbXVuaWNhdGlvbi5pby9hdXRob3JpemF0aW9uLzEuMC9yZXNwb25zZSIsInRoaWQiOiI3ZjM4YTE5My0wOTE4LTRhNDgtOWZhYy0zNmFkZmRiOGI1NDIiLCJmcm9tIjoiZGlkOnBvbHlnb25pZDpwb2x5Z29uOm11bWJhaToycUpwUnFaTlJUeGtpQ1VONFZTZkxRN0tBNFB6SFN3d1Z3blNLU0ZLdHciLCJ0byI6ImRpZDpwb2x5Z29uaWQ6cG9seWdvbjptdW1iYWk6MnFKNjg5a3BvSnhjU3pCNXNBRkp0UHNTQlNySEY1ZHE3MjJCSE1xVVJMIiwiYm9keSI6eyJkaWRfZG9jIjp7IkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy9ucy9kaWQvdjEiXSwiaWQiOiJkaWQ6cG9seWdvbmlkOnBvbHlnb246bXVtYmFpOjJxSnBScVpOUlR4a2lDVU40VlNmTFE3S0E0UHpIU3d3VnduU0tTRkt0dyIsInNlcnZpY2UiOlt7ImlkIjoiZGlkOnBvbHlnb25pZDpwb2x5Z29uOm11bWJhaToycUpwUnFaTlJUeGtpQ1VONFZTZkxRN0tBNFB6SFN3d1Z3blNLU0ZLdHcjcHVzaCIsInR5cGUiOiJwdXNoLW5vdGlmaWNhdGlvbiIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHBzOi8vcHVzaC1zdGFnaW5nLnBvbHlnb25pZC5jb20vYXBpL3YxIiwibWV0YWRhdGEiOnsiZGV2aWNlcyI6W3siY2lwaGVydGV4dCI6IlBoeGlRbVRqQjg1MmsvSGV1by9Wd0NuZE9keUdvblVaQThmbUN3L0pWZC9rajNGMG9uUUtwRWFUZXVsZnBMM0p3cnF1RVplT0RyVm1VOU9hbWo3eEpMV3pNOC9RSmptUG5aMzIyMmFGbGVtTGlSNnhGNk5ZZzNZMUZtVitMdlYrUUUwV0lsVHByUlVUSGhYNDJWQTcveWUvSGI5bStZSFJiUXNSa3FiQzVCYjQ2bE9IOFFjWjJ5OTEzOXVCYTlGUk9ERE5XNzViRytNR1ZjMUhBMnJ3aFQzNjVGMkIvSEtaWkpKVE02TEZhL1U3bjVjaVFMb2lyam5tei9RYVFvRmpVWHI5QUFtdkFkbFl3VkNIeDZhdVp1SnlXUjRRT1kxYm0rdG5mSWJmYnFBL2pNUUVlcE9ydittZENSY2VLaFI1ZDMzaFVld1VRakJrNFdxNHZQUy9HMlhLUUlUa1BCNnM5aGFwSkpYL3YrRHVBUWE2MnVEcFQ5UExYWjRBbW1PUUdlYXZWd1BTOE1QSHdoUHZHS0wxbWluVmlxY1BIUDU5dHZTUVlxRTVncU5lQVpPSVY3RW4wcU1SMHVDb0RFQ0Q1Sk55VFJvRXFIeTlIR2hjZ0tOTXdlL3VyZTlJdGV6UlZmSm9KbzgxcHVSZE82Y1daZnVjY2s0U1VndTJGRFdCUndrWU9McGFlempvbEZOZ0xyU2ltbzJZQ2t5U0lFRHRNcjAyR0h0T0RSS25vMFZjUTdLZkUyQ0VNSStZVXlQTkQ4Mk9OeDBGc0ZMQU9qMXAxNVBjbDF0bnhWWUJKZmJYNXNZM3BpcDI5NU5jY3VIT3RFQndwQzhoS0toWjJ5SHpsOGhQNlpGcWJlckM0TlRPMFo4a2NtZFVEd01vM1pJS2QyNDZiRnlxV2dNPSIsImFsZyI6IlJTQS1PQUVQLTUxMiJ9XX19XX0sIm1lc3NhZ2UiOm51bGwsInNjb3BlIjpbeyJpZCI6MSwiY2lyY3VpdElkIjoiY3JlZGVudGlhbEF0b21pY1F1ZXJ5TVRQVjIiLCJwcm9vZiI6eyJwaV9hIjpbIjE3MDc5OTEzMTQ1NzIwMjExODY5OTc4Njk3NTQ1NzkzNDc3OTc4ODc2NzUzNjE4MDA4NjAxNzI3MjA5NjU2MjU2NDAzOTg0MTE5MDEzIiwiMTg5MjU4NTgyNzkxMDg5ODMxMTAwMjU5NTc4NTM5MTI1NTU5MDU5Nzg2OTg5ODE5NjA5MDc0NTg0OTUyNDUyODYzMDQ4MDUwNzA5NjgiLCIxIl0sInBpX2IiOltbIjcyMDM2MzA2NTA5NzQ2MDUxODg0MTc5Mjc2Mzk1NTIxMjEwMDUyMTg5NTM2Njg5NDE5MDQxOTQyMjg1MDYzOTE4NTAyMDA0NjkzMDUiLCIxNDIzNTM0OTU2MzkzOTc3ODE1ODI3OTM2MzExMjQ1MTM2MjI1MTI1MTQyMzk0MTE5ODczODI2MzIxNzkzOTYwNzg0ODk0MTc2ODQ5MCJdLFsiMjA1NjkyMjYyNzYyMjU2ODczMDgyNjEyNTA2ODIxODU2MTc5MTQ4MDkzOTg2NzA4OTIwODc4NjUxMjM1MzgyNjUzMjE4MDc0Njc0MyIsIjE5MjA5MjEyNjA0MTk0NzA1Mzk5MDA1Mjc1MDc0MDg2ODI3MTg2MDc2NzQ1NTE0MzgwMzAxMDM5NTU3Njk3MDg1NDkwMjI5ODUyNDM5Il0sWyIxIiwiMCJdXSwicGlfYyI6WyIxMDEzMjAyMzEyNDUwNjcyODI2MjU4MTI1MjU1ODAxOTc3MjU4MzkwNjk4NjkwNzExNzMwMDE4MTkyNDUzMTg2MDU3MDMyMzMzNzk0MyIsIjczNjIyMTI1MDIyMDg3OTU3MzUzNDcwMjE2MTM3MzU1MjMyNDM5MjM2NzUwNzM2NjgyMjU4MDM5MDE0MzE0NzA4OTE3Mzc4MTU3MzMiLCIxIl0sInByb3RvY29sIjoiZ3JvdGgxNiIsImN1cnZlIjoiYm4xMjgifSwicHViX3NpZ25hbHMiOlsiMSIsIjIxNTEzMTQwNTMwMjMzOTIxNTE1ODA5MjM1Mzg4NzgwMTM0NjgxMjQ1NjEyODU4NzQ0OTAwMjk3NzQwNDkwNDQ3NzM4NTczMzE0IiwiMSIsIjI3NzUyNzY2ODIzMzcxNDcxNDA4MjQ4MjI1NzA4NjgxMzEzNzY0ODY2MjMxNjU1MTg3MzY2MDcxODgxMDcwOTE4OTg0NDcxMDQyIiwiMjI5ODI1ODk3MDg5OTY4NTE2NzUxMTE5NDA0OTkyMzY5NTkxOTEzNzcyMDg5NDUyNTQ2ODMzNTg1NzA1NzY1NTIyMTA5ODkyNDk3MyIsIjEiLCIyMjk4MjU4OTcwODk5Njg1MTY3NTExMTk0MDQ5OTIzNjk1OTE5MTM3NzIwODk0NTI1NDY4MzM1ODU3MDU3NjU1MjIxMDk4OTI0OTczIiwiMTY4MTM4MTA3NSIsIjI2NzgzMTUyMTkyMjU1ODAyNzIwNjA4MjM5MDA0MzMyMTc5Njk0NCIsIjAiLCIyMDM3NjAzMzgzMjM3MTEwOTE3NzY4MzA0ODQ1NjAxNDUyNTkwNTExOTE3MzY3NDk4NTg0MzkxNTQ0NTYzNDcyNjE2NzQ1MDk4OTYzMCIsIjAiLCIxIiwiMTk5NjA0MjQiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiXSwidnAiOnsiQHR5cGUiOiJWZXJpZmlhYmxlUHJlc2VudGF0aW9uIiwiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiXSwidmVyaWZpYWJsZUNyZWRlbnRpYWwiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vaWRlbjMvY2xhaW0tc2NoZW1hLXZvY2FiL21haW4vc2NoZW1hcy9qc29uLWxkL2t5Yy12NC5qc29ubGQiXSwiQHR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJLWUNBZ2VDcmVkZW50aWFsIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7IkB0eXBlIjoiS1lDQWdlQ3JlZGVudGlhbCIsImJpcnRoZGF5IjoxOTk2MDQyNH19fX1dfX0.eyJwcm9vZiI6eyJwaV9hIjpbIjkzOTkyOTEyMjUxMDI1NDc2MDExMTI4ODMwOTM1NzQ0MTU5MzUzMzU5ODIwODgyMTg2NDE5ODg5NTgwMzIzODA1MTIyNTczOTY0OTMiLCIxMDMxNDYxNzA0NjQ0ODIzNjE4MTkzNjYxODUwMTMzMDY0Njc2MjU3OTU1MTkxNTE1NTY5MTU4ODU5NTk4NjYzNzY4Mzc1OTE4NTczNCIsIjEiXSwicGlfYiI6W1siMTc3MDczODkwMDE3MTg2NDk4NTIyMjMyNjA1Mjk2Mzg2Mjg1OTc1NzIyOTU0MzU4MDY3Mjg0MTEyMTc0MTQwMDY4NDI1NTg3NDk1OTMiLCIyMTU2Nzc4MDgwMTMyNzU0NTc5ODk0NzkzMjIwODAzOTA3NjYyMTM0NDg3NzQ3NzU5NDQ1NzA2MDc5OTQwMzI1NjYyNzY5MTU1Njg0MSJdLFsiMjA3NzY4ODY1ODkwNzE2OTU3NDczMTUzODIyNjI5MjU0NzI3MzA2NTY3OTE5NDI5ODg0MjI2Mzk0NTAzMTEzODE4MjM3NTU1ODI0MCIsIjE0MzA5NTc3MDk4OTk3OTQ1Njc4OTM1MjgwMzgxMTE0NzI5MzY2NTU1MDIyODk5MTE2NTc5NjQ2NTI3NjEwMjYxOTIwMTg3NTEwNjUxIl0sWyIxIiwiMCJdXSwicGlfYyI6WyIyMTE4ODk1MDUwMjY2OTk0Njk0NjAzMzUzNTYyNTk1MjE5MjY1MTY2ODI2MjkyNDIyNzAyMDg2OTU3MDM0NjAyODE4OTc2MzM2MDk3NCIsIjgxODQ1NzY2ODU3MDk5MTY4NzA3ODkxNjgxOTI1MjIzMzg4NDQzNDMxNzk0NzgxMjY5NzI4MTE2NjQxMTY2NzIwOTY1MjAxNjU0NjkiLCIxIl0sInByb3RvY29sIjoiZ3JvdGgxNiIsImN1cnZlIjoiYm4xMjgifSwicHViX3NpZ25hbHMiOlsiMjE1MTMxNDA1MzAyMzM5MjE1MTU4MDkyMzUzODg3ODAxMzQ2ODEyNDU2MTI4NTg3NDQ5MDAyOTc3NDA0OTA0NDc3Mzg1NzMzMTQiLCI0MzA0NjAwNjM3MTg5NzI2OTU0Nzg4MTMzNDIxNjc0ODk0NzYxODQ0OTE2MDgyMTY2MjgyMzA4MDAyMDY1MDI4NTY4ODY0Mjg5Njc1IiwiNTIyOTY2ODY4NjU1NzYzNzAxNzc4MTE1NzM1NjMwNDc2OTY2MTcwOTIzODY3MDI3MDYxMzU2MDg4NzY5OTM1Mjk0NDk5NjU1MDI5NSJdfQ`
+
+	authInstance := NewVerifier(verificationKeyloader, schemaLoader, stateResolvers)
+	_, err := authInstance.FullVerify(context.Background(), token, request)
+	require.NoError(t, err)
 }

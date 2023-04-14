@@ -204,15 +204,12 @@ func (q Query) verifyCredentialSubject(
 
 	if q.CredentialSubject != nil && len(predicate) == 0 {
 		ctx := context.Background()
-		if err := q.validateDisclosure(
+		return q.validateDisclosure(
 			ctx,
 			pubSig,
 			fieldName,
 			verifiablePresentation,
-		); err != nil {
-			return err
-		}
-		return nil
+		)
 	}
 
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
