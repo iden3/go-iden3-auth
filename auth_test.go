@@ -147,7 +147,7 @@ var stateResolvers = map[string]pubsignals.StateResolver{
 type mockStateResolver struct {
 }
 
-func (r *mockStateResolver) Resolve(_ context.Context, id, s *big.Int) (*state.ResolvedState, error) {
+func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*state.ResolvedState, error) {
 	return &state.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
 }
 
@@ -158,7 +158,7 @@ func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*s
 func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	// TODO(illia-korotia): for non merklized claim and schema don't know about xsd:types
 	t.Skip("skipping test")
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -314,7 +314,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 }
 
 func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMToR"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -486,7 +486,7 @@ func TestVerifier_VerifyJWZ(t *testing.T) {
 
 func TestVerifier_FullVerify(t *testing.T) {
 	// request
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
@@ -524,7 +524,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 
 func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
@@ -678,7 +678,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 
 func TestCreateAuthorizationRequest(t *testing.T) {
 
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	sender := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 
@@ -692,7 +692,7 @@ func TestCreateAuthorizationRequest(t *testing.T) {
 
 func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 
-	sender := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	sender := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "basic authentication"
 	message := "message"
@@ -707,7 +707,7 @@ func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 
 func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 	// request
-	verifierID := "1125GJqgw6YEsKFwj63GY87MMxPL9kwDKxPUiwMLNZ"
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
