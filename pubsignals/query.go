@@ -205,15 +205,12 @@ func (q Query) verifyCredentialSubject(
 	// validate selectivity disclosure request
 	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
-		if err := q.validateDisclosure(
+		return q.validateDisclosure(
 			ctx,
 			pubSig,
 			fieldName,
 			verifiablePresentation,
-		); err != nil {
-			return err
-		}
-		return nil
+		)
 	}
 
 	// validate empty credential subject request
