@@ -215,10 +215,7 @@ func (q Query) verifyCredentialSubject(
 
 	// validate empty credential subject request
 	if q.isEmptyCredentialSubject(predicate, pubSig.Merklized) {
-		if err := q.verifyEmptyCredentialSubject(pubSig); err != nil {
-			return err
-		}
-		return nil
+		return q.verifyEmptyCredentialSubject(pubSig)
 	}
 
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
