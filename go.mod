@@ -13,7 +13,7 @@ require (
 	github.com/iden3/go-jwz v1.0.0-beta.0
 	github.com/iden3/go-rapidsnark/types v0.0.2
 	github.com/iden3/go-rapidsnark/verifier v0.0.4-0.20221129112904-b9f8680ca8e2
-	github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1
+	github.com/iden3/go-schema-processor v1.1.4
 	github.com/iden3/iden3comm v1.0.0-beta.1
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
