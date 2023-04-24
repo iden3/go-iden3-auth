@@ -121,6 +121,8 @@ github.com/iden3/go-rapidsnark/witness v0.0.4-0.20221129112904-b9f8680ca8e2 h1:f
 github.com/iden3/go-rapidsnark/witness v0.0.4-0.20221129112904-b9f8680ca8e2/go.mod h1:ZRd4PX8vJX/2aJ/1XRvtwMon5F7phDRX6C7v/BYBrwE=
 github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1 h1:ZF0G+difSPokc1M57yKLRvSZFRp9vh6Kg3sQpnEZqL0=
 github.com/iden3/go-schema-processor v1.1.4-0.20230323105148-1acaddccd9c1/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
+github.com/iden3/go-schema-processor v1.1.4 h1:Rzut4Mts8l7Sd4ndTFiI5LnRjzU9sltldsLeKgKL5Jw=
+github.com/iden3/go-schema-processor v1.1.4/go.mod h1:Irj/LOiEntZRUqa3Xio0VuHG6v6pP4vo3uxo5lEv4UM=
 github.com/iden3/iden3comm v1.0.0-beta.1 h1:/RCtOe6yitzFr6a+VKbcQZoiJIw8j4bjTVTuNq/f2Ok=
 github.com/iden3/iden3comm v1.0.0-beta.1/go.mod h1:jhj1N7+6uaRVHnIjyKqSLO6oCXS6rPvNVUMlq8ydk64=
 github.com/ipfs/go-cid v0.3.2 h1:OGgOd+JCFM+y1DjWPmVH+2/4POtpDzwcr7VgnB7mZXc=
