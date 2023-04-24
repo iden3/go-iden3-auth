@@ -202,7 +202,8 @@ func (q Query) verifyCredentialSubject(
 		}
 	}
 
-	if q.CredentialSubject != nil && len(predicate) == 0 {
+	// validate selectivity disclosure request
+	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
 		return q.validateDisclosure(
 			ctx,
@@ -210,6 +211,11 @@ func (q Query) verifyCredentialSubject(
 			fieldName,
 			verifiablePresentation,
 		)
+	}
+
+	// validate empty credential subject request
+	if q.isEmptyCredentialSubject(predicate, pubSig.Merklized) {
+		return q.verifyEmptyCredentialSubject(pubSig)
 	}
 
 	values, operator, err := parseFieldPredicate(fieldType, predicate)
@@ -294,6 +300,47 @@ func (q Query) validateDisclosure(
 	}
 
 	return nil
+}
+
+func (q Query) verifyEmptyCredentialSubject(
+	pubSig *CircuitOutputs,
+) error {
+	if pubSig.Operator != circuits.EQ {
+		return errors.New("empty credentialSubject request available only for equal operation")
+	}
+
+	for i := 1; i < len(pubSig.Value); i++ {
+		if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+			return errors.New("empty credentialSubject request not available for array of values")
+		}
+	}
+
+	p, err := merklize.NewPath("https://www.w3.org/2018/credentials#credentialSubject")
+	if err != nil {
+		return err
+	}
+	bi, err := p.MtEntry()
+	if err != nil {
+		return err
+	}
+
+	if pubSig.ClaimPathKey.Cmp(bi) != 0 {
+		return errors.New("proof doesn't contain credentialSubject in claimPathKey")
+	}
+
+	return nil
+}
+
+func (q Query) isSelectivityDisclosure(
+	predicate map[string]interface{}) bool {
+	return q.CredentialSubject != nil && len(predicate) == 0
+}
+
+func (q Query) isEmptyCredentialSubject(
+	predicate map[string]interface{},
+	isMerklized int,
+) bool {
+	return q.CredentialSubject == nil && len(predicate) == 0 && isMerklized == 1
 }
 
 func parseFieldPredicate(
