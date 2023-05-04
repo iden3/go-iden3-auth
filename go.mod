@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
-	github.com/ethereum/go-ethereum v1.11.6
+	github.com/ethereum/go-ethereum v1.11.5
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
