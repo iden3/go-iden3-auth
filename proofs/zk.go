@@ -2,7 +2,7 @@ package proofs
 
 import (
 	"github.com/iden3/go-rapidsnark/verifier"
-	"github.com/iden3/iden3comm/protocol"
+	"github.com/iden3/iden3comm/v2/protocol"
 	"github.com/pkg/errors"
 )
 

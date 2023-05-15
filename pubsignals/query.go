@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	core "github.com/iden3/go-iden3-core"
-	jsonSuite "github.com/iden3/go-schema-processor/json"
-	"github.com/iden3/go-schema-processor/merklize"
-	"github.com/iden3/go-schema-processor/utils"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-auth/v2/loaders"
+	core "github.com/iden3/go-iden3-core/v2"
+	jsonSuite "github.com/iden3/go-schema-processor/v2/json"
+	"github.com/iden3/go-schema-processor/v2/merklize"
+	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )

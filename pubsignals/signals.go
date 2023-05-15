@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/iden3/go-circuits"
+	"github.com/iden3/go-circuits/v2"
 	"github.com/pkg/errors"
 )
 

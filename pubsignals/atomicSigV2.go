@@ -7,9 +7,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	core "github.com/iden3/go-iden3-core"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-auth/v2/loaders"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/pkg/errors"
 )
 
@@ -46,11 +46,15 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
-	issuerDID, err := core.ParseDIDFromID(*c.IssuerID)
+	blockchain, err := core.BlockchainFromID(*c.IssuerID)
 	if err != nil {
 		return err
 	}
-	resolver, ok := stateResolvers[fmt.Sprintf("%s:%s", issuerDID.Blockchain, issuerDID.NetworkID)]
+	networkID, err := core.NetworkIDFromID(*c.IssuerID)
+	if err != nil {
+		return err
+	}
+	resolver, ok := stateResolvers[fmt.Sprintf("%s:%s", blockchain, networkID)]
 	if !ok {
 		return errors.Errorf("%s resolver not found", resolver)
 	}

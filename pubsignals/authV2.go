@@ -7,9 +7,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	core "github.com/iden3/go-iden3-core"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-auth/v2/loaders"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/pkg/errors"
 )
 
@@ -29,11 +29,15 @@ func (c *AuthV2) VerifyQuery(
 
 // VerifyStates verify AuthV2 tests.
 func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
-	userDID, err := core.ParseDIDFromID(*c.UserID)
+	blockchain, err := core.BlockchainFromID(*c.UserID)
 	if err != nil {
 		return err
 	}
-	chainInfo := fmt.Sprintf("%s:%s", userDID.Blockchain, userDID.NetworkID)
+	networkID, err := core.NetworkIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+	chainInfo := fmt.Sprintf("%s:%s", blockchain, networkID)
 	resolver, ok := stateResolvers[chainInfo]
 	if !ok {
 		return errors.Errorf("%s resolver not found", chainInfo)

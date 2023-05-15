@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/iden3/go-schema-processor/loaders"
-	"github.com/iden3/go-schema-processor/processor"
+	"github.com/iden3/go-schema-processor/v2/loaders"
+	"github.com/iden3/go-schema-processor/v2/processor"
 )
 
 // SchemaLoader is an interface for schema loading
