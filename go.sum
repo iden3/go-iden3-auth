@@ -111,8 +111,8 @@ github.com/iden3/go-iden3-core/v2 v2.0.0-20230505110120-f4681972ad45 h1:0XwrQksy
 github.com/iden3/go-iden3-core/v2 v2.0.0-20230505110120-f4681972ad45/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.15 h1:4MJYlrot1l31Fzlo2sF56u7EVFeHHJkxGXXZCtESgK4=
 github.com/iden3/go-iden3-crypto v0.0.15/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
-github.com/iden3/go-jwz/v2 v2.0.0-20230509174319-3791b6c3e946 h1:F9oOe1ZMlJ8rZ/1kraznp714T4DBY5dRiFCkhgDFZgo=
-github.com/iden3/go-jwz/v2 v2.0.0-20230509174319-3791b6c3e946/go.mod h1:XSQlWuAYnFmp7LVeTC4T+airr8ccEPuaF4pUh0A9sLE=
+github.com/iden3/go-jwz/v2 v2.0.0-20230515084017-3015ef593f65 h1:2i3tfrIkyCgVLoh3loWqAsrGd6SPsEAC+/cUov6rB2A=
+github.com/iden3/go-jwz/v2 v2.0.0-20230515084017-3015ef593f65/go.mod h1:XMNc2HqAc5VIUsgiOvquPN3l+DegHvCns91qDs1vU+g=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4 h1:Dp089P3YNX1BE8+T1tKQHWTtnk84Y/Kr7ZAGTqwscoY=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4/go.mod h1:kRhHKYpui5DUsry5RpveP6IC4XMe6iApdV9VChRYuEk=
 github.com/iden3/go-rapidsnark/prover v0.0.10 h1:NvOfRPpex/k646UsqOcUy7a7uVl17t4ok9kWvpQg4+k=
@@ -125,8 +125,8 @@ github.com/iden3/go-rapidsnark/witness v0.0.6 h1:p+6QBymSV3XWm1kB2PL2vlXxKXJN8Gy
 github.com/iden3/go-rapidsnark/witness v0.0.6/go.mod h1:57IHQpnvx0CeS6cAT07oN/lqwT5LRc4zicYoZ1cnAPE=
 github.com/iden3/go-schema-processor/v2 v2.0.0-20230509182548-f9ee518c3f71 h1:Tix/kH7NWOXjzZgS7TTwNaAjvWNHFx4RAVqeYTXXsSY=
 github.com/iden3/go-schema-processor/v2 v2.0.0-20230509182548-f9ee518c3f71/go.mod h1:NVz+rOZjWWH6rySnjJ4kzlyGiKXwkpUyXK1Kgbw7Yzc=
-github.com/iden3/iden3comm/v2 v2.0.0-20230515074208-5d7e585b04cc h1:xN2Kar3mhrV1/AsKpZl553N/xFjm/wHSdY2Y74rL0u0=
-github.com/iden3/iden3comm/v2 v2.0.0-20230515074208-5d7e585b04cc/go.mod h1:UdfQKrMA/uh5E2226XMLKTjoAI2PXJNqitbmE3LsYMw=
+github.com/iden3/iden3comm/v2 v2.0.0-20230515084403-fd7c3498bb7c h1:SmUuDEcjNRNS3Ifi7I/4qd/2es2xSVtUHmL1bx65+w0=
+github.com/iden3/iden3comm/v2 v2.0.0-20230515084403-fd7c3498bb7c/go.mod h1:DQAPMIuddTyiUbAlyZce/VGA5wUXRtVOmnvTiQW83OM=
 github.com/iden3/wasmer-go v0.0.1 h1:TZKh8Se8B/73PvWrcu+FTU9L1k5XYAmtFbioj7l0Uog=
 github.com/iden3/wasmer-go v0.0.1/go.mod h1:ZnZBAO012M7o+Q1INXLRIxKQgEcH2FuwL0Iga8A4ufg=
 github.com/ipfs/go-cid v0.3.2 h1:OGgOd+JCFM+y1DjWPmVH+2/4POtpDzwcr7VgnB7mZXc=

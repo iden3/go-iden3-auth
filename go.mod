@@ -10,11 +10,11 @@ require (
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
 	github.com/iden3/go-circuits/v2 v2.0.0-20230509170938-87ec0426a872
 	github.com/iden3/go-iden3-core/v2 v2.0.0-20230505110120-f4681972ad45
-	github.com/iden3/go-jwz/v2 v2.0.0-20230509174319-3791b6c3e946
+	github.com/iden3/go-jwz/v2 v2.0.0-20230515084017-3015ef593f65
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
 	github.com/iden3/go-schema-processor/v2 v2.0.0-20230509182548-f9ee518c3f71
-	github.com/iden3/iden3comm/v2 v2.0.0-20230515074208-5d7e585b04cc
+	github.com/iden3/iden3comm/v2 v2.0.0-20230515084403-fd7c3498bb7c
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.2
