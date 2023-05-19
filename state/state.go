@@ -124,7 +124,7 @@ func CheckGenesisStateID(id, state *big.Int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	identifier, err := core.IdGenesisFromIdenState(userID.Type(), state)
+	identifier, err := core.NewIDFromIdenState(userID.Type(), state)
 	if err != nil {
 		return false, err
 	}
