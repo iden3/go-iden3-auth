@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"time"
@@ -40,7 +41,13 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -90,8 +97,8 @@ func (v *Verifier) SetPackageManager(manager iden3comm.PackageManager) {
 }
 
 // SetPacker sets the custom packer manager for the VerifierBuilder.
-func (v *Verifier) SetPacker(packer iden3comm.Packer) {
-	v.packageManager.RegisterPackers(packer)
+func (v *Verifier) SetPacker(packer iden3comm.Packer) error {
+	return v.packageManager.RegisterPackers(packer)
 }
 
 // SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
@@ -131,19 +138,18 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 		provers,
 		verifications,
 	)
-	v.packageManager.RegisterPackers(zkpPackerV2)
-	return nil
+	return v.packageManager.RegisterPackers(zkpPackerV2)
 }
 
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
-func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) {
+func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
 	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
 
-	v.packageManager.RegisterPackers(jwsPacker)
+	return v.packageManager.RegisterPackers(jwsPacker)
 }
 
 // CreateAuthorizationRequest creates new authorization request message

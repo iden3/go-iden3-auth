@@ -598,7 +598,8 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 	pm := *iden3comm.NewPackageManager()
 	jwsPacker := packers.NewJWSPacker(didResolverHandler, nil)
 
-	pm.RegisterPackers(jwsPacker)
+	err = pm.RegisterPackers(jwsPacker)
+	require.NoError(t, err)
 	v.SetPackageManager(pm)
 	_, err = v.FullVerify(context.Background(), token, request)
 	require.NoError(t, err)
