@@ -85,13 +85,13 @@ func NewVerifier(
 }
 
 // SetPackageManager sets the package manager for the VerifierBuilder.
-func (b *Verifier) SetPackageManager(manager iden3comm.PackageManager) {
-	b.packageManager = manager
+func (v *Verifier) SetPackageManager(manager iden3comm.PackageManager) {
+	v.packageManager = manager
 }
 
 // SetPacker sets the custom packer manager for the VerifierBuilder.
-func (b *Verifier) SetPacker(packer iden3comm.Packer) {
-	b.packageManager.RegisterPackers(packer)
+func (v *Verifier) SetPacker(packer iden3comm.Packer) {
+	v.packageManager.RegisterPackers(packer)
 }
 
 // SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
