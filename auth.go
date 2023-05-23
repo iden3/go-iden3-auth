@@ -82,8 +82,11 @@ func NewVerifier(
 	}
 
 	err := v.SetupAuthV2ZKPPacker()
+	if err != nil {
+		return nil, err
+	}
 
-	v.SetupJWSPacker(UniversalDIDResolver)
+	err = v.SetupJWSPacker(UniversalDIDResolver)
 	if err != nil {
 		return nil, err
 	}
