@@ -35,8 +35,10 @@ const UniversalResolverURL = "https://dev.uniresolver.io/1.0/identifiers"
 var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*verifiable.DIDDocument, error) {
 	didDoc := &verifiable.DIDDocument{}
 
-	url := fmt.Sprintf("%s/%s", UniversalResolverURL, did)
-	resp, err := http.Get(url)
+	URL := fmt.Sprintf("%s/%s", UniversalResolverURL, did)
+
+	resp, err := http.Get(URL)
+
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +54,7 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 	if err != nil {
 		return nil, err
 	}
+
 	err = json.Unmarshal(body, didDoc)
 	if err != nil {
 		return nil, err
