@@ -120,8 +120,8 @@ github.com/iden3/go-rapidsnark/verifier v0.0.5 h1:J7y0ovrEjDQoWtZmlrp4tgGng1A9fa
 github.com/iden3/go-rapidsnark/verifier v0.0.5/go.mod h1:KgL3Yr9NehlFDI4EIWVLE3UDUi8ulyjbp7HcXSBfiGI=
 github.com/iden3/go-rapidsnark/witness v0.0.6 h1:p+6QBymSV3XWm1kB2PL2vlXxKXJN8GyWuqNJv/0PGGU=
 github.com/iden3/go-rapidsnark/witness v0.0.6/go.mod h1:57IHQpnvx0CeS6cAT07oN/lqwT5LRc4zicYoZ1cnAPE=
-github.com/iden3/go-schema-processor v1.1.5 h1:nhK4xNMlNdnNmPT/WlNZgmbrHL9ifXn9QgPp87L+G7U=
-github.com/iden3/go-schema-processor v1.1.5/go.mod h1:OoxGutmHbpU42/mYCkzYSf4nhsEZ0Ws0ouBpWxcjp0w=
+github.com/iden3/go-schema-processor v1.1.6-0.20230525145518-6fa0bc9e95dd h1:/duxuKHSdf07Yrp43Dyl+FC0LTtweg6Sg+eBZxxV6GU=
+github.com/iden3/go-schema-processor v1.1.6-0.20230525145518-6fa0bc9e95dd/go.mod h1:OoxGutmHbpU42/mYCkzYSf4nhsEZ0Ws0ouBpWxcjp0w=
 github.com/iden3/iden3comm v1.0.0 h1:ZF796O5oftSFZDhPG5hTcBjY9Yw2faSajD47cjYdSJA=
 github.com/iden3/iden3comm v1.0.0/go.mod h1:2rEv35F6gE0XJjP89sCOR0Im4/r6uG2jo8Ui5p5bzE4=
 github.com/iden3/wasmer-go v0.0.1 h1:TZKh8Se8B/73PvWrcu+FTU9L1k5XYAmtFbioj7l0Uog=
