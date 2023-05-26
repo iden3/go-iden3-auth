@@ -2,9 +2,13 @@ package auth
 
 import (
 	"context"
+	"crypto"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"math/big"
+	"net/http"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,29 +21,139 @@ import (
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/iden3/go-jwz"
+	"github.com/iden3/go-schema-processor/verifiable"
+	"github.com/iden3/iden3comm"
 	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
 	"github.com/pkg/errors"
 )
+
+// UniversalResolverURL is a url for universal resolver
+const UniversalResolverURL = "https://dev.uniresolver.io/1.0/identifiers"
+
+// UniversalDIDResolver is a resolver for universal resolver
+var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*verifiable.DIDDocument, error) {
+	didDoc := &verifiable.DIDDocument{}
+
+	resp, err := http.Get(fmt.Sprintf("%s/%s", UniversalResolverURL, did))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(body, didDoc)
+	if err != nil {
+		return nil, err
+	}
+
+	return didDoc, nil
+})
 
 // Verifier is a struct for auth instance
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	claimSchemaLoader     loaders.SchemaLoader
 	stateResolver         map[string]pubsignals.StateResolver
+	packageManager        iden3comm.PackageManager
 }
 
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
 	claimSchemaLoader loaders.SchemaLoader,
-	resolver map[string]pubsignals.StateResolver) *Verifier {
-
-	return &Verifier{
+	resolver map[string]pubsignals.StateResolver,
+) (*Verifier, error) {
+	v := &Verifier{
 		verificationKeyLoader: keyLoader,
 		claimSchemaLoader:     claimSchemaLoader,
 		stateResolver:         resolver,
+		packageManager:        *iden3comm.NewPackageManager(),
 	}
+
+	err := v.SetupAuthV2ZKPPacker()
+	if err != nil {
+		return nil, err
+	}
+
+	err = v.SetupJWSPacker(UniversalDIDResolver)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+// SetPackageManager sets the package manager for the VerifierBuilder.
+func (v *Verifier) SetPackageManager(manager iden3comm.PackageManager) {
+	v.packageManager = manager
+}
+
+// SetPacker sets the custom packer manager for the VerifierBuilder.
+func (v *Verifier) SetPacker(packer iden3comm.Packer) error {
+	return v.packageManager.RegisterPackers(packer)
+}
+
+// SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
+func (v *Verifier) SetupAuthV2ZKPPacker() error {
+	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	provers := make(map[jwz.ProvingMethodAlg]packers.ProvingParams)
+
+	verifications := make(map[jwz.ProvingMethodAlg]packers.VerificationParams)
+
+	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
+		authV2Set,
+		func(id circuits.CircuitID, pubSignals []string) error {
+			if id != circuits.AuthV2CircuitID {
+				return errors.New("circuit id is not AuthV2CircuitID")
+			}
+			verifier, err := pubsignals.GetVerifier(circuits.AuthV2CircuitID)
+			if err != nil {
+				return err
+			}
+			pubSignalBytes, err := json.Marshal(pubSignals)
+			if err != nil {
+				return err
+			}
+			err = verifier.PubSignalsUnmarshal(pubSignalBytes)
+			if err != nil {
+				return err
+			}
+			return verifier.VerifyStates(context.Background(), v.stateResolver)
+		},
+	)
+
+	zkpPackerV2 := packers.NewZKPPacker(
+		provers,
+		verifications,
+	)
+	return v.packageManager.RegisterPackers(zkpPackerV2)
+}
+
+// SetupJWSPacker sets the JWS packer for the VerifierBuilder.
+func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
+
+	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+		return nil, nil
+	})
+	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
+
+	return v.packageManager.RegisterPackers(jwsPacker)
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -190,31 +304,20 @@ func (v *Verifier) FullVerify(
 	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
 ) (*protocol.AuthorizationResponseMessage, error) {
 
-	t, err := v.VerifyJWZ(ctx, token, opts...)
+	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
 	}
-	// parse jwz payload as json message
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
 	var authMsgResponse protocol.AuthorizationResponseMessage
-	msg := t.GetPayload()
-	err = json.Unmarshal(msg, &authMsgResponse)
+	err = json.Unmarshal(msgBytes, &authMsgResponse)
+
 	if err != nil {
 		return nil, err
-	}
-
-	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
-	if err != nil {
-		return nil, err
-	}
-
-	challengeBytes, err := t.GetMessageHash()
-	if err != nil {
-		return nil, err
-	}
-
-	err = circuitVerifier.VerifyIDOwnership(authMsgResponse.From, new(big.Int).SetBytes(challengeBytes))
-	if err != nil {
-		return &authMsgResponse, err
 	}
 
 	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, opts...)
