@@ -53,7 +53,27 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 		return nil, err
 	}
 
-	err = json.Unmarshal(body, didDoc)
+	var didMetadata map[string]interface{}
+
+	err = json.Unmarshal(body, &didMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, ok := didMetadata["didDocument"]
+
+	if !ok {
+		return nil, errors.New("did document not found")
+	}
+
+	docBts, err := json.Marshal(doc)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(docBts, &didDoc)
+
 	if err != nil {
 		return nil, err
 	}
