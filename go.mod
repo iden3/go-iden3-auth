@@ -13,8 +13,8 @@ require (
 	github.com/iden3/go-jwz/v2 v2.0.0-20230519132540-75b6744028b1
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
-	github.com/iden3/go-schema-processor/v2 v2.0.0-20230519132955-e2f78dc2eef4
-	github.com/iden3/iden3comm/v2 v2.0.0-20230519135250-c8c867fcc34a
+	github.com/iden3/go-schema-processor/v2 v2.0.0-20230612173549-9743816fb1b0
+	github.com/iden3/iden3comm/v2 v2.0.0-20230612175727-9bf4f7a02f7a
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.2
@@ -30,6 +30,7 @@ require (
 	github.com/dchest/blake512 v1.0.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.3.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/dustinxie/ecc v0.0.0-20210511000915-959544187564 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
