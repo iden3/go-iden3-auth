@@ -90,13 +90,13 @@ func (q Query) Check(
 		return err
 	}
 
-	if err := q.verifySchemaID(pubSig); err != nil {
-		return err
-	}
-
 	schemaBytes, _, err := loader.Load(ctx, q.Context)
 	if err != nil {
 		return fmt.Errorf("failed load schema by context: %w", err)
+	}
+
+	if err := q.verifySchemaID(schemaBytes, pubSig); err != nil {
+		return err
 	}
 
 	if err := q.verifyCredentialSubject(
@@ -172,8 +172,13 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 	return ErrUnavailableIssuer
 }
 
-func (q Query) verifySchemaID(pubSig *CircuitOutputs) error {
-	schemaID := fmt.Sprintf("%s#%s", q.Context, q.Type)
+func (q Query) verifySchemaID(schemaBytes []byte,
+	pubSig *CircuitOutputs) error {
+
+	schemaID, err := merklize.TypeIDFromContext(schemaBytes, q.Type)
+	if err != nil {
+		return err
+	}
 	querySchema := utils.CreateSchemaHash([]byte(schemaID))
 	if querySchema.BigInt().Cmp(pubSig.ClaimSchema.BigInt()) == 0 {
 		return nil
