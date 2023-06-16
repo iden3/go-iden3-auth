@@ -10,10 +10,11 @@ require (
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
 	github.com/iden3/go-circuits v1.0.3
 	github.com/iden3/go-iden3-core v1.0.2
+	github.com/iden3/go-iden3-crypto v0.0.15
 	github.com/iden3/go-jwz v1.0.0
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
-	github.com/iden3/go-schema-processor v1.2.1
+	github.com/iden3/go-schema-processor v1.2.2
 	github.com/iden3/iden3comm v1.0.1-0.20230609100900-191d60f4f566
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
@@ -37,7 +38,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
-	github.com/iden3/go-iden3-crypto v0.0.15 // indirect
 	github.com/iden3/go-merkletree-sql/v2 v2.0.4 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.10 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.6 // indirect
