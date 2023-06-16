@@ -13,7 +13,7 @@ require (
 	github.com/iden3/go-jwz v1.0.0
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
-	github.com/iden3/go-schema-processor v1.2.0
+	github.com/iden3/go-schema-processor v1.2.1
 	github.com/iden3/iden3comm v1.0.1-0.20230609100900-191d60f4f566
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
@@ -42,10 +42,9 @@ require (
 	github.com/iden3/go-rapidsnark/prover v0.0.10 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.6 // indirect
 	github.com/iden3/wasmer-go v0.0.1 // indirect
-	github.com/ipfs/go-cid v0.3.2 // indirect
-	github.com/ipfs/go-ipfs-api v0.4.0 // indirect
-	github.com/ipfs/go-ipfs-files v0.3.0 // indirect
-	github.com/ipfs/go-libipfs v0.6.1 // indirect
+	github.com/ipfs/boxo v0.8.0 // indirect
+	github.com/ipfs/go-cid v0.4.0 // indirect
+	github.com/ipfs/go-ipfs-api v0.6.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -55,7 +54,7 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
-	github.com/libp2p/go-libp2p v0.26.2 // indirect
+	github.com/libp2p/go-libp2p v0.26.3 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
