@@ -107,7 +107,6 @@ The blockchain verification algorithm is used
    verifier := auth.NewVerifier(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolvers)
    // check that verifier instance is not nil or use NewVerifierWithExplicitError and check error
    // verifier,err := auth.NewVerifierWithExplicitError(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolvers)
-   // check that verifier instance is not nil or use 
     ```
 4. FullVerify:
 
