@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -48,7 +48,7 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 		}
 	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +89,38 @@ type Verifier struct {
 	packageManager        iden3comm.PackageManager
 }
 
+// Deprecated: NewVerifier now return nil it can't set up default package manager for verifier,
+// in future major release it will return error
+//
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
+	keyLoader loaders.VerificationKeyLoader,
+	claimSchemaLoader loaders.SchemaLoader,
+	resolver map[string]pubsignals.StateResolver,
+) *Verifier {
+	v := &Verifier{
+		verificationKeyLoader: keyLoader,
+		claimSchemaLoader:     claimSchemaLoader,
+		stateResolver:         resolver,
+		packageManager:        *iden3comm.NewPackageManager(),
+	}
+
+	err := v.SetupAuthV2ZKPPacker()
+	if err != nil {
+		return nil
+	}
+
+	err = v.SetupJWSPacker(UniversalDIDResolver)
+	if err != nil {
+		return nil
+	}
+
+	return v
+}
+
+// NewVerifierWithExplicitError returns verifier instance with default package manager and explicit error if it couldn't register default packers
+// in future major release it will be renamed to NewVerifier
+func NewVerifierWithExplicitError(
 	keyLoader loaders.VerificationKeyLoader,
 	claimSchemaLoader loaders.SchemaLoader,
 	resolver map[string]pubsignals.StateResolver,
