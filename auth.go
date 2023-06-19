@@ -89,10 +89,9 @@ type Verifier struct {
 	packageManager        iden3comm.PackageManager
 }
 
+// NewVerifier returns setup instance of auth library
 // Deprecated: NewVerifier now return nil it can't set up default package manager for verifier,
 // in future major release it will return error
-//
-// NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
 	claimSchemaLoader loaders.SchemaLoader,
