@@ -99,23 +99,11 @@ func NewVerifier(
 	claimSchemaLoader loaders.SchemaLoader,
 	resolver map[string]pubsignals.StateResolver,
 ) *Verifier {
-	v := &Verifier{
-		verificationKeyLoader: keyLoader,
-		claimSchemaLoader:     claimSchemaLoader,
-		stateResolver:         resolver,
-		packageManager:        *iden3comm.NewPackageManager(),
-	}
-
-	err := v.SetupAuthV2ZKPPacker()
+	v, err := NewVerifierWithExplicitError(keyLoader, claimSchemaLoader,
+		resolver)
 	if err != nil {
 		return nil
 	}
-
-	err = v.SetupJWSPacker(UniversalDIDResolver)
-	if err != nil {
-		return nil
-	}
-
 	return v
 }
 
