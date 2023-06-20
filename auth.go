@@ -21,10 +21,12 @@ import (
 	"github.com/iden3/go-iden3-auth/pubsignals"
 	"github.com/iden3/go-iden3-auth/state"
 	"github.com/iden3/go-jwz"
+	"github.com/iden3/go-schema-processor/merklize"
 	"github.com/iden3/go-schema-processor/verifiable"
 	"github.com/iden3/iden3comm"
 	"github.com/iden3/iden3comm/packers"
 	"github.com/iden3/iden3comm/protocol"
+	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/pkg/errors"
 )
 
@@ -129,6 +131,15 @@ func NewVerifierWithExplicitError(
 		claimSchemaLoader:     claimSchemaLoader,
 		stateResolver:         resolver,
 		packageManager:        *iden3comm.NewPackageManager(),
+	}
+
+	// try to extract IPFS_URL if the schema loader is the default one
+	if impl, ok := claimSchemaLoader.(loaders.DefaultSchemaLoader); ok &&
+		impl.IpfsURL != "" {
+
+		ipfsCli := shell.NewShell(impl.IpfsURL)
+		documentLoader := merklize.NewDocumentLoader(ipfsCli, "")
+		merklize.SetDocumentLoader(documentLoader)
 	}
 
 	err := v.SetupAuthV2ZKPPacker()
@@ -420,6 +431,7 @@ func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (p
 	}
 	return cv, nil
 }
+
 func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id uint32) *protocol.ZeroKnowledgeProofResponse {
 	for _, respProof := range arr {
 		if respProof.ID == id {
