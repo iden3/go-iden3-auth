@@ -21,13 +21,13 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/go-jwz/v2"
+	"github.com/iden3/go-schema-processor/merklize"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/iden3/iden3comm/v2"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
-	"github.com/pkg/errors"
 	shell "github.com/ipfs/go-ipfs-api"
-
+	"github.com/pkg/errors"
 )
 
 // UniversalResolverURL is a url for universal resolver
