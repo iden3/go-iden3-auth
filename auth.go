@@ -5,7 +5,7 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/big"
 	"net/http"
@@ -26,6 +26,8 @@ import (
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
 	"github.com/pkg/errors"
+	shell "github.com/ipfs/go-ipfs-api"
+
 )
 
 // UniversalResolverURL is a url for universal resolver
@@ -48,7 +50,7 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 		}
 	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +102,15 @@ func NewVerifier(
 		claimSchemaLoader:     claimSchemaLoader,
 		stateResolver:         resolver,
 		packageManager:        *iden3comm.NewPackageManager(),
+	}
+
+	// try to extract IPFS_URL if the schema loader is the default one
+	if impl, ok := claimSchemaLoader.(loaders.DefaultSchemaLoader); ok &&
+		impl.IpfsURL != "" {
+
+		ipfsCli := shell.NewShell(impl.IpfsURL)
+		documentLoader := merklize.NewDocumentLoader(ipfsCli, "")
+		merklize.SetDocumentLoader(documentLoader)
 	}
 
 	err := v.SetupAuthV2ZKPPacker()
@@ -391,6 +402,7 @@ func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (p
 	}
 	return cv, nil
 }
+
 func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id uint32) *protocol.ZeroKnowledgeProofResponse {
 	for _, respProof := range arr {
 		if respProof.ID == id {
