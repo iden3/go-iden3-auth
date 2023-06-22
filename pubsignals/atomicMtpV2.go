@@ -88,6 +88,14 @@ func (c *AtomicQueryMTPV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 	}
 
 	userDID, err := core.ParseDIDFromID(*c.UserID)
+	if err != nil && err == core.ErrDIDMethodNotSupported {
+		// sender to id
+		senderHashedID := IDFromUnknownDID(sender)
+		if senderHashedID.String() != c.UserID.String() {
+			return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderHashedID.String(), c.UserID.String())
+		}
+		return nil
+	}
 	if err != nil {
 		return err
 	}

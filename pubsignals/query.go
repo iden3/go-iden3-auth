@@ -3,6 +3,7 @@ package pubsignals
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -454,4 +455,14 @@ func isValidOperation(typ string, op int) bool {
 
 	_, ok = ops[op]
 	return ok
+}
+
+// IDFromUnknownDID returns ID from did with unsupported by go-iden3-core did method
+// type is set to [255,255] hash alg is sha256
+func IDFromUnknownDID(did string) core.ID {
+	hash := sha256.Sum256([]byte(did))
+	var genesis [27]byte
+	copy(genesis[:], hash[len(hash)-27:])
+	var tp = [2]byte{0b11111111, 0b11111111}
+	return core.NewID(tp, genesis)
 }
