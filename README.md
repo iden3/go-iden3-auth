@@ -104,9 +104,9 @@ The blockchain verification algorithm is used
    resolvers := map[string]pubsignals.StateResolver{
       "polygon:mumbai": resolver,
    }
-   verifier := auth.NewVerifier(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolvers)
-   // check that verifier instance is not nil or use NewVerifierWithExplicitError and check error
-   // verifier,err := auth.NewVerifierWithExplicitError(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolvers)
+   verifier,err := auth.NewVerifierWithExplicitError(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "<IPFS NODE HERE>"}, resolvers)
+   // or use NewVerifier and check that verifier instance is not nil. IPFS merklization is not worked without setuping global loader
+   // verifier := auth.NewVerifier(verificationKeyloader, loaders.DefaultSchemaLoader{IpfsURL: "ipfs.io"}, resolvers)
     ```
 4. FullVerify:
 
