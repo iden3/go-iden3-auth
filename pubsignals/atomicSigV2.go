@@ -10,6 +10,7 @@ import (
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/pkg/errors"
 )
 
@@ -96,12 +97,17 @@ func (c *AtomicQuerySigV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 		return errors.New("invalid requestID in proof")
 	}
 
-	userDID, err := core.ParseDIDFromID(*c.UserID)
+	did, err := w3c.ParseDID(sender)
+	if err != nil {
+		return errors.Wrap(err, "sender must be a valid did")
+	}
+	senderID, err := core.IDFromDID(*did)
 	if err != nil {
 		return err
 	}
-	if sender != userDID.String() {
-		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, c.UserID.String())
+
+	if senderID.String() != c.UserID.String() {
+		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderID.String(), c.UserID.String())
 	}
 	return nil
 }

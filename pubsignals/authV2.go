@@ -10,6 +10,7 @@ import (
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/pkg/errors"
 )
 
@@ -61,13 +62,18 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
-	userDID, err := core.ParseDIDFromID(*c.UserID)
+
+	did, err := w3c.ParseDID(sender)
+	if err != nil {
+		return errors.Wrap(err, "sender must be a valid did")
+	}
+	senderID, err := core.IDFromDID(*did)
 	if err != nil {
 		return err
 	}
 
-	if sender != userDID.String() {
-		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, userDID)
+	if senderID.String() != c.UserID.String() {
+		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderID.String(), c.UserID.String())
 	}
 	if challenge.Cmp(c.Challenge) != 0 {
 		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
