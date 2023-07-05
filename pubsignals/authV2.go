@@ -62,6 +62,9 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
+	if challenge.Cmp(c.Challenge) != 0 {
+		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
+	}
 
 	did, err := w3c.ParseDID(sender)
 	if err != nil {
@@ -75,8 +78,6 @@ func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
 	if senderID.String() != c.UserID.String() {
 		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderID.String(), c.UserID.String())
 	}
-	if challenge.Cmp(c.Challenge) != 0 {
-		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
-	}
+
 	return nil
 }

@@ -656,15 +656,6 @@ func TestVerifier_FullVerify(t *testing.T) {
 func TestVerifier_FullVerify_JWS(t *testing.T) {
 	var request protocol.AuthorizationRequestMessage
 
-	request.Typ = packers.MediaTypeSignedMessage
-	request.Type = protocol.AuthorizationRequestMessageType
-	request.ID = "4f3549b-0c9d-47f8-968c-c9b0c10b8847"
-	request.ThreadID = "1f3549b-0c9d-47f8-968c-c9b0c10b8847"
-	request.Body = protocol.AuthorizationRequestMessageBody{
-		CallbackURL: "https://test.com/callback",
-		Reason:      "reason",
-		Scope:       []protocol.ZeroKnowledgeProofRequest{},
-	}
 	var sigReq protocol.ZeroKnowledgeProofRequest
 	sigReq.ID = 1
 	sigReq.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
