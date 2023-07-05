@@ -9,9 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
 	github.com/iden3/go-circuits/v2 v2.0.0-20230519130224-2f1dac1ae3f8
-	github.com/iden3/go-iden3-auth v1.2.1
 	github.com/iden3/go-iden3-core/v2 v2.0.0-20230519124718-42b31ff46f37
-	github.com/iden3/go-iden3-crypto v0.0.15
 	github.com/iden3/go-jwz/v2 v2.0.0-20230519132540-75b6744028b1
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
@@ -41,8 +39,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
-	github.com/iden3/go-circuits v1.0.3 // indirect
-	github.com/iden3/go-iden3-core v1.0.2 // indirect
+	github.com/iden3/go-iden3-crypto v0.0.15 // indirect
 	github.com/iden3/go-merkletree-sql/v2 v2.0.4 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.10 // indirect
 	github.com/iden3/go-rapidsnark/witness v0.0.6 // indirect
@@ -74,7 +71,6 @@ require (
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/qri-io/jsonpointer v0.1.1 // indirect
 	github.com/qri-io/jsonschema v0.2.1 // indirect
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect

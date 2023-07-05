@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/go-rapidsnark/types"
-	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/iden3/iden3comm/v2"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
@@ -261,20 +259,6 @@ type mockJSONLDSchemaLoader struct {
 func (r *mockJSONLDSchemaLoader) Load(_ context.Context, _ string) (schema []byte, ext string, err error) {
 	return []byte(r.schema), "json-ld", nil
 }
-
-const exampleDidDoc = `{"@context":["https://www.w3.org/ns/did/v1","https://w3id.org/security/suites/secp256k1recovery-2020/v2"],"id":"did:example:123","verificationMethod":[{"id":"did:iden3:polygon:mumbai:x4jcHP4XHTK3vX58AHZPyHE8kYjneyE6FZRfz7K29","controller":"did:example:123","type":"EcdsaSecp256k1VerificationKey2019","publicKeyJwk":{"crv":"secp256k1","kid":"did:iden3:polygon:mumbai:x4jcHP4XHTK3vX58AHZPyHE8kYjneyE6FZRfz7K29","kty":"EC","x":"YEwwxb2s2kjvKodwoW3II8JhcvYk-51hD74Kkq63syc=","y":"fCIyEltvzDs0JZnL25-YyyDgLrbZTw9y3lM2BLDhQbU="}}],"authentication":["did:example:123#vm-1"]}`
-
-var didResolverHandler = packers.DIDResolverHandlerFunc(func(did string) (*verifiable.DIDDocument, error) {
-	didDoc := &verifiable.DIDDocument{}
-
-	err := json.Unmarshal([]byte(exampleDidDoc), didDoc)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return didDoc, nil
-})
 
 /*
 mock for state resolver
