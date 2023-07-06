@@ -164,6 +164,7 @@ var vpEmployee = []byte(`{
 }`)
 
 func TestCheckRequest_Success(t *testing.T) {
+	now := time.Now().Unix()
 	tests := []struct {
 		name   string
 		query  Query
@@ -193,6 +194,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 		},
 		{
@@ -216,6 +218,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vp,
 		},
@@ -242,6 +245,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{bigIntTrueHash},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 		},
 		{
@@ -268,6 +272,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vpEmployee,
 		},
@@ -297,6 +302,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vpEmployee,
 		},
@@ -304,7 +310,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp, WithAcceptedProofGenerationDelay(time.Hour*1000000))
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.NoError(t, err)
 		})
 	}
@@ -489,6 +495,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 }
 
 func TestCheckRequest_Error(t *testing.T) {
+	now := time.Now().Unix()
 	tests := []struct {
 		name   string
 		query  Query
@@ -515,6 +522,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: KYCCountrySchema,
+				Timestamp:   now,
 			},
 			expErr: ErrSchemaID,
 		},
@@ -532,6 +540,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: KYCCountrySchema,
+				Timestamp:   now,
 			},
 			expErr: errors.New("multiple requests not supported"),
 		},
@@ -548,6 +557,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: KYCCountrySchema,
+				Timestamp:   now,
 			},
 			expErr: errors.New("failed cast type map[string]interface"),
 		},
@@ -567,6 +577,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: KYCCountrySchema,
+				Timestamp:   now,
 			},
 			expErr: errors.New("multiple predicates for one field not supported"),
 		},
@@ -586,6 +597,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				IssuerID:    &issuerID,
 				ClaimSchema: KYCCountrySchema,
 				Operator:    3,
+				Timestamp:   now,
 			},
 			expErr: ErrRequestOperator,
 		},
@@ -606,6 +618,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				ClaimSchema: KYCCountrySchema,
 				Operator:    5,
 				Value:       []*big.Int{big.NewInt(40)},
+				Timestamp:   now,
 			},
 			expErr: ErrInvalidValues,
 		},
@@ -629,6 +642,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("proof was generated for another path"),
 		},
@@ -652,6 +666,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("different slot index for claim"),
 		},
@@ -676,6 +691,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: errors.New("check revocation is required"),
 		},
@@ -700,6 +716,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: errors.New("invalid operation '$lt' for field type 'http://www.w3.org/2001/XMLSchema#boolean'"),
 		},
@@ -724,6 +741,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: ErrNegativeValue,
 		},
@@ -731,7 +749,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil, WithAcceptedProofGenerationDelay(time.Hour*1000000))
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
