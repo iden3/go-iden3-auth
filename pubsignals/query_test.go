@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	core "github.com/iden3/go-iden3-core"
 	"github.com/stretchr/testify/require"
@@ -303,7 +304,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp, WithAcceptedProofGenerationDelay(time.Hour*1000000))
 			require.NoError(t, err)
 		})
 	}
@@ -315,8 +316,37 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		query  Query
 		pubSig *CircuitOutputs
 		vp     json.RawMessage
+		ops    VerifyOpt
 		expErr error
 	}{
+		{
+			name: "Generated proof is outdated",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"countryCode": map[string]interface{}{
+						"$nin": []interface{}{float64(800)},
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCCountryOfResidenceCredential",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: KYCCountrySchema,
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
+					return v
+				}(),
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(800)},
+				Merklized:           1,
+				IsRevocationChecked: 1,
+				Timestamp:           1688648054,
+			},
+			expErr: errors.New("generated proof is outdated"),
+			ops:    WithAcceptedProofGenerationDelay(time.Hour),
+		},
 		{
 			name: "Empty disclosure value for disclosure request",
 			query: Query{
@@ -340,6 +370,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure value is missed"),
 		},
 		{
@@ -365,6 +396,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure available only for equal operation"),
 		},
 		{
@@ -390,6 +422,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure not available for array of values"),
 		},
 		{
@@ -415,6 +448,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("different value between proof and disclosure value"),
 		},
 		{
@@ -440,13 +474,14 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp, tt.ops)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
@@ -695,7 +730,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil, WithAcceptedProofGenerationDelay(time.Hour*1000000))
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}

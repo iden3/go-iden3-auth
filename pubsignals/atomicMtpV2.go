@@ -24,6 +24,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 	query Query,
 	schemaLoader loaders.SchemaLoader,
 	verifiablePresentation json.RawMessage,
+	opts ...VerifyOpt,
 ) error {
 	return query.Check(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
@@ -37,7 +38,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, verifiablePresentation)
+	}, verifiablePresentation, opts...)
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.

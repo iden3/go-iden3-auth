@@ -293,7 +293,7 @@ func (v *Verifier) VerifyAuthResponse(
 			rawMessage = nil
 		}
 
-		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, rawMessage)
+		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, rawMessage, opts...)
 		if err != nil {
 			return err
 		}
