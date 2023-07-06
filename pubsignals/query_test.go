@@ -6,27 +6,47 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 
 	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	issuerDID   = "did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"
-	iid, _      = new(big.Int).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
-	issuerID, _ = core.IDFromInt(iid)
-
-	schemaHashKYCEmployee, _ = big.NewInt(0).SetString("40507426258035268209384482717564233104", 10)
-	KYCEmployeeSchema        = core.NewSchemaHashFromInt(schemaHashKYCEmployee)
-
-	schemaHashKYCCountry, _ = big.NewInt(0).SetString("336615423900919464193075592850483704600", 10)
-	KYCCountrySchema        = core.NewSchemaHashFromInt(schemaHashKYCCountry)
-
+	issuerDID         = "did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"
+	iid, _            = new(big.Int).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
+	issuerID, _       = core.IDFromInt(iid)
 	bigIntTrueHash, _ = big.NewInt(0).SetString("18586133768512220936620570745912940619677854269274689475585506675881198879027", 10)
 )
 
+type mockJSONLDSchemaLoader struct {
+	schemas map[string]string
+	seen    map[string]bool
+}
+
+func (r *mockJSONLDSchemaLoader) LoadDocument(u string) (*ld.RemoteDocument, error) {
+	if body, ok := r.schemas[u]; ok {
+		if r.seen == nil {
+			r.seen = make(map[string]bool)
+		}
+		r.seen[u] = true
+		var doc = ld.RemoteDocument{DocumentURL: u}
+		err := json.Unmarshal([]byte(body), &doc.Document)
+		return &doc, err
+	}
+	return nil, fmt.Errorf("schema not found: %v", u)
+}
+
+func (r *mockJSONLDSchemaLoader) assert(t testing.TB) {
+	for url := range r.schemas {
+		require.True(t, r.seen[url], "schema not loaded: %v", url)
+	}
+}
+
+// TODO remove this after fixing name: "Different slot index",
 type mockMemorySchemaLoader struct {
 }
 
@@ -175,6 +195,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		query  Query
 		pubSig *CircuitOutputs
 		vp     json.RawMessage
+		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Check merkalized query",
@@ -190,7 +211,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -199,6 +220,11 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+			},
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
 			},
 		},
 		{
@@ -213,7 +239,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -224,6 +250,12 @@ func TestCheckRequest_Success(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			vp: vp,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+				},
+			},
 		},
 		{
 			name: "Query with boolean type",
@@ -234,12 +266,12 @@ func TestCheckRequest_Success(t *testing.T) {
 						"$eq": true,
 					},
 				},
-				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCEmployeeSchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("1944808975288007371356450257872165609440470546066507760733183342797918372827", 10)
 					return v
@@ -249,6 +281,11 @@ func TestCheckRequest_Success(t *testing.T) {
 				Merklized:           1,
 				IsRevocationChecked: 1,
 			},
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Selective disclosure with xsd:string type",
@@ -257,12 +294,12 @@ func TestCheckRequest_Success(t *testing.T) {
 				CredentialSubject: map[string]interface{}{
 					"position": map[string]interface{}{},
 				},
-				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCEmployeeSchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
 					return v
@@ -276,6 +313,12 @@ func TestCheckRequest_Success(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			vp: vpEmployee,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                           loadSchema("credentialsV1.jsonld"),
+				},
+			},
 		},
 		{
 			name: "EQ operator for xsd:string type",
@@ -286,12 +329,12 @@ func TestCheckRequest_Success(t *testing.T) {
 						"$eq": "Software Engineer",
 					},
 				},
-				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCEmployeeSchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("15406634529806189041952040954758558497189093183268091368437514469450172572054", 10)
 					return v
@@ -305,13 +348,19 @@ func TestCheckRequest_Success(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			vp: vpEmployee,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
 			require.NoError(t, err)
+			tt.loader.assert(t)
 		})
 	}
 }
@@ -323,6 +372,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		pubSig *CircuitOutputs
 		vp     json.RawMessage
 		expErr error
+		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Empty disclosure value for disclosure request",
@@ -337,7 +387,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: nil,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -348,6 +398,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("selective disclosure value is missed"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Not EQ operation for disclosure request",
@@ -362,7 +417,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -373,6 +428,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("selective disclosure available only for equal operation"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Not array of values for disclosure request",
@@ -387,7 +447,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -398,6 +458,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("selective disclosure not available for array of values"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Proof was generated for another disclosure value",
@@ -412,7 +477,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -423,6 +488,12 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("different value between proof and disclosure value"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+				},
+			},
 		},
 		{
 			name: "Different key between proof and disclosure response",
@@ -437,7 +508,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			vp: vp,
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
@@ -448,13 +519,20 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
 			require.EqualError(t, err, tt.expErr.Error())
+			tt.loader.assert(t)
 		})
 	}
 }
@@ -465,6 +543,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		query  Query
 		pubSig *CircuitOutputs
 		expErr error
+		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Invalid issuer",
@@ -475,6 +554,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				IssuerID: &issuerID,
 			},
 			expErr: ErrUnavailableIssuer,
+			loader: &mockJSONLDSchemaLoader{},
 		},
 		{
 			name: "Invalid Schema ID",
@@ -485,9 +565,14 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 			},
 			expErr: ErrSchemaID,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Multiply query",
@@ -502,9 +587,14 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 			},
 			expErr: errors.New("multiple requests not supported"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Failed params in request",
@@ -518,9 +608,14 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 			},
 			expErr: errors.New("failed cast type map[string]interface"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Multiple predicates in one request",
@@ -537,9 +632,14 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 			},
 			expErr: errors.New("multiple predicates for one field not supported"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Proof was generated for another query operator",
@@ -555,10 +655,15 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    3,
 			},
 			expErr: ErrRequestOperator,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Proof was generated for another values",
@@ -574,11 +679,16 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
-				ClaimSchema: KYCCountrySchema,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    5,
 				Value:       []*big.Int{big.NewInt(40)},
 			},
 			expErr: ErrInvalidValues,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Proof was generated for another path",
@@ -594,7 +704,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         KYCCountrySchema,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey:        big.NewInt(0),
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
@@ -602,8 +712,14 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("proof was generated for another path"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
+			// TODO need to fix
 			name: "Different slot index",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
@@ -617,7 +733,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         KYCCountrySchema,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           0,
@@ -625,6 +741,13 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 1,
 			},
 			expErr: errors.New("different slot index for claim"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCCountryOfResidenceCredential-v2.json": loadSchema("KYCCountryOfResidenceCredential-v2.json"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("fake.json"),
+				},
+			},
 		},
 		{
 			name: "Check revocation is required",
@@ -641,7 +764,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         KYCCountrySchema,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:            5,
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           0,
@@ -649,12 +772,17 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 0,
 			},
 			expErr: errors.New("check revocation is required"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Unsupported lt operator for xsd:boolean",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
-				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:           "KYCEmployee",
 				CredentialSubject: map[string]interface{}{
 					"ZKPexperiance": map[string]interface{}{
@@ -665,7 +793,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         KYCEmployeeSchema,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				Operator:            2,
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           0,
@@ -673,12 +801,17 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 0,
 			},
 			expErr: errors.New("invalid operation '$lt' for field type 'http://www.w3.org/2001/XMLSchema#boolean'"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+				},
+			},
 		},
 		{
 			name: "Negative value in request",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
-				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:           "KYCEmployee",
 				CredentialSubject: map[string]interface{}{
 					"documentType": map[string]interface{}{
@@ -689,7 +822,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
-				ClaimSchema:         KYCEmployeeSchema,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				Operator:            1,
 				Value:               []*big.Int{big.NewInt(-1)},
 				Merklized:           0,
@@ -697,13 +830,19 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 0,
 			},
 			expErr: ErrNegativeValue,
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, nil)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil)
 			require.EqualError(t, err, tt.expErr.Error())
+			tt.loader.assert(t)
 		})
 	}
 }
@@ -799,4 +938,12 @@ func TestVerifyQuery_Error(t *testing.T) {
 			}
 		})
 	}
+}
+
+func loadSchema(name string) string {
+	bs, err := os.ReadFile("../testdata/" + name)
+	if err != nil {
+		panic(err)
+	}
+	return string(bs)
 }
