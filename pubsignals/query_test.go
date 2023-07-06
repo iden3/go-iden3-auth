@@ -311,12 +311,14 @@ func TestCheckRequest_Success(t *testing.T) {
 }
 
 func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
+	now := time.Now().Unix()
+	durationMin, _ := time.ParseDuration("-1m")
+	dayAndMinuteAgo := time.Now().AddDate(0, 0, -1).Add(durationMin).Unix()
 	tests := []struct {
 		name   string
 		query  Query
 		pubSig *CircuitOutputs
 		vp     json.RawMessage
-		ops    VerifyOpt
 		expErr error
 	}{
 		{
@@ -342,10 +344,9 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
-				Timestamp:           1688648054,
+				Timestamp:           dayAndMinuteAgo,
 			},
 			expErr: errors.New("generated proof is outdated"),
-			ops:    WithAcceptedProofGenerationDelay(time.Hour),
 		},
 		{
 			name: "Empty disclosure value for disclosure request",
@@ -369,8 +370,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
-			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure value is missed"),
 		},
 		{
@@ -395,8 +396,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
-			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure available only for equal operation"),
 		},
 		{
@@ -421,8 +422,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800), big.NewInt(801)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
-			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("selective disclosure not available for array of values"),
 		},
 		{
@@ -447,8 +448,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(1)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
-			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("different value between proof and disclosure value"),
 		},
 		{
@@ -473,15 +474,15 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
-			ops:    WithAcceptedProofGenerationDelay(time.Hour * 1000000),
 			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp, tt.ops)
+			err := tt.query.Check(context.Background(), &mockMemorySchemaLoader{}, tt.pubSig, tt.vp)
 			require.EqualError(t, err, tt.expErr.Error())
 		})
 	}
