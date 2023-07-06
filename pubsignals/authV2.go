@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
-	"github.com/iden3/go-iden3-auth/v2/loaders"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
+	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
 
@@ -23,7 +23,7 @@ type AuthV2 struct {
 func (c *AuthV2) VerifyQuery(
 	_ context.Context,
 	_ Query,
-	_ loaders.SchemaLoader,
+	_ ld.DocumentLoader,
 	_ json.RawMessage) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }

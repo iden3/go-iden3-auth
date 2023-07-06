@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/iden3/go-circuits/v2"
-	"github.com/iden3/go-iden3-auth/v2/loaders"
 	core "github.com/iden3/go-iden3-core/v2"
 	jsonSuite "github.com/iden3/go-schema-processor/v2/json"
 	"github.com/iden3/go-schema-processor/v2/merklize"
@@ -82,7 +81,7 @@ type CircuitOutputs struct {
 // Check checks if proof was created for this query.
 func (q Query) Check(
 	ctx context.Context,
-	loader loaders.SchemaLoader,
+	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
 ) error {
@@ -90,20 +89,22 @@ func (q Query) Check(
 		return err
 	}
 
-	schemaBytes, _, err := loader.Load(ctx, q.Context)
+	schemaDoc, err := loader.LoadDocument(q.Context)
 	if err != nil {
 		return fmt.Errorf("failed load schema by context: %w", err)
 	}
 
-	if err := q.verifySchemaID(schemaBytes, pubSig); err != nil {
+	schemaBytes, err := json.Marshal(schemaDoc.Document)
+	if err != nil {
+		return fmt.Errorf("failed jsonify schema document: %w", err)
+	}
+
+	if err := q.verifySchemaID(schemaBytes, pubSig, loader); err != nil {
 		return err
 	}
 
-	if err := q.verifyCredentialSubject(
-		pubSig,
-		verifiablePresentation,
-		schemaBytes,
-	); err != nil {
+	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
+		schemaBytes, loader); err != nil {
 		return err
 	}
 
@@ -111,10 +112,12 @@ func (q Query) Check(
 		return errors.New("check revocation is required")
 	}
 
-	return q.verifyClaim(ctx, schemaBytes, pubSig)
+	return q.verifyClaim(schemaBytes, pubSig, loader)
 }
 
-func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
+func (q Query) verifyClaim(schemaBytes []byte, pubSig *CircuitOutputs,
+	schemaLoader ld.DocumentLoader) error {
+
 	if len(q.CredentialSubject) == 0 {
 		return nil
 	}
@@ -125,7 +128,8 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 	}
 
 	if pubSig.Merklized == 1 {
-		path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
+		path, err := merklize.Options{DocumentLoader: schemaLoader}.
+			FieldPathFromContext(schemaBytes, q.Type, fieldName)
 		if err != nil {
 			return err
 		}
@@ -172,10 +176,11 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 	return ErrUnavailableIssuer
 }
 
-func (q Query) verifySchemaID(schemaBytes []byte,
-	pubSig *CircuitOutputs) error {
+func (q Query) verifySchemaID(schemaBytes []byte, pubSig *CircuitOutputs,
+	schemaLoader ld.DocumentLoader) error {
 
-	schemaID, err := merklize.TypeIDFromContext(schemaBytes, q.Type)
+	schemaID, err := merklize.Options{DocumentLoader: schemaLoader}.
+		TypeIDFromContext(schemaBytes, q.Type)
 	if err != nil {
 		return err
 	}
@@ -190,6 +195,7 @@ func (q Query) verifyCredentialSubject(
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
 	ctxBytes []byte,
+	schemaLoader ld.DocumentLoader,
 ) error {
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
@@ -198,10 +204,8 @@ func (q Query) verifyCredentialSubject(
 
 	var fieldType string
 	if fieldName != "" {
-		fieldType, err = merklize.TypeFromContext(
-			ctxBytes,
-			fmt.Sprintf("%s.%s", q.Type, fieldName),
-		)
+		fieldType, err = merklize.Options{DocumentLoader: schemaLoader}.
+			TypeFromContext(ctxBytes, fmt.Sprintf("%s.%s", q.Type, fieldName))
 		if err != nil {
 			return err
 		}
@@ -210,12 +214,8 @@ func (q Query) verifyCredentialSubject(
 	// validate selectivity disclosure request
 	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
-		return q.validateDisclosure(
-			ctx,
-			pubSig,
-			fieldName,
-			verifiablePresentation,
-		)
+		return q.validateDisclosure(ctx, pubSig, fieldName,
+			verifiablePresentation, schemaLoader)
 	}
 
 	// validate empty credential subject request
@@ -257,12 +257,10 @@ func (q Query) verifyCredentialSubject(
 	return nil
 }
 
-func (q Query) validateDisclosure(
-	ctx context.Context,
-	pubSig *CircuitOutputs,
-	key string,
-	verifiablePresentation json.RawMessage,
-) error {
+func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
+	key string, verifiablePresentation json.RawMessage,
+	schemaLoader ld.DocumentLoader) error {
+
 	if verifiablePresentation == nil {
 		return errors.New("selective disclosure value is missed")
 	}
@@ -277,12 +275,16 @@ func (q Query) validateDisclosure(
 		}
 	}
 
-	mz, err := merklize.MerklizeJSONLD(ctx, bytes.NewBuffer(verifiablePresentation))
+	mz, err := merklize.MerklizeJSONLD(ctx,
+		bytes.NewBuffer(verifiablePresentation),
+		merklize.WithDocumentLoader(schemaLoader))
 	if err != nil {
 		return errors.Errorf("failed to merklize doc: %v", err)
 	}
 
-	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
+	merklizedPath, err := merklize.Options{DocumentLoader: schemaLoader}.
+		NewPathFromDocument(verifiablePresentation,
+			fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
 	if err != nil {
 		return errors.Errorf("failed build path to '%s' key: %v", key, err)
 	}

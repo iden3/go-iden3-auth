@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/piprate/json-gold/ld"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,8 +30,8 @@ var (
 type mockMemorySchemaLoader struct {
 }
 
-func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byte, ext string, err error) {
-	return []byte(`{
+func (r *mockMemorySchemaLoader) LoadDocument(u string) (*ld.RemoteDocument, error) {
+	docBytes := []byte(`{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "$metadata": {
@@ -120,7 +121,13 @@ func (r *mockMemorySchemaLoader) Load(_ context.Context, _ string) (schema []byt
     }
   ]
 }
-`), "json-ld", nil
+`)
+	var doc interface{}
+	err := json.Unmarshal(docBytes, &doc)
+	if err != nil {
+		panic(err)
+	}
+	return &ld.RemoteDocument{DocumentURL: u, Document: doc}, nil
 }
 
 var vp = []byte(`{
