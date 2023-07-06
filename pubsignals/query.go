@@ -79,8 +79,10 @@ type CircuitOutputs struct {
 }
 
 // Check checks if proof was created for this query.
+// Would be good to use ctx for external http requests, but current interfaces
+// doesn't allow to do it. Left it for future.
 func (q Query) Check(
-	ctx context.Context,
+	_ context.Context,
 	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,

@@ -33,6 +33,9 @@ import (
 
 var defaultSchemaLoader ld.DocumentLoader
 
+// SetDocumentLoader sets the default schema loader that would be used if
+// other is not set with WithDocumentLoader option. Also, this document loader
+// is set for go-schema-processor library to use it for merklize.
 func SetDocumentLoader(schemaLoader ld.DocumentLoader) {
 	defaultSchemaLoader = schemaLoader
 	merklize.SetDocumentLoader(schemaLoader)
@@ -99,20 +102,28 @@ type Verifier struct {
 	packageManager        iden3comm.PackageManager
 }
 
+// VerifyOption is a function to set options for Verifier instance
 type VerifyOption func(opts *verifyOpts)
 
+// WithDocumentLoader sets the document loader for Verifier instance
 func WithDocumentLoader(docLoader ld.DocumentLoader) VerifyOption {
 	return func(opts *verifyOpts) {
 		opts.docLoader = docLoader
 	}
 }
 
+// WithIPFSClient sets the IPFS client for document loader of Verifier instance.
+// If document loader is set with WithDocumentLoader function, this option is
+// ignored.
 func WithIPFSClient(ipfsCli *shell.Shell) VerifyOption {
 	return func(opts *verifyOpts) {
 		opts.ipfsCli = ipfsCli
 	}
 }
 
+// WithIPFSGateway sets the IPFS gateway for document loader of Verifier
+// instance. If document loader is set with WithDocumentLoader function, this
+// option is ignored. If WithIPFSClient is set, this option is ignored also.
 func WithIPFSGateway(ipfsGW string) VerifyOption {
 	return func(opts *verifyOpts) {
 		opts.ipfsGW = ipfsGW
