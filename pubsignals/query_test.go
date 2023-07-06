@@ -47,9 +47,11 @@ func (r *mockJSONLDSchemaLoader) assert(t testing.TB) {
 }
 
 // TODO remove this after fixing name: "Different slot index",
+//nolint //reason: remove after fixing test
 type mockMemorySchemaLoader struct {
 }
 
+//nolint //reason: remove after fixing test
 func (r *mockMemorySchemaLoader) LoadDocument(u string) (*ld.RemoteDocument, error) {
 	docBytes := []byte(`{
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -743,8 +745,10 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("different slot index for claim"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
+					//nolint: gocritic // reason: will remove after fixing test
 					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCCountryOfResidenceCredential-v2.json": loadSchema("KYCCountryOfResidenceCredential-v2.json"),
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					//nolint: gocritic // reason: will remove after fixing test
 					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("fake.json"),
 				},
 			},
