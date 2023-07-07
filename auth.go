@@ -130,10 +130,25 @@ func WithIPFSGateway(ipfsGW string) VerifierOption {
 	}
 }
 
+// WithDIDResolver sets the DID resolver for Verifier instance. The default
+// value is UniversalDIDResolver.
+func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.didResolver = resolver
+	}
+}
+
 type verifierOpts struct {
-	docLoader ld.DocumentLoader
-	ipfsCli   *shell.Shell
-	ipfsGW    string
+	docLoader   ld.DocumentLoader
+	ipfsCli     *shell.Shell
+	ipfsGW      string
+	didResolver packers.DIDResolverHandlerFunc
+}
+
+func newOpts() verifierOpts {
+	return verifierOpts{
+		didResolver: UniversalDIDResolver,
+	}
 }
 
 // NewVerifier returns setup instance of auth library
@@ -142,7 +157,7 @@ func NewVerifier(
 	resolver map[string]pubsignals.StateResolver,
 	opts ...VerifierOption,
 ) (*Verifier, error) {
-	var vOpts verifierOpts
+	vOpts := newOpts()
 	for _, optFn := range opts {
 		optFn(&vOpts)
 	}
@@ -161,8 +176,7 @@ func NewVerifier(
 		return nil, err
 	}
 
-	// TODO Make new option WithDIDResolver.
-	err = v.SetupJWSPacker(UniversalDIDResolver)
+	err = v.SetupJWSPacker(vOpts.didResolver)
 	if err != nil {
 		return nil, err
 	}
