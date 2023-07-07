@@ -46,112 +46,6 @@ func (r *mockJSONLDSchemaLoader) assert(t testing.TB) {
 	}
 }
 
-// TODO remove this after fixing name: "Different slot index",
-//nolint //reason: remove after fixing test
-type mockMemorySchemaLoader struct {
-}
-
-//nolint //reason: remove after fixing test
-func (r *mockMemorySchemaLoader) LoadDocument(u string) (*ld.RemoteDocument, error) {
-	docBytes := []byte(`{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "$metadata": {
-    "uris": {
-      "jsonLdContext": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-      "jsonSchema": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCCountryOfResidenceCredential-v2.json"
-    },
-	"serialization": {
-		"valueDataSlotB": "countryCode"
-	}
-  },
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-	  "KYCEmployee": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCEmployee",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          },
-          "ZKPexperiance": {
-            "@id": "kyc-vocab:hasZKPexperiance",
-            "@type": "xsd:boolean"
-          },
-          "hireDate": {
-            "@id": "kyc-vocab:hireDate",
-            "@type": "xsd:dateTime"
-          },
-          "position": {
-            "@id": "kyc-vocab:position",
-            "@type": "xsd:string"
-          },
-          "salary": {
-            "@id": "kyc-vocab:salary",
-            "@type": "xsd:double"
-          }
-        }
-      }
-    }
-  ]
-}
-`)
-	var doc interface{}
-	err := json.Unmarshal(docBytes, &doc)
-	if err != nil {
-		panic(err)
-	}
-	return &ld.RemoteDocument{DocumentURL: u, Document: doc}, nil
-}
-
 var vp = []byte(`{
 	"@context": [
 		"https://www.w3.org/2018/credentials/v1"
@@ -721,8 +615,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			},
 		},
 		{
-			// TODO need to fix
-			name: "Different slot index",
+			name: "non-merklized credentials are not supported",
 			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
@@ -742,14 +635,10 @@ func TestCheckRequest_Error(t *testing.T) {
 				SlotIndex:           0,
 				IsRevocationChecked: 1,
 			},
-			expErr: errors.New("different slot index for claim"),
+			expErr: errors.New("non-merklized credentials are not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					//nolint: gocritic // reason: will remove after fixing test
-					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCCountryOfResidenceCredential-v2.json": loadSchema("KYCCountryOfResidenceCredential-v2.json"),
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
-					//nolint: gocritic // reason: will remove after fixing test
-					//"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("fake.json"),
 				},
 			},
 		},

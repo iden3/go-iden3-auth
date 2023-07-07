@@ -102,12 +102,12 @@ type Verifier struct {
 	packageManager        iden3comm.PackageManager
 }
 
-// VerifyOption is a function to set options for Verifier instance
-type VerifyOption func(opts *verifyOpts)
+// VerifierOption is a function to set options for Verifier instance
+type VerifierOption func(opts *verifierOpts)
 
 // WithDocumentLoader sets the document loader for Verifier instance
-func WithDocumentLoader(docLoader ld.DocumentLoader) VerifyOption {
-	return func(opts *verifyOpts) {
+func WithDocumentLoader(docLoader ld.DocumentLoader) VerifierOption {
+	return func(opts *verifierOpts) {
 		opts.docLoader = docLoader
 	}
 }
@@ -115,8 +115,8 @@ func WithDocumentLoader(docLoader ld.DocumentLoader) VerifyOption {
 // WithIPFSClient sets the IPFS client for document loader of Verifier instance.
 // If document loader is set with WithDocumentLoader function, this option is
 // ignored.
-func WithIPFSClient(ipfsCli *shell.Shell) VerifyOption {
-	return func(opts *verifyOpts) {
+func WithIPFSClient(ipfsCli *shell.Shell) VerifierOption {
+	return func(opts *verifierOpts) {
 		opts.ipfsCli = ipfsCli
 	}
 }
@@ -124,13 +124,13 @@ func WithIPFSClient(ipfsCli *shell.Shell) VerifyOption {
 // WithIPFSGateway sets the IPFS gateway for document loader of Verifier
 // instance. If document loader is set with WithDocumentLoader function, this
 // option is ignored. If WithIPFSClient is set, this option is ignored also.
-func WithIPFSGateway(ipfsGW string) VerifyOption {
-	return func(opts *verifyOpts) {
+func WithIPFSGateway(ipfsGW string) VerifierOption {
+	return func(opts *verifierOpts) {
 		opts.ipfsGW = ipfsGW
 	}
 }
 
-type verifyOpts struct {
+type verifierOpts struct {
 	docLoader ld.DocumentLoader
 	ipfsCli   *shell.Shell
 	ipfsGW    string
@@ -140,9 +140,9 @@ type verifyOpts struct {
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
 	resolver map[string]pubsignals.StateResolver,
-	opts ...VerifyOption,
+	opts ...VerifierOption,
 ) (*Verifier, error) {
-	var vOpts verifyOpts
+	var vOpts verifierOpts
 	for _, optFn := range opts {
 		optFn(&vOpts)
 	}
@@ -161,6 +161,7 @@ func NewVerifier(
 		return nil, err
 	}
 
+	// TODO Make new option WithDIDResolver.
 	err = v.SetupJWSPacker(UniversalDIDResolver)
 	if err != nil {
 		return nil, err
