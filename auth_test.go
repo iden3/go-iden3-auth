@@ -513,6 +513,7 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 	require.NoError(t, err)
 
 	// TODO: [OL] I think we do not need this. Remove after discussion.
+	//nolint
 	//pm := *iden3comm.NewPackageManager()
 	//jwsPacker := packers.NewJWSPacker(UniversalDIDResolver, nil)
 	//
