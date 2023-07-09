@@ -14,10 +14,11 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/go-rapidsnark/types"
-	"github.com/iden3/iden3comm/v2"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
 	"github.com/piprate/json-gold/ld"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,233 +29,6 @@ import (
 )
 
 var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./testdata"}
-
-const kycV2Schema = `{
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "serialization": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/serialization.md#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "serialization:IndexDataSlotA"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "serialization:IndexDataSlotB"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "serialization": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/serialization.md#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "serialization:IndexDataSlotA"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "serialization:IndexDataSlotB"
-          }
-        }
-      }
-    }
-  ]
-}`
-
-const kycV3Schema = `{
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      }
-    }
-  ]
-}`
-
-const kycV4Schema = `{
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      }
-    }
-  ]
-}`
-
-const kycV101Schema = `{
-  "@context": [
-    {
-      "@version": 1.1,
-      "@protected": true,
-      "id": "@id",
-      "type": "@type",
-      "KYCAgeCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCAgeCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "birthday": {
-            "@id": "kyc-vocab:birthday",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-      "KYCCountryOfResidenceCredential": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCCountryOfResidenceCredential",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "countryCode": {
-            "@id": "kyc-vocab:countryCode",
-            "@type": "xsd:integer"
-          },
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          }
-        }
-      },
-      "KYCEmployee": {
-        "@id": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee",
-        "@context": {
-          "@version": 1.1,
-          "@protected": true,
-          "id": "@id",
-          "type": "@type",
-          "kyc-vocab": "https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "documentType": {
-            "@id": "kyc-vocab:documentType",
-            "@type": "xsd:integer"
-          },
-          "ZKPexperiance": {
-            "@id": "kyc-vocab:hasZKPexperiance",
-            "@type": "xsd:boolean"
-          },
-          "hireDate": {
-            "@id": "kyc-vocab:hireDate",
-            "@type": "xsd:dateTime"
-          },
-          "position": {
-            "@id": "kyc-vocab:position",
-            "@type": "xsd:string"
-          },
-          "salary": {
-            "@id": "kyc-vocab:salary",
-            "@type": "xsd:double"
-          }
-        }
-      }
-    }
-  ]
-}`
 
 type mockJSONLDSchemaLoader struct {
 	schemas map[string]string
@@ -274,6 +48,7 @@ func (r *mockJSONLDSchemaLoader) LoadDocument(u string) (*ld.RemoteDocument, err
 	return nil, fmt.Errorf("schema not found: %v", u)
 }
 
+// assert that all schemas were loaded
 func (r *mockJSONLDSchemaLoader) assert(t testing.TB) {
 	for url := range r.schemas {
 		require.True(t, r.seen[url], "schema not loaded: %v", url)
@@ -452,7 +227,9 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	}
 
 	schemaLoader := &mockJSONLDSchemaLoader{
-		schemas: map[string]string{"url": kycV2Schema},
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld": loadSchema("kyc-v2.json-ld"),
+		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
@@ -619,7 +396,7 @@ func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
 	}
 
 	schemaLoader := &mockJSONLDSchemaLoader{
-		schemas: map[string]string{"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": kycV3Schema},
+		schemas: map[string]string{"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld")},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
@@ -678,7 +455,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{
-			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": kycV3Schema,
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
@@ -714,17 +491,35 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 	token := `eyJhbGciOiJFUzI1NkstUiIsImtpZCI6ImRpZDpwa2g6cG9seToweDcxNDFFNGQyMEY3NjQ0REM4YzBBZENBOGE1MjBFQzgzQzZjQUJENjUjUmVjb3ZlcnkyMDIwIiwidHlwIjoiYXBwbGljYXRpb24vaWRlbjNjb21tLXNpZ25lZC1qc29uIn0.eyJpZCI6IjJjOGQ5NzQ3LTQ0MTAtNGU5My1iZjg0LTRlYTNjZmY4MmY0MCIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1zaWduZWQtanNvbiIsInR5cGUiOiJodHRwczovL2lkZW4zLWNvbW11bmljYXRpb24uaW8vYXV0aG9yaXphdGlvbi8xLjAvcmVzcG9uc2UiLCJ0aGlkIjoiN2YzOGExOTMtMDkxOC00YTQ4LTlmYWMtMzZhZGZkYjhiNTQyIiwiYm9keSI6eyJzY29wZSI6W3siaWQiOjEsImNpcmN1aXRJZCI6ImNyZWRlbnRpYWxBdG9taWNRdWVyeVNpZ1YyIiwicHJvb2YiOnsicGlfYSI6WyIxMzI3Njk4Nzc5MjQ5MjM0OTA2MDcxMDc3NTEyOTUxMjYxNzY1NjMzODcxMDkxMzE3NDA0NzE0NTcyMDY4Mjk4NzU0MzUwNjY3NDY0IiwiMjA1NDcyOTI1MzQ0MDgxNzA4NDQwODc3MzY2MDQ0OTYyNjQ3MzI2NjUxNDkxMDEzMzMxNzk3NTg5NTAwMjM0NTgwMjA1Njg5NzMzNTYiLCIxIl0sInBpX2IiOltbIjcyNTI1MDEyNjE5ODM1NTYwMjM1NjA3MzI1MjIzODk2MjIxMDY4MTA5OTUxNzkxNjI0MjY2NzcyNDM2MjQwNTQ0Mzc2Nzc1ODI4MCIsIjgyNDU2MTQzMTExNjUzNTUyNzcyNTgyNTg1NTA0MTI5MTUzNjAzNTc2MjEyMDY5OTA0Mjk3NTE3ODk2NTgwNTI1ODY0Mjc2NjgyMDMiXSxbIjg0MjA4OTI3MTI5OTMyMTU5OTU3NjkwMDQ3MzU2Njc5MzY3MDk4MzY5MTY4MzU4MDM2Njc2NjI1NzQxMTcyNjEzNjI2OTgxMzI1MjkiLCIxMDgyOTQzMjI5MDkyODY3MjM1NjAzNjExMTgxNjE4NTQ0MDU3NTgwMDI1NDQzODAyMzUzNTA3MzUzNTY1ODMzOTE0MzMzODAzNDAyNyJdLFsiMSIsIjAiXV0sInBpX2MiOlsiMTIwNTc1NzM1NDQ2Mzc1NDA1MzE2MjIxNDc2NDg2NjE0MDc1NzM1MzY2MjU0MjM0MzY1ODE0MTk2OTY3NzYwOTMxOTY5Nzc5OTg2MzkiLCIxNTIwMzMwMjIxNjcyOTEzOTcwNjQyNjcyMzc5Mzk5Mjk0MjI5NjY1NTU0NDA4MTEwODkzMTE2MjIwMTQxOTcxNzI0MjU4NTQzOTg2NSIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2IiwiY3VydmUiOiJibjEyOCJ9LCJwdWJfc2lnbmFscyI6WyIxIiwiMjgwMTg1ODg4MjE0NzE5Mzk2MjQ3MTE0MjE5MjIwNzkzOTU0NTE1MDc3NTQzNzU5Nzg0MDgyMzA1MjQ3OTI3ODY4NjI5OTc1MDMiLCIxNDE5MzMwNDc0NzUwMTMzMTE4MTgwOTcxNTkxMjQ4NzIzNjUyNzAwMzkyNTA4MjEwNjc1MjM3Njc5NjA5OTg5MDIwMTkyODE4NTY5MCIsIjEiLCIyMjk0MjU5NDE1NjI2NjY2NTQyNjYxMzQ2Mjc3MTcyNTMyNzMxNDM4MjY0NzQyNjk1OTA0NDg2MzQ0Njg2NjYxMzAwMzc1MTkzOCIsIjEiLCIzMTY5NjEyMzY4MDg3OTA1MzQyNzg2NTE0MDk5NDQ5Mjk3NDA0MzgzODc0MzcxMzU2OTI0ODI4MDgyMTQzNjExOTUzNjIxODU5NzU5IiwiMTY4NzQzMzc0OCIsIjI2NzgzMTUyMTkyMjU1ODAyNzIwNjA4MjM5MDA0MzMyMTc5Njk0NCIsIjAiLCIyMDM3NjAzMzgzMjM3MTEwOTE3NzY4MzA0ODQ1NjAxNDUyNTkwNTExOTE3MzY3NDk4NTg0MzkxNTQ0NTYzNDcyNjE2NzQ1MDk4OTYzMCIsIjIiLCIyIiwiMjAwMDAxMDEiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiXX1dfSwiZnJvbSI6ImRpZDpwa2g6cG9seToweDcxNDFFNGQyMEY3NjQ0REM4YzBBZENBOGE1MjBFQzgzQzZjQUJENjUiLCJ0byI6ImRpZDpwb2x5Z29uaWQ6cG9seWdvbjptdW1iYWk6MnFMUHF2YXlOUXo5VEEycjVWUHhVdWdvRjE4dGVHVTU4M3pKODU5d2Z5In0.bWc2ECABj7nvHatD8AXWNJM2VtfhkIjNwz5BBIK9zBMsP0-UWLEWdAWcosiLkYoL0KWwZpgEOrPPepl6T5gC-AA`
 
 	schemaLoader := &mockJSONLDSchemaLoader{schemas: map[string]string{
-		"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld": kycV4Schema,
+		"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld": loadSchema("kyc-v4.json-ld"),
 	}}
-	v, err := NewVerifier(verificationKeyloader, stateResolvers,
-		WithDocumentLoader(schemaLoader))
-	require.NoError(t, err)
-	pm := *iden3comm.NewPackageManager()
-	jwsPacker := packers.NewJWSPacker(UniversalDIDResolver, nil)
 
-	err = pm.RegisterPackers(jwsPacker)
+	mockedResolver := func(did string) (*verifiable.DIDDocument, error) {
+		if did != "did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65" {
+			return nil, errors.Errorf("unexpected DID: %v", did)
+		}
+		data := `{"@context":["https://www.w3.org/ns/did/v1",{"EcdsaSecp256k1RecoveryMethod2020":"https://identity.foundation/EcdsaSecp256k1RecoverySignature2020#EcdsaSecp256k1RecoveryMethod2020","blockchainAccountId":"https://w3id.org/security#blockchainAccountId"}],"id":"did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65","verificationMethod":[{"id":"did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65#Recovery2020","type":"EcdsaSecp256k1RecoveryMethod2020","controller":"did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65","blockchainAccountId":"eip155:137:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65"}],"authentication":["did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65#Recovery2020"],"assertionMethod":["did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65#Recovery2020"]}`
+		var doc verifiable.DIDDocument
+		err := json.Unmarshal([]byte(data), &doc)
+		if err != nil {
+			return nil, err
+		}
+		return &doc, nil
+	}
+
+	v, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader),
+		WithDIDResolver(mockedResolver))
 	require.NoError(t, err)
-	v.SetPackageManager(pm)
+
+	// TODO: [OL] I think we do not need this. Remove after discussion.
+	//pm := *iden3comm.NewPackageManager()
+	//jwsPacker := packers.NewJWSPacker(UniversalDIDResolver, nil)
+	//
+	//err = pm.RegisterPackers(jwsPacker)
+	//require.NoError(t, err)
+	//v.SetPackageManager(pm)
+
 	_, err = v.FullVerify(context.Background(), token, request)
 	require.NoError(t, err)
 
@@ -882,7 +677,9 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	}
 
 	schemaLoader := &mockJSONLDSchemaLoader{
-		schemas: map[string]string{"url": kycV2Schema},
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld": loadSchema("kyc-v2.json-ld"),
+		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
@@ -949,8 +746,8 @@ func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{
-			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld": kycV4Schema,
-			"https://www.w3.org/2018/credentials/v1":                                                        getCredentialV1Schema(),
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v4.jsonld": loadSchema("kyc-v4.json-ld"),
+			"https://www.w3.org/2018/credentials/v1":                                                        loadSchema("credentials-v1.json-ld"),
 		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
@@ -986,7 +783,7 @@ func TestEmptyCredentialSubject(t *testing.T) {
 
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{
-			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": kycV101Schema,
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
 		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
@@ -998,8 +795,8 @@ func TestEmptyCredentialSubject(t *testing.T) {
 	schemaLoader.assert(t)
 }
 
-func getCredentialV1Schema() string {
-	bs, err := os.ReadFile("testdata/credentialsV1.jsonld")
+func loadSchema(name string) string {
+	bs, err := os.ReadFile("testdata/" + name)
 	if err != nil {
 		panic(err)
 	}

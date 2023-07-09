@@ -119,7 +119,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -148,8 +148,8 @@ func TestCheckRequest_Success(t *testing.T) {
 			vp: vp,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
-					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -212,7 +212,7 @@ func TestCheckRequest_Success(t *testing.T) {
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
-					"https://www.w3.org/2018/credentials/v1":                                                           loadSchema("credentialsV1.jsonld"),
+					"https://www.w3.org/2018/credentials/v1":                                                           loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -296,7 +296,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			expErr: errors.New("selective disclosure value is missed"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -326,7 +326,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			expErr: errors.New("selective disclosure available only for equal operation"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -356,7 +356,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			expErr: errors.New("selective disclosure not available for array of values"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -386,8 +386,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			expErr: errors.New("different value between proof and disclosure value"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
-					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -417,8 +417,8 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
-					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentialsV1.jsonld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -466,7 +466,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: ErrSchemaID,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -488,7 +488,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("multiple requests not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -509,7 +509,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("failed cast type map[string]interface"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -533,7 +533,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("multiple predicates for one field not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -557,7 +557,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: ErrRequestOperator,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -582,7 +582,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: ErrInvalidValues,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -610,7 +610,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("proof was generated for another path"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -638,7 +638,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("non-merklized credentials are not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
@@ -667,7 +667,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			expErr: errors.New("check revocation is required"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-V3.json-ld"),
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
 				},
 			},
 		},
