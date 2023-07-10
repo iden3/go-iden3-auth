@@ -512,15 +512,6 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 		WithDIDResolver(mockedResolver))
 	require.NoError(t, err)
 
-	// TODO: [OL] I think we do not need this. Remove after discussion.
-	//nolint
-	//pm := *iden3comm.NewPackageManager()
-	//jwsPacker := packers.NewJWSPacker(UniversalDIDResolver, nil)
-	//
-	//err = pm.RegisterPackers(jwsPacker)
-	//require.NoError(t, err)
-	//v.SetPackageManager(pm)
-
 	_, err = v.FullVerify(context.Background(), token, request)
 	require.NoError(t, err)
 
