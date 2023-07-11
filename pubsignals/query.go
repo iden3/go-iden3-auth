@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/iden3/go-circuits"
 	"github.com/iden3/go-iden3-auth/loaders"
@@ -86,6 +87,7 @@ func (q Query) Check(
 	loader loaders.SchemaLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
+	opts ...VerifyOpt,
 ) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
 		return err
@@ -110,6 +112,17 @@ func (q Query) Check(
 
 	if !q.SkipClaimRevocationCheck && pubSig.IsRevocationChecked == 0 {
 		return errors.New("check revocation is required")
+	}
+
+	cfg := defaultProofVerifyOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
+	if time.Since(
+		time.Unix(pubSig.Timestamp, 0),
+	) > cfg.acceptedProofGenerationDelay {
+		return ErrProofGenerationOutdated
 	}
 
 	return q.verifyClaim(ctx, schemaBytes, pubSig)

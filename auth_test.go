@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits"
@@ -282,6 +283,8 @@ mock for state resolver
 var stateResolvers = map[string]pubsignals.StateResolver{
 	"polygon:mumbai": &mockStateResolver{},
 }
+
+const proofGenerationDelay = time.Hour * 100000
 
 type mockStateResolver struct {
 }
@@ -613,7 +616,7 @@ func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
 	schemaLoader := &mockJSONLDSchemaLoader{schema: kycV3Schema}
 	authInstance, err := NewVerifierWithExplicitError(verificationKeyloader, schemaLoader, stateResolvers)
 	require.NoError(t, err)
-	err = authInstance.VerifyAuthResponse(context.Background(), message, request)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 }
 
@@ -665,7 +668,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 	schemaLoader := &mockJSONLDSchemaLoader{schema: kycV3Schema}
 	authInstance, err := NewVerifierWithExplicitError(verificationKeyloader, schemaLoader, stateResolvers)
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request)
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 }
 
@@ -702,7 +705,7 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 	err = pm.RegisterPackers(jwsPacker)
 	require.NoError(t, err)
 	v.SetPackageManager(pm)
-	_, err = v.FullVerify(context.Background(), token, request)
+	_, err = v.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 }
 
@@ -921,7 +924,7 @@ func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 	schemaLoader := &mockJSONLDSchemaLoader{schema: kycV4Schema}
 	authInstance, err := NewVerifierWithExplicitError(verificationKeyloader, schemaLoader, stateResolvers)
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request)
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 }
 
@@ -951,6 +954,6 @@ func TestEmptyCredentialSubject(t *testing.T) {
 	schemaLoader := &mockJSONLDSchemaLoader{schema: kycV101Schema}
 	authInstance, err := NewVerifierWithExplicitError(verificationKeyloader, schemaLoader, stateResolvers)
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request)
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 }
