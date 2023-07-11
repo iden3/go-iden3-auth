@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
-	"github.com/iden3/go-iden3-auth/v2/loaders"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
+	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
 
@@ -23,7 +23,7 @@ type AtomicQuerySigV2 struct {
 func (c *AtomicQuerySigV2) VerifyQuery(
 	ctx context.Context,
 	query Query,
-	schemaLoader loaders.SchemaLoader,
+	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
 ) error {
 	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
