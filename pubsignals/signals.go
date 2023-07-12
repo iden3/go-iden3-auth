@@ -18,6 +18,8 @@ var (
 	ErrIssuerClaimStateIsNotValid = errors.New("issuer state is not valid")
 	// ErrIssuerNonRevocationClaimStateIsNotValid declares that issuer non-revocation state is invalid.
 	ErrIssuerNonRevocationClaimStateIsNotValid = errors.New("issuer state for non-revocation proofs is not valid")
+	// ErrProofGenerationOutdated declares that generated proof is outdated.
+	ErrProofGenerationOutdated = errors.New("generated proof is outdated")
 )
 
 // RegisterVerifier is factory for public signals init.

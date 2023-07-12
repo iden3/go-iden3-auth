@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-schema-processor/v2/utils"
@@ -86,6 +87,7 @@ var vpEmployee = []byte(`{
 }`)
 
 func TestCheckRequest_Success(t *testing.T) {
+	now := time.Now().Unix()
 	tests := []struct {
 		name   string
 		query  Query
@@ -116,6 +118,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
@@ -144,6 +147,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vp,
 			loader: &mockJSONLDSchemaLoader{
@@ -176,6 +180,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Value:               []*big.Int{bigIntTrueHash},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
@@ -207,6 +212,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vpEmployee,
 			loader: &mockJSONLDSchemaLoader{
@@ -242,6 +248,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			vp: vpEmployee,
 			loader: &mockJSONLDSchemaLoader{
@@ -262,6 +269,9 @@ func TestCheckRequest_Success(t *testing.T) {
 }
 
 func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
+	now := time.Now().Unix()
+	durationMin, _ := time.ParseDuration("-1m")
+	dayAndMinuteAgo := time.Now().AddDate(0, 0, -1).Add(durationMin).Unix()
 	tests := []struct {
 		name   string
 		query  Query
@@ -270,6 +280,38 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		expErr error
 		loader *mockJSONLDSchemaLoader
 	}{
+		{
+			name: "Generated proof is outdated",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"countryCode": map[string]interface{}{
+						"$nin": []interface{}{float64(800)},
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCCountryOfResidenceCredential",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
+					return v
+				}(),
+				Operator:            5,
+				Value:               []*big.Int{big.NewInt(800)},
+				Merklized:           1,
+				IsRevocationChecked: 1,
+				Timestamp:           dayAndMinuteAgo,
+			},
+			expErr: errors.New("generated proof is outdated"),
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+				},
+			},
+		},
 		{
 			name: "Empty disclosure value for disclosure request",
 			query: Query{
@@ -292,6 +334,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("selective disclosure value is missed"),
 			loader: &mockJSONLDSchemaLoader{
@@ -322,6 +365,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("selective disclosure available only for equal operation"),
 			loader: &mockJSONLDSchemaLoader{
@@ -352,6 +396,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800), big.NewInt(801)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("selective disclosure not available for array of values"),
 			loader: &mockJSONLDSchemaLoader{
@@ -382,6 +427,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(1)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("different value between proof and disclosure value"),
 			loader: &mockJSONLDSchemaLoader{
@@ -413,6 +459,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(800)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("path '[https://www.w3.org/2018/credentials#verifiableCredential https://www.w3.org/2018/credentials#credentialSubject https://github.com/iden3/claim-schema-vocab/blob/main/credentials/kyc.md#documentType]' doesn't exist in document"),
 			loader: &mockJSONLDSchemaLoader{
@@ -434,6 +481,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 }
 
 func TestCheckRequest_Error(t *testing.T) {
+	now := time.Now().Unix()
 	tests := []struct {
 		name   string
 		query  Query
@@ -462,6 +510,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				Timestamp:   now,
 			},
 			expErr: ErrSchemaID,
 			loader: &mockJSONLDSchemaLoader{
@@ -484,6 +533,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				Timestamp:   now,
 			},
 			expErr: errors.New("multiple requests not supported"),
 			loader: &mockJSONLDSchemaLoader{
@@ -505,6 +555,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				Timestamp:   now,
 			},
 			expErr: errors.New("failed cast type map[string]interface"),
 			loader: &mockJSONLDSchemaLoader{
@@ -529,6 +580,7 @@ func TestCheckRequest_Error(t *testing.T) {
 			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				Timestamp:   now,
 			},
 			expErr: errors.New("multiple predicates for one field not supported"),
 			loader: &mockJSONLDSchemaLoader{
@@ -553,6 +605,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    3,
+				Timestamp:   now,
 			},
 			expErr: ErrRequestOperator,
 			loader: &mockJSONLDSchemaLoader{
@@ -578,6 +631,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    5,
 				Value:       []*big.Int{big.NewInt(40)},
+				Timestamp:   now,
 			},
 			expErr: ErrInvalidValues,
 			loader: &mockJSONLDSchemaLoader{
@@ -606,6 +660,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Value:               []*big.Int{big.NewInt(20)},
 				Merklized:           1,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("proof was generated for another path"),
 			loader: &mockJSONLDSchemaLoader{
@@ -634,6 +689,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 1,
+				Timestamp:           now,
 			},
 			expErr: errors.New("non-merklized credentials are not supported"),
 			loader: &mockJSONLDSchemaLoader{
@@ -663,6 +719,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: errors.New("check revocation is required"),
 			loader: &mockJSONLDSchemaLoader{
@@ -692,6 +749,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: errors.New("invalid operation '$lt' for field type 'http://www.w3.org/2001/XMLSchema#boolean'"),
 			loader: &mockJSONLDSchemaLoader{
@@ -721,6 +779,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
+				Timestamp:           now,
 			},
 			expErr: ErrNegativeValue,
 			loader: &mockJSONLDSchemaLoader{
