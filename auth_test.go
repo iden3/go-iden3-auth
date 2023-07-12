@@ -514,13 +514,7 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 		WithDocumentLoader(schemaLoader),
 		WithDIDResolver(mockedResolver))
 	require.NoError(t, err)
-<<<<<<< HEAD
-
-	_, err = v.FullVerify(context.Background(), token, request)
-=======
-	v.SetPackageManager(pm)
 	_, err = v.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
->>>>>>> main
 	require.NoError(t, err)
 
 	schemaLoader.assert(t)
