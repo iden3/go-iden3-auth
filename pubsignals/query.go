@@ -26,13 +26,14 @@ var allOperations = map[int]struct{}{
 	circuits.NE:  {},
 }
 
-var availabelTypesOperations = map[string]map[int]struct{}{
+var availableTypesOperations = map[string]map[int]struct{}{
 	ld.XSDBoolean:                        {circuits.EQ: {}, circuits.NE: {}},
 	ld.XSDInteger:                        allOperations,
 	ld.XSDInteger + "nonNegativeInteger": allOperations,
 	ld.XSDInteger + "positiveInteger":    allOperations,
 	ld.XSDString:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
 	ld.XSDNS + "dateTime":                allOperations,
+	ld.XSDDouble:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
 }
 
 // PathToSubjectType path to description of subject type.
@@ -454,10 +455,10 @@ func isValidOperation(typ string, op int) bool {
 		return true
 	}
 
-	ops, ok := availabelTypesOperations[typ]
+	ops, ok := availableTypesOperations[typ]
 	if !ok {
 		// by default all unknown types will be considered as string
-		ops = availabelTypesOperations[ld.XSDString]
+		ops = availableTypesOperations[ld.XSDString]
 		_, ok = ops[op]
 		return ok
 	}
