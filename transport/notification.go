@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// SendAuthRequest sends an authorization request to the user.
 func SendAuthRequest(
 	ctx context.Context,
 	diddoc verifiable.DIDDocument,
@@ -27,6 +28,7 @@ func SendAuthRequest(
 	)
 }
 
+// SendContractInvokeRequest sends a contract invoke request to the user.
 func SendContractInvokeRequest(
 	ctx context.Context,
 	diddoc verifiable.DIDDocument,
