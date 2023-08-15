@@ -125,10 +125,10 @@ github.com/iden3/go-rapidsnark/verifier v0.0.5 h1:J7y0ovrEjDQoWtZmlrp4tgGng1A9fa
 github.com/iden3/go-rapidsnark/verifier v0.0.5/go.mod h1:KgL3Yr9NehlFDI4EIWVLE3UDUi8ulyjbp7HcXSBfiGI=
 github.com/iden3/go-rapidsnark/witness v0.0.6 h1:p+6QBymSV3XWm1kB2PL2vlXxKXJN8GyWuqNJv/0PGGU=
 github.com/iden3/go-rapidsnark/witness v0.0.6/go.mod h1:57IHQpnvx0CeS6cAT07oN/lqwT5LRc4zicYoZ1cnAPE=
-github.com/iden3/go-schema-processor/v2 v2.0.0-20230815084029-5f7db469e023 h1:Mgs3oXjhkTwfiMJ2fQvFUneISbBL75uP7GWhNd+DR/w=
-github.com/iden3/go-schema-processor/v2 v2.0.0-20230815084029-5f7db469e023/go.mod h1:fuC9+rNfhMtgK9HoFXFt1xvsd6mCdAm8psUJIz80o6o=
-github.com/iden3/iden3comm/v2 v2.0.0-20230815081925-096f73ffadc0 h1:vNsFVIXM5b1jjK4K5zz3Wsp+qh68lrUJWC2rn44XpNQ=
-github.com/iden3/iden3comm/v2 v2.0.0-20230815081925-096f73ffadc0/go.mod h1:1jgqxr8Sdg6DJwdZ2L2bJ4BuyPP44sQ4iiJ5m8UiEpc=
+github.com/iden3/go-schema-processor/v2 v2.0.0-20230815163555-a522c86691c2 h1:6uq3Hpt/kf+QpNTnKAdvkzfImyPQP0J3X1UD/laTxAY=
+github.com/iden3/go-schema-processor/v2 v2.0.0-20230815163555-a522c86691c2/go.mod h1:fuC9+rNfhMtgK9HoFXFt1xvsd6mCdAm8psUJIz80o6o=
+github.com/iden3/iden3comm/v2 v2.0.0-20230815163928-2aa42446429f h1:B9hw1kg2payF1/vvvlYa7CVwG9NI1e05jWqvCgNtPLQ=
+github.com/iden3/iden3comm/v2 v2.0.0-20230815163928-2aa42446429f/go.mod h1:mUpiJahdnGxr73G9IJWKq82hbbcWXF8kxwr2WMsGG1U=
 github.com/iden3/wasmer-go v0.0.1 h1:TZKh8Se8B/73PvWrcu+FTU9L1k5XYAmtFbioj7l0Uog=
 github.com/iden3/wasmer-go v0.0.1/go.mod h1:ZnZBAO012M7o+Q1INXLRIxKQgEcH2FuwL0Iga8A4ufg=
 github.com/ipfs/boxo v0.8.0 h1:UdjAJmHzQHo/j3g3b1bAcAXCj/GM6iTwvSlBDvPBNBs=

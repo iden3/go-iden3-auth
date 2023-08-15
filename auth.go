@@ -21,6 +21,7 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/go-jwz/v2"
+	spLoaders "github.com/iden3/go-schema-processor/v2/loaders"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/iden3/iden3comm/v2"
@@ -481,5 +482,5 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli *shell.Shell,
 		return defaultSchemaLoader
 	}
 
-	return merklize.NewDocumentLoader(ipfsCli, ipfsGW)
+	return spLoaders.NewDocumentLoader(ipfsCli, ipfsGW)
 }

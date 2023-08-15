@@ -13,8 +13,8 @@ require (
 	github.com/iden3/go-jwz/v2 v2.0.0-20230519132540-75b6744028b1
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
-	github.com/iden3/go-schema-processor/v2 v2.0.0-20230815084029-5f7db469e023
-	github.com/iden3/iden3comm/v2 v2.0.0-20230815081925-096f73ffadc0
+	github.com/iden3/go-schema-processor/v2 v2.0.0-20230815163555-a522c86691c2
+	github.com/iden3/iden3comm/v2 v2.0.0-20230815163928-2aa42446429f
 	github.com/ipfs/go-ipfs-api v0.6.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
