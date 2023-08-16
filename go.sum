@@ -129,6 +129,12 @@ github.com/iden3/go-schema-processor v1.3.1 h1:LJfFInfYGMOp0bTKKC17R8q4XI+VtqhFL
 github.com/iden3/go-schema-processor v1.3.1/go.mod h1:NwJ1nuGdRlCFaN1/V6mS0AOAdvpLcGf4KKq0mluLG7U=
 github.com/iden3/iden3comm v1.1.0 h1:feWurfGJV6YZyxi4J3U2jqQ+RUo0mo36Aoqyck1ZnHg=
 github.com/iden3/iden3comm v1.1.0/go.mod h1:1bJHz0xNhwbQGDxYfVwMVYsdsMjFQRkHJF/eq5Rc9wE=
+github.com/iden3/iden3comm v1.1.1-0.20230810101037-f49961bb9e6c h1:JSsDSdkhkZNPD6dwNG3jua1QWbTERmA+oALrcy+Q3aU=
+github.com/iden3/iden3comm v1.1.1-0.20230810101037-f49961bb9e6c/go.mod h1:1bJHz0xNhwbQGDxYfVwMVYsdsMjFQRkHJF/eq5Rc9wE=
+github.com/iden3/iden3comm v1.1.1-0.20230810105009-6a98a9309fed h1:2aBuvK/GPWiqMDu2NoNKp8X2Wrm6xEiQC0uH6oeyz7Y=
+github.com/iden3/iden3comm v1.1.1-0.20230810105009-6a98a9309fed/go.mod h1:1bJHz0xNhwbQGDxYfVwMVYsdsMjFQRkHJF/eq5Rc9wE=
+github.com/iden3/iden3comm v1.1.1-0.20230810141028-42068fe8ad57 h1:+UukNLBWlCIvUqDA79pHBCXYarGt6VQH2WsNJv9dUYs=
+github.com/iden3/iden3comm v1.1.1-0.20230810141028-42068fe8ad57/go.mod h1:1bJHz0xNhwbQGDxYfVwMVYsdsMjFQRkHJF/eq5Rc9wE=
 github.com/iden3/wasmer-go v0.0.1 h1:TZKh8Se8B/73PvWrcu+FTU9L1k5XYAmtFbioj7l0Uog=
 github.com/iden3/wasmer-go v0.0.1/go.mod h1:ZnZBAO012M7o+Q1INXLRIxKQgEcH2FuwL0Iga8A4ufg=
 github.com/ipfs/boxo v0.8.0 h1:UdjAJmHzQHo/j3g3b1bAcAXCj/GM6iTwvSlBDvPBNBs=
