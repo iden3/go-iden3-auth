@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// SendAuthRequest sends an authorization request to the user.
+// SendPushAuthRequest sends authorization request to the user via a push notification.
 func SendPushAuthRequest(
 	ctx context.Context,
 	diddoc verifiable.DIDDocument,
@@ -28,8 +28,8 @@ func SendPushAuthRequest(
 	)
 }
 
-// SendContractInvokeRequest sends a contract invoke request to the user.
-func SendContractInvokeRequest(
+// SendPushContractInvokeRequest sends a contract invoke request to the user via a push notification.
+func SendPushContractInvokeRequest(
 	ctx context.Context,
 	diddoc verifiable.DIDDocument,
 	contractInvokeMsg protocol.ContractInvokeRequestMessage,
