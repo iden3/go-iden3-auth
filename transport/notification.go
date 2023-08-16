@@ -11,7 +11,7 @@ import (
 )
 
 // SendAuthRequest sends an authorization request to the user.
-func SendAuthRequest(
+func SendPushAuthRequest(
 	ctx context.Context,
 	diddoc verifiable.DIDDocument,
 	authMsg protocol.AuthorizationRequestMessage,
