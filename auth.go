@@ -253,7 +253,7 @@ func CreateContractInvokeRequestWithMessage(
 ) protocol.ContractInvokeRequestMessage {
 	return protocol.ContractInvokeRequestMessage{
 		Typ:  packers.MediaTypePlainMessage,
-		Type: protocol.AuthorizationRequestMessageType,
+		Type: protocol.ContractInvokeRequestMessageType,
 		ID:   uuid.New().String(),
 		From: sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
