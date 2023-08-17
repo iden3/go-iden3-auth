@@ -251,11 +251,13 @@ func CreateContractInvokeRequestWithMessage(
 	transactionData protocol.TransactionData,
 	zkRequests ...protocol.ZeroKnowledgeProofRequest,
 ) protocol.ContractInvokeRequestMessage {
+	reqID := uuid.New().String()
 	return protocol.ContractInvokeRequestMessage{
-		Typ:  packers.MediaTypePlainMessage,
-		Type: protocol.ContractInvokeRequestMessageType,
-		ID:   uuid.New().String(),
-		From: sender,
+		Typ:      packers.MediaTypePlainMessage,
+		Type:     protocol.ContractInvokeRequestMessageType,
+		ID:       reqID,
+		ThreadID: reqID,
+		From:     sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
 			Reason:          reason,
 			Message:         message,
