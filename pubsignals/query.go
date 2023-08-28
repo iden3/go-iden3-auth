@@ -11,6 +11,7 @@ import (
 
 	"github.com/iden3/go-circuits/v2"
 	core "github.com/iden3/go-iden3-core/v2"
+	parser "github.com/iden3/go-schema-processor/v2/json"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
@@ -166,7 +167,13 @@ func (q Query) verifyClaim(schemaBytes []byte, pubSig *CircuitOutputs,
 			return errors.New("proof doesn't contains target query key")
 		}
 	} else {
-		return errors.New("non-merklized credentials are not supported")
+		slotIndex, err := parser.Parser{}.GetFieldSlotIndex(fieldName, q.Type, schemaBytes)
+		if err != nil {
+			return errors.Errorf("failed to get field slot: %v", err)
+		}
+		if slotIndex != pubSig.SlotIndex {
+			return errors.New("proof was generated for another slot")
+		}
 	}
 
 	return nil
