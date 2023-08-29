@@ -274,6 +274,41 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 	return request
 }
 
+// CreateContractInvokeRequest creates new contract invoke request message
+// reason - describes purpose of request
+// sender - sender identifier
+// transactionData - data for on chain verification
+// zkRequests - zero knowledge proof request(s)
+func CreateContractInvokeRequest(
+	reason, sender string,
+	transactionData protocol.TransactionData,
+	zkRequests ...protocol.ZeroKnowledgeProofRequest,
+) protocol.ContractInvokeRequestMessage {
+	return CreateContractInvokeRequestWithMessage(reason, "", sender, transactionData, zkRequests...)
+}
+
+// CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
+func CreateContractInvokeRequestWithMessage(
+	reason, message, sender string,
+	transactionData protocol.TransactionData,
+	zkRequests ...protocol.ZeroKnowledgeProofRequest,
+) protocol.ContractInvokeRequestMessage {
+	reqID := uuid.New().String()
+	return protocol.ContractInvokeRequestMessage{
+		Typ:      packers.MediaTypePlainMessage,
+		Type:     protocol.ContractInvokeRequestMessageType,
+		ID:       reqID,
+		ThreadID: reqID,
+		From:     sender,
+		Body: protocol.ContractInvokeRequestMessageBody{
+			Reason:          reason,
+			Message:         message,
+			TransactionData: transactionData,
+			Scope:           zkRequests,
+		},
+	}
+}
+
 // VerifyAuthResponse performs verification of auth response based on auth request
 func (v *Verifier) VerifyAuthResponse(
 	ctx context.Context,
