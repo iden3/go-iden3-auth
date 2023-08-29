@@ -77,14 +77,12 @@ func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*s
 }
 
 func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
-	// TODO(illia-korotia): for non merklized claim and schema don't know about xsd:types
-	t.Skip("skipping test")
 	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 	callbackURL := "https://test.com/callback"
 	reason := "test"
 
 	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
-	mtpProofRequest.ID = 23
+	mtpProofRequest.ID = 84239
 	mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
 	opt := true
 	mtpProofRequest.Optional = &opt
@@ -92,16 +90,16 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 		"allowedIssuers": []string{"*"},
 		"credentialSubject": map[string]interface{}{
 			"documentType": map[string]interface{}{
-				"$eq": 10,
+				"$eq": 99,
 			},
 		},
-		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
 		"type":    "KYCAgeCredential",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
 
-	userID := "did:polygonid:polygon:mumbai:2qD8Nsp4FQcdk1N3yhziquEBZGMXdVkKtBhtLdGnix"
+	userID := "did:polygonid:polygon:mumbai:2qKzaaAewvBVv11iZjJZzjTxBQioZLEujPYTUJp7gQ"
 	responseUUID := uuid.New()
 
 	// response
@@ -116,50 +114,50 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 		Message: "message to sign",
 		Scope: []protocol.ZeroKnowledgeProofResponse{
 			{
-				ID:        23,
+				ID:        84239,
 				CircuitID: mtpProofRequest.CircuitID,
 				ZKProof: types.ZKProof{
 					Proof: &types.ProofData{
 						A: []string{
-							"9518940539414587245794003192532307790550936491078690484579527365586406369952",
-							"18310892073224615121155590891657868809375867436314025475318265897577698765429",
+							"14056228231956087288378518013493130710375131807243578639863710060510262038676",
+							"15685597096933930175890593905690244171450509041610585092210638200145586390285",
 							"1",
 						},
 						B: [][]string{
 							{
-								"7473471862476301137207221898428038544241157556635980264621324015685573123570",
-								"12749169234766877085006220937362504781288470732483056139299482729458259754028",
+								"6867891861795556838771075779522609255721689620651295420993290050538780283807",
+								"12803728874072821363624664338413776845757845422512289455246307343796729670516",
 							},
 							{
-								"3455578419807762064145715564295939767903330673624118421238034929096545128331",
-								"12484357578498567666992818368371681218686429789722992962435530253571008321433",
+								"1556511867067742689232747109877739227261867306751037654148240512509806309140",
+								"3417379743049361186708759271231315501277403869916476403120965486647240758779",
 							},
 							{
 								"1",
 								"0",
 							}},
 						C: []string{
-							"2620490929586137686238649209251762311479806943644120771227616021811240503743",
-							"5676385148800793701377781773804054339642731549886824415936348195774348094130",
+							"10569434133480072042978475540156042501239134571700053665222790798542811352807",
+							"16412506719218682682070660169432465369639644911994254460610287965570092298694",
 							"1",
 						},
 						Protocol: "groth16",
 					},
 					PubSignals: []string{
 						"0",
-						"23280069646923371456510050373677752848804011824981226331232885668622242306",
-						"2943483356559152311923412925436024635269538717812859789851139200242297094",
-						"23",
-						"22064883246134712298411652505170593669589088931416964593351226206090301954",
+						"23556362286864724741858679466282977995723542763829611007300550436288008706",
+						"6488011081960287964570775172930943914920953982696735236025195378048754598764",
+						"84239",
+						"21803003425107230045260507608510138502859759480520560654156359021447614978",
 						"1",
-						"2943483356559152311923412925436024635269538717812859789851139200242297094",
-						"1642074362",
-						"74977327600848231385663280181476307657",
-						"0",
-						"0",
-						"2",
+						"6488011081960287964570775172930943914920953982696735236025195378048754598764",
+						"1693230616",
+						"198285726510688200335207273836123338699",
 						"1",
-						"10",
+						"0",
+						"3",
+						"1",
+						"99",
 						"0",
 						"0",
 						"0",
@@ -231,7 +229,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{
-			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v2.json-ld": loadSchema("kyc-v2.json-ld"),
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld": loadSchema("kyc-nonmerklized.jsonld"),
 		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
