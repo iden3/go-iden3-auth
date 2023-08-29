@@ -113,8 +113,8 @@ github.com/iden3/go-iden3-core/v2 v2.0.0 h1:sQEuuq3RLfyYSY8qPiqxQ6YBpGbiAwepHJD/
 github.com/iden3/go-iden3-core/v2 v2.0.0/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.15 h1:4MJYlrot1l31Fzlo2sF56u7EVFeHHJkxGXXZCtESgK4=
 github.com/iden3/go-iden3-crypto v0.0.15/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
-github.com/iden3/go-jwz/v2 v2.0.0-20230829091754-8aa869b73aef h1:hs/wshhEJ6RU2P54BczLaSjUTBRuTQHFSM1Emaym+M8=
-github.com/iden3/go-jwz/v2 v2.0.0-20230829091754-8aa869b73aef/go.mod h1:JBJ58Cef8h+4Uz8qaVRsNjiT/Ubqb800dGKTZt66NkU=
+github.com/iden3/go-jwz/v2 v2.0.0 h1:VsU2PrmcchPMx/V0IhamMZRNjiQYZoyJopO8K8uSZOY=
+github.com/iden3/go-jwz/v2 v2.0.0/go.mod h1:JBJ58Cef8h+4Uz8qaVRsNjiT/Ubqb800dGKTZt66NkU=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4 h1:Dp089P3YNX1BE8+T1tKQHWTtnk84Y/Kr7ZAGTqwscoY=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4/go.mod h1:kRhHKYpui5DUsry5RpveP6IC4XMe6iApdV9VChRYuEk=
 github.com/iden3/go-rapidsnark/prover v0.0.10 h1:NvOfRPpex/k646UsqOcUy7a7uVl17t4ok9kWvpQg4+k=
@@ -129,8 +129,8 @@ github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e
 github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e/go.mod h1:UEBifEzw62T6VzIHJeHuUgeLg2U/J9ttf7hOwQEqnYk=
 github.com/iden3/go-schema-processor/v2 v2.0.0 h1:izbC5+rd7rV1np+tjCqDe016qlOKu6JF7r8LQvdObWM=
 github.com/iden3/go-schema-processor/v2 v2.0.0/go.mod h1:eWRQDbxixZ/9k/uPlciKIy6TUYlKX/6hdqyTuAQi3wE=
-github.com/iden3/iden3comm/v2 v2.0.0-20230829092051-caa01672ce06 h1:fItVtYFFn/rN5vDHy1oapyKgEt+lw/D698aMAooybso=
-github.com/iden3/iden3comm/v2 v2.0.0-20230829092051-caa01672ce06/go.mod h1:olLXUjhFj6v8TWmxfhlxVSiSJ7a7DU+TBuNxYjAvuVs=
+github.com/iden3/iden3comm/v2 v2.0.0 h1:cFDfF6aJ589ENg5zlTBEPK6Qqv4I11C/gliAWZORpyY=
+github.com/iden3/iden3comm/v2 v2.0.0/go.mod h1:wrXoxi8eoQSLopatRW5+hYF9lDRvzGL2As9ZE88q/kA=
 github.com/ipfs/boxo v0.8.0 h1:UdjAJmHzQHo/j3g3b1bAcAXCj/GM6iTwvSlBDvPBNBs=
 github.com/ipfs/boxo v0.8.0/go.mod h1:RIsi4CnTyQ7AUsNn5gXljJYZlQrHBMnJp94p73liFiA=
 github.com/ipfs/go-cid v0.4.1 h1:A/T3qGvxi4kpKWWcPC/PgbvDA2bjVLO7n4UeVwnbs/s=
