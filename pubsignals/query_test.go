@@ -257,6 +257,34 @@ func TestCheckRequest_Success(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Non merklized claim",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"birthday": map[string]interface{}{
+						"$eq": "19960424",
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
+				Type:    "KYCAgeCredential",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:            &issuerID,
+				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld#KYCAgeCredential")),
+				Operator:            1,
+				Value:               []*big.Int{big.NewInt(19960424)},
+				Merklized:           0,
+				SlotIndex:           2,
+				IsRevocationChecked: 1,
+				Timestamp:           now,
+			},
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld": loadSchema("kyc-nonmerklized.jsonld"),
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -663,35 +691,6 @@ func TestCheckRequest_Error(t *testing.T) {
 				Timestamp:           now,
 			},
 			expErr: errors.New("proof was generated for another path"),
-			loader: &mockJSONLDSchemaLoader{
-				schemas: map[string]string{
-					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
-				},
-			},
-		},
-		{
-			name: "non-merklized credentials are not supported",
-			query: Query{
-				AllowedIssuers: []string{issuerDID},
-				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-				Type:           "KYCCountryOfResidenceCredential",
-				CredentialSubject: map[string]interface{}{
-					"countryCode": map[string]interface{}{
-						"$nin": []interface{}{float64(20)},
-					},
-				},
-			},
-			pubSig: &CircuitOutputs{
-				IssuerID:            &issuerID,
-				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(20)},
-				Merklized:           0,
-				SlotIndex:           0,
-				IsRevocationChecked: 1,
-				Timestamp:           now,
-			},
-			expErr: errors.New("non-merklized credentials are not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
