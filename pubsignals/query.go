@@ -3,19 +3,17 @@ package pubsignals
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
 	"time"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	core "github.com/iden3/go-iden3-core"
-	jsonSuite "github.com/iden3/go-schema-processor/json"
-	"github.com/iden3/go-schema-processor/merklize"
-	"github.com/iden3/go-schema-processor/utils"
+	"github.com/iden3/go-circuits/v2"
+	core "github.com/iden3/go-iden3-core/v2"
+	parser "github.com/iden3/go-schema-processor/v2/json"
+	"github.com/iden3/go-schema-processor/v2/merklize"
+	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -29,13 +27,14 @@ var allOperations = map[int]struct{}{
 	circuits.NE:  {},
 }
 
-var availabelTypesOperations = map[string]map[int]struct{}{
+var availableTypesOperations = map[string]map[int]struct{}{
 	ld.XSDBoolean:                        {circuits.EQ: {}, circuits.NE: {}},
 	ld.XSDInteger:                        allOperations,
 	ld.XSDInteger + "nonNegativeInteger": allOperations,
 	ld.XSDInteger + "positiveInteger":    allOperations,
 	ld.XSDString:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
 	ld.XSDNS + "dateTime":                allOperations,
+	ld.XSDDouble:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
 }
 
 // PathToSubjectType path to description of subject type.
@@ -82,9 +81,11 @@ type CircuitOutputs struct {
 }
 
 // Check checks if proof was created for this query.
+// Would be good to use ctx for external http requests, but current interfaces
+// doesn't allow to do it. Left it for future.
 func (q Query) Check(
-	ctx context.Context,
-	loader loaders.SchemaLoader,
+	_ context.Context,
+	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
 	opts ...VerifyOpt,
@@ -93,20 +94,22 @@ func (q Query) Check(
 		return err
 	}
 
-	schemaBytes, _, err := loader.Load(ctx, q.Context)
+	schemaDoc, err := loader.LoadDocument(q.Context)
 	if err != nil {
 		return fmt.Errorf("failed load schema by context: %w", err)
 	}
 
-	if err := q.verifySchemaID(schemaBytes, pubSig); err != nil {
+	schemaBytes, err := json.Marshal(schemaDoc.Document)
+	if err != nil {
+		return fmt.Errorf("failed jsonify schema document: %w", err)
+	}
+
+	if err := q.verifySchemaID(schemaBytes, pubSig, loader); err != nil {
 		return err
 	}
 
-	if err := q.verifyCredentialSubject(
-		pubSig,
-		verifiablePresentation,
-		schemaBytes,
-	); err != nil {
+	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
+		schemaBytes, loader); err != nil {
 		return err
 	}
 
@@ -125,10 +128,12 @@ func (q Query) Check(
 		return ErrProofGenerationOutdated
 	}
 
-	return q.verifyClaim(ctx, schemaBytes, pubSig)
+	return q.verifyClaim(schemaBytes, pubSig, loader)
 }
 
-func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *CircuitOutputs) error {
+func (q Query) verifyClaim(schemaBytes []byte, pubSig *CircuitOutputs,
+	schemaLoader ld.DocumentLoader) error {
+
 	if len(q.CredentialSubject) == 0 {
 		return nil
 	}
@@ -139,7 +144,8 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 	}
 
 	if pubSig.Merklized == 1 {
-		path, err := merklize.NewFieldPathFromContext(schemaBytes, q.Type, fieldName)
+		path, err := merklize.Options{DocumentLoader: schemaLoader}.
+			FieldPathFromContext(schemaBytes, q.Type, fieldName)
 		if err != nil {
 			return err
 		}
@@ -161,12 +167,12 @@ func (q Query) verifyClaim(_ context.Context, schemaBytes []byte, pubSig *Circui
 			return errors.New("proof doesn't contains target query key")
 		}
 	} else {
-		slotIdx, err := jsonSuite.Parser{}.GetFieldSlotIndex(fieldName, schemaBytes)
+		slotIndex, err := parser.Parser{}.GetFieldSlotIndex(fieldName, q.Type, schemaBytes)
 		if err != nil {
-			return err
+			return errors.Errorf("failed to get field slot: %v", err)
 		}
-		if pubSig.SlotIndex != slotIdx {
-			return errors.New("different slot index for claim")
+		if slotIndex != pubSig.SlotIndex {
+			return errors.New("proof was generated for another slot")
 		}
 	}
 
@@ -186,10 +192,11 @@ func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 	return ErrUnavailableIssuer
 }
 
-func (q Query) verifySchemaID(schemaBytes []byte,
-	pubSig *CircuitOutputs) error {
+func (q Query) verifySchemaID(schemaBytes []byte, pubSig *CircuitOutputs,
+	schemaLoader ld.DocumentLoader) error {
 
-	schemaID, err := merklize.TypeIDFromContext(schemaBytes, q.Type)
+	schemaID, err := merklize.Options{DocumentLoader: schemaLoader}.
+		TypeIDFromContext(schemaBytes, q.Type)
 	if err != nil {
 		return err
 	}
@@ -204,6 +211,7 @@ func (q Query) verifyCredentialSubject(
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
 	ctxBytes []byte,
+	schemaLoader ld.DocumentLoader,
 ) error {
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
@@ -212,10 +220,8 @@ func (q Query) verifyCredentialSubject(
 
 	var fieldType string
 	if fieldName != "" {
-		fieldType, err = merklize.TypeFromContext(
-			ctxBytes,
-			fmt.Sprintf("%s.%s", q.Type, fieldName),
-		)
+		fieldType, err = merklize.Options{DocumentLoader: schemaLoader}.
+			TypeFromContext(ctxBytes, fmt.Sprintf("%s.%s", q.Type, fieldName))
 		if err != nil {
 			return err
 		}
@@ -224,12 +230,8 @@ func (q Query) verifyCredentialSubject(
 	// validate selectivity disclosure request
 	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
-		return q.validateDisclosure(
-			ctx,
-			pubSig,
-			fieldName,
-			verifiablePresentation,
-		)
+		return q.validateDisclosure(ctx, pubSig, fieldName,
+			verifiablePresentation, schemaLoader)
 	}
 
 	// validate empty credential subject request
@@ -271,12 +273,10 @@ func (q Query) verifyCredentialSubject(
 	return nil
 }
 
-func (q Query) validateDisclosure(
-	ctx context.Context,
-	pubSig *CircuitOutputs,
-	key string,
-	verifiablePresentation json.RawMessage,
-) error {
+func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
+	key string, verifiablePresentation json.RawMessage,
+	schemaLoader ld.DocumentLoader) error {
+
 	if verifiablePresentation == nil {
 		return errors.New("selective disclosure value is missed")
 	}
@@ -291,12 +291,16 @@ func (q Query) validateDisclosure(
 		}
 	}
 
-	mz, err := merklize.MerklizeJSONLD(ctx, bytes.NewBuffer(verifiablePresentation))
+	mz, err := merklize.MerklizeJSONLD(ctx,
+		bytes.NewBuffer(verifiablePresentation),
+		merklize.WithDocumentLoader(schemaLoader))
 	if err != nil {
 		return errors.Errorf("failed to merklize doc: %v", err)
 	}
 
-	merklizedPath, err := merklize.NewPathFromDocument(verifiablePresentation, fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
+	merklizedPath, err := merklize.Options{DocumentLoader: schemaLoader}.
+		NewPathFromDocument(verifiablePresentation,
+			fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
 	if err != nil {
 		return errors.Errorf("failed build path to '%s' key: %v", key, err)
 	}
@@ -458,24 +462,14 @@ func isValidOperation(typ string, op int) bool {
 		return true
 	}
 
-	ops, ok := availabelTypesOperations[typ]
+	ops, ok := availableTypesOperations[typ]
 	if !ok {
 		// by default all unknown types will be considered as string
-		ops = availabelTypesOperations[ld.XSDString]
+		ops = availableTypesOperations[ld.XSDString]
 		_, ok = ops[op]
 		return ok
 	}
 
 	_, ok = ops[op]
 	return ok
-}
-
-// IDFromUnknownDID returns ID from did with unsupported by go-iden3-core did method
-// type is set to [255,255] hash alg is sha256
-func IDFromUnknownDID(did string) core.ID {
-	hash := sha256.Sum256([]byte(did))
-	var genesis [27]byte
-	copy(genesis[:], hash[len(hash)-27:])
-	var tp = [2]byte{0b11111111, 0b11111111}
-	return core.NewID(tp, genesis)
 }

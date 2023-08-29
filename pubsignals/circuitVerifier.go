@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	"github.com/iden3/go-iden3-auth/state"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-auth/v2/state"
+	"github.com/piprate/json-gold/ld"
 )
 
 // StateResolver is a state resolver interface
@@ -18,7 +18,7 @@ type StateResolver interface {
 
 // Verifier is interface for verification of public signals of zkp
 type Verifier interface {
-	VerifyQuery(ctx context.Context, query Query, schemaLoader loaders.SchemaLoader, verifiablePresentation json.RawMessage, opts ...VerifyOpt) error
+	VerifyQuery(ctx context.Context, query Query, schemaLoader ld.DocumentLoader, verifiablePresentation json.RawMessage, opts ...VerifyOpt) error
 	VerifyStates(ctx context.Context, resolvers map[string]StateResolver, opts ...VerifyOpt) error
 	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
 

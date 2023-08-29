@@ -7,9 +7,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	core "github.com/iden3/go-iden3-core"
+	"github.com/iden3/go-circuits/v2"
+	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-iden3-core/v2/w3c"
+	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
 
@@ -22,7 +23,7 @@ type AuthV2 struct {
 func (c *AuthV2) VerifyQuery(
 	_ context.Context,
 	_ Query,
-	_ loaders.SchemaLoader,
+	_ ld.DocumentLoader,
 	_ json.RawMessage,
 	_ ...VerifyOpt) error {
 	return errors.New("authV2 circuit doesn't support queries")
@@ -30,11 +31,15 @@ func (c *AuthV2) VerifyQuery(
 
 // VerifyStates verify AuthV2 tests.
 func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
-	userDID, err := core.ParseDIDFromID(*c.UserID)
+	blockchain, err := core.BlockchainFromID(*c.UserID)
 	if err != nil {
 		return err
 	}
-	chainInfo := fmt.Sprintf("%s:%s", userDID.Blockchain, userDID.NetworkID)
+	networkID, err := core.NetworkIDFromID(*c.UserID)
+	if err != nil {
+		return err
+	}
+	chainInfo := fmt.Sprintf("%s:%s", blockchain, networkID)
 	resolver, ok := stateResolvers[chainInfo]
 	if !ok {
 		return errors.Errorf("%s resolver not found", chainInfo)
@@ -58,25 +63,22 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
 func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
-
 	if challenge.Cmp(c.Challenge) != 0 {
 		return errors.Errorf("challenge is not used for proof creation, expected , expected %s, challenge from public signals: %s}", challenge.String(), c.Challenge.String())
 	}
 
-	userDID, err := core.ParseDIDFromID(*c.UserID)
-	if err != nil && err == core.ErrDIDMethodNotSupported {
-		// sender to id
-		senderHashedID := IDFromUnknownDID(sender)
-		if senderHashedID.String() != c.UserID.String() {
-			return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderHashedID.String(), c.UserID.String())
-		}
-		return nil
+	did, err := w3c.ParseDID(sender)
+	if err != nil {
+		return errors.Wrap(err, "sender must be a valid did")
 	}
+	senderID, err := core.IDFromDID(*did)
 	if err != nil {
 		return err
 	}
-	if sender != userDID.String() {
-		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", sender, userDID)
+
+	if senderID.String() != c.UserID.String() {
+		return errors.Errorf("sender is not used for proof creation, expected %s, user from public signals: %s}", senderID.String(), c.UserID.String())
 	}
+
 	return nil
 }

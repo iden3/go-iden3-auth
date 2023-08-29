@@ -15,20 +15,32 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/contracts-abi/state/go/abi"
-	"github.com/iden3/go-circuits"
-	"github.com/iden3/go-iden3-auth/loaders"
-	"github.com/iden3/go-iden3-auth/proofs"
-	"github.com/iden3/go-iden3-auth/pubsignals"
-	"github.com/iden3/go-iden3-auth/state"
-	"github.com/iden3/go-jwz"
-	"github.com/iden3/go-schema-processor/merklize"
-	"github.com/iden3/go-schema-processor/verifiable"
-	"github.com/iden3/iden3comm"
-	"github.com/iden3/iden3comm/packers"
-	"github.com/iden3/iden3comm/protocol"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-auth/v2/loaders"
+	"github.com/iden3/go-iden3-auth/v2/proofs"
+	"github.com/iden3/go-iden3-auth/v2/pubsignals"
+	"github.com/iden3/go-iden3-auth/v2/state"
+	"github.com/iden3/go-jwz/v2"
+	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
+	"github.com/iden3/go-schema-processor/v2/merklize"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
+	"github.com/iden3/iden3comm/v2"
+	"github.com/iden3/iden3comm/v2/packers"
+	"github.com/iden3/iden3comm/v2/protocol"
 	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
+
+var defaultSchemaLoader ld.DocumentLoader
+
+// SetDocumentLoader sets the default schema loader that would be used if
+// other is not set with WithDocumentLoader option. Also, this document loader
+// is set for go-schema-processor library to use it for merklize.
+func SetDocumentLoader(schemaLoader ld.DocumentLoader) {
+	defaultSchemaLoader = schemaLoader
+	merklize.SetDocumentLoader(schemaLoader)
+}
 
 // UniversalResolverURL is a url for universal resolver
 const UniversalResolverURL = "https://dev.uniresolver.io/1.0/identifiers"
@@ -86,48 +98,78 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 // Verifier is a struct for auth instance
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
-	claimSchemaLoader     loaders.SchemaLoader
+	documentLoader        ld.DocumentLoader
 	stateResolver         map[string]pubsignals.StateResolver
 	packageManager        iden3comm.PackageManager
 }
 
-// NewVerifier returns setup instance of auth library
-// Deprecated: NewVerifier now return nil it can't set up default package manager for verifier,
-// in future major release it will return error
-func NewVerifier(
-	keyLoader loaders.VerificationKeyLoader,
-	claimSchemaLoader loaders.SchemaLoader,
-	resolver map[string]pubsignals.StateResolver,
-) *Verifier {
-	v, err := NewVerifierWithExplicitError(keyLoader, claimSchemaLoader,
-		resolver)
-	if err != nil {
-		return nil
+// VerifierOption is a function to set options for Verifier instance
+type VerifierOption func(opts *verifierOpts)
+
+// WithDocumentLoader sets the document loader for Verifier instance
+func WithDocumentLoader(docLoader ld.DocumentLoader) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.docLoader = docLoader
 	}
-	return v
 }
 
-// NewVerifierWithExplicitError returns verifier instance with default package manager and explicit error if it couldn't register default packers
-// in future major release it will be renamed to NewVerifier
-func NewVerifierWithExplicitError(
+// WithIPFSClient sets the IPFS client for document loader of Verifier instance.
+// If document loader is set with WithDocumentLoader function, this option is
+// ignored.
+func WithIPFSClient(ipfsCli *shell.Shell) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.ipfsCli = ipfsCli
+	}
+}
+
+// WithIPFSGateway sets the IPFS gateway for document loader of Verifier
+// instance. If document loader is set with WithDocumentLoader function, this
+// option is ignored. If WithIPFSClient is set, this option is ignored also.
+func WithIPFSGateway(ipfsGW string) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.ipfsGW = ipfsGW
+	}
+}
+
+// WithDIDResolver sets the DID resolver for Verifier instance. The default
+// value is UniversalDIDResolver.
+func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.didResolver = resolver
+	}
+}
+
+type verifierOpts struct {
+	docLoader   ld.DocumentLoader
+	ipfsCli     *shell.Shell
+	ipfsGW      string
+	didResolver packers.DIDResolverHandlerFunc
+}
+
+func newOpts() verifierOpts {
+	return verifierOpts{
+		didResolver: UniversalDIDResolver,
+	}
+}
+
+// NewVerifier returns setup instance of auth library
+func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
-	claimSchemaLoader loaders.SchemaLoader,
 	resolver map[string]pubsignals.StateResolver,
+	opts ...VerifierOption,
 ) (*Verifier, error) {
-	v := &Verifier{
-		verificationKeyLoader: keyLoader,
-		claimSchemaLoader:     claimSchemaLoader,
-		stateResolver:         resolver,
-		packageManager:        *iden3comm.NewPackageManager(),
+	vOpts := newOpts()
+	for _, optFn := range opts {
+		optFn(&vOpts)
 	}
 
-	// try to extract IPFS_URL if the schema loader is the default one
-	if impl, ok := claimSchemaLoader.(loaders.DefaultSchemaLoader); ok &&
-		impl.IpfsURL != "" {
-
-		ipfsCli := shell.NewShell(impl.IpfsURL)
-		documentLoader := merklize.NewDocumentLoader(ipfsCli, "")
-		merklize.SetDocumentLoader(documentLoader)
+	docLoader := getDocumentLoader(vOpts.docLoader, vOpts.ipfsCli,
+		vOpts.ipfsGW)
+	v := &Verifier{
+		verificationKeyLoader: keyLoader,
+		documentLoader:        docLoader,
+		stateResolver:         resolver,
+		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
 	err := v.SetupAuthV2ZKPPacker()
@@ -135,7 +177,7 @@ func NewVerifierWithExplicitError(
 		return nil, err
 	}
 
-	err = v.SetupJWSPacker(UniversalDIDResolver)
+	err = v.SetupJWSPacker(vOpts.didResolver)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +370,7 @@ func (v *Verifier) VerifyAuthResponse(
 			rawMessage = nil
 		}
 
-		err = cv.VerifyQuery(ctx, query, v.claimSchemaLoader, rawMessage, opts...)
+		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, opts...)
 		if err != nil {
 			return err
 		}
@@ -462,4 +504,18 @@ func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id uint32) 
 		}
 	}
 	return nil
+}
+
+func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli *shell.Shell,
+	ipfsGW string) ld.DocumentLoader {
+
+	if docLoader != nil {
+		return docLoader
+	}
+
+	if ipfsCli == nil && ipfsGW == "" && defaultSchemaLoader != nil {
+		return defaultSchemaLoader
+	}
+
+	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/iden3/go-circuits"
+	"github.com/iden3/go-circuits/v2"
 )
 
 // VerificationKeyLoader load verification key bytes for specific circuit

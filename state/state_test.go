@@ -7,9 +7,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/iden3/contracts-abi/state/go/abi"
-	"github.com/iden3/go-iden3-auth/state"
-	mock "github.com/iden3/go-iden3-auth/state/mock"
-	core "github.com/iden3/go-iden3-core"
+	"github.com/iden3/go-iden3-auth/v2/state"
+	mock "github.com/iden3/go-iden3-auth/v2/state/mock"
+	core "github.com/iden3/go-iden3-core/v2"
+	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
@@ -303,19 +304,26 @@ func TestResolveGlobalRoot_Error(t *testing.T) {
 }
 
 func TestCheckGenesisStateID(t *testing.T) {
-	userDID, err := core.ParseDID("did:iden3:polygon:mumbai:x6suHR8HkEYczV9yVeAKKiXCZAd25P8WS6QvNhszk")
+	userDID, err := w3c.ParseDID("did:iden3:polygon:mumbai:x6suHR8HkEYczV9yVeAKKiXCZAd25P8WS6QvNhszk")
 	require.NoError(t, err)
-	genesisID, ok := big.NewInt(0).SetString("7521024223205616003431860562270429547098131848980857190502964780628723574810", 10)
+	genesisID, ok := big.NewInt(0).SetString(
+		"7521024223205616003431860562270429547098131848980857190502964780628723574810",
+		10)
 	require.True(t, ok)
 
-	isGenesis, err := state.CheckGenesisStateID(userDID.ID.BigInt(), genesisID)
+	uID, err := core.IDFromDID(*userDID)
+	require.NoError(t, err)
+
+	isGenesis, err := state.CheckGenesisStateID(uID.BigInt(), genesisID)
 	require.NoError(t, err)
 	require.True(t, isGenesis)
 
-	notGenesisState, ok := big.NewInt(0).SetString("6017654403209798611575982337826892532952335378376369712724079246845524041042", 10)
+	notGenesisState, ok := big.NewInt(0).SetString(
+		"6017654403209798611575982337826892532952335378376369712724079246845524041042",
+		10)
 	require.True(t, ok)
 
-	isGenesis, err = state.CheckGenesisStateID(userDID.ID.BigInt(), notGenesisState)
+	isGenesis, err = state.CheckGenesisStateID(uID.BigInt(), notGenesisState)
 	require.NoError(t, err)
 	require.False(t, isGenesis)
 }
