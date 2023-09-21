@@ -235,7 +235,8 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	err = authInstance.VerifyAuthResponse(context.Background(), message, request)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.Nil(t, err)
 	schemaLoader.assert(t)
 }
@@ -674,7 +675,8 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	err = authInstance.VerifyAuthResponse(context.Background(), resp, authReq)
+	err = authInstance.VerifyAuthResponse(context.Background(), resp, authReq,
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
 }
