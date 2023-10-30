@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/iden3/go-circuits/v2"
+	verifier "github.com/iden3/go-circuits/v2/verifier"
 	"github.com/pkg/errors"
 )
 
@@ -39,11 +40,11 @@ func init() {
 }
 
 // GetVerifier return specific public signals verifier
-func GetVerifier(id circuits.CircuitID) (Verifier, error) {
+func GetVerifier(id circuits.CircuitID) (verifier.Verifier, error) {
 	verifierType, ok := signalsVerifierRegistry[id]
 	if !ok {
 		return nil, errors.New("public signals verifier for circuit is not registered")
 	}
 
-	return reflect.New(verifierType).Interface().(Verifier), nil
+	return reflect.New(verifierType).Interface().(verifier.Verifier), nil
 }

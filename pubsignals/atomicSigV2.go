@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
+	verifier "github.com/iden3/go-circuits/v2/verifier"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/piprate/json-gold/ld"
@@ -22,12 +23,12 @@ type AtomicQuerySigV2 struct {
 // VerifyQuery verifies query for atomic query mtp circuit.
 func (c *AtomicQuerySigV2) VerifyQuery(
 	ctx context.Context,
-	query Query,
+	query verifier.Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
-	opts ...VerifyOpt,
+	opts ...verifier.VerifyOpt,
 ) error {
-	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
+	err := query.Check(ctx, schemaLoader, &verifier.CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,
@@ -47,7 +48,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
+func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]verifier.StateResolver, opts ...verifier.VerifyOpt) error {
 	blockchain, err := core.BlockchainFromID(*c.IssuerID)
 	if err != nil {
 		return err
@@ -78,14 +79,14 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[
 		return err
 	}
 
-	cfg := defaultProofVerifyOpts
+	cfg := verifier.DefaultProofVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
 
 	if !issuerNonRevStateResolved.Latest && time.Since(
 		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
-	) > cfg.acceptedStateTransitionDelay {
+	) > cfg.AcceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 

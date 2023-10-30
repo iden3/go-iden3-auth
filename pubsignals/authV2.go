@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
+	verifier "github.com/iden3/go-circuits/v2/verifier"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/piprate/json-gold/ld"
@@ -22,15 +23,15 @@ type AuthV2 struct {
 // VerifyQuery is not implemented for authV2 circuit.
 func (c *AuthV2) VerifyQuery(
 	_ context.Context,
-	_ Query,
+	_ verifier.Query,
 	_ ld.DocumentLoader,
 	_ json.RawMessage,
-	_ ...VerifyOpt) error {
+	_ ...verifier.VerifyOpt) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
 
 // VerifyStates verify AuthV2 tests.
-func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
+func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]verifier.StateResolver, opts ...verifier.VerifyOpt) error {
 	blockchain, err := core.BlockchainFromID(*c.UserID)
 	if err != nil {
 		return err
@@ -50,12 +51,12 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 		return err
 	}
 
-	cfg := defaultAuthVerifyOpts
+	cfg := verifier.DefaultAuthVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
 
-	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.acceptedStateTransitionDelay {
+	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.AcceptedStateTransitionDelay {
 		return ErrGlobalStateIsNotValid
 	}
 	return nil
