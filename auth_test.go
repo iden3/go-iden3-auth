@@ -793,3 +793,173 @@ func loadSchema(name string) string {
 	}
 	return string(bs)
 }
+
+func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 84239
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryV3CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"documentType": map[string]interface{}{
+				"$eq": 99,
+			},
+		},
+		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
+		"type":    "KYCAgeCredential",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qMhPWX8CDuZn2vHUepRKYqWKqYUAGL3472kdZ7vub"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        84239,
+				CircuitID: mtpProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"21754778311938568142589620175298646303816959432223019070550032711387713760221",
+							"792835745981540496962574018439401673484161633870659600019894097094307360165",
+							"1",
+						},
+						B: [][]string{
+							{
+								"6683648338276344809424949592218398172767931748969967407650045396734002600030",
+								"9752733355356714334133959428842018968270201819862667334637889161346677975372",
+							},
+							{
+								"3720053998336872785248494041004353954062206601524572266306226507173862786010",
+								"13512093825478908694929976760477053994539062004711868307547816466464775515708",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"1883130310552493499459650030944021563854826156655887788731385570282394599892",
+							"6679873473119431659456775758085480415698906834368062977197859386067749244348",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"0",
+						"25019317600313390008390582486455756018138815597949470648415095074035798530",
+						"5305761346334220144767977324646811953234217467304611771560625250158853504842",
+						"0",
+						"0",
+						"0",
+						"84239",
+						"19138858867670544632059759462262166457716876369433914941143240992974836226",
+						"1",
+						"5305761346334220144767977324646811953234217467304611771560625250158853504842",
+						"1698684327",
+						"198285726510688200335207273836123338699",
+						"1",
+						"0",
+						"3",
+						"1",
+						"99",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+					},
+				},
+			},
+		},
+	}
+
+	schemaLoader := &mockJSONLDSchemaLoader{
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld": loadSchema("kyc-nonmerklized.jsonld"),
+		},
+	}
+	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader))
+	require.NoError(t, err)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
+		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	require.Nil(t, err)
+	schemaLoader.assert(t)
+}
