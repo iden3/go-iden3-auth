@@ -811,8 +811,9 @@ func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
 				"$eq": 99,
 			},
 		},
-		"context": "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
-		"type":    "KYCAgeCredential",
+		"context":   "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
+		"type":      "KYCAgeCredential",
+		"proofType": "BJJSignature2021",
 	}
 	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
 	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
@@ -867,7 +868,7 @@ func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
 						"5305761346334220144767977324646811953234217467304611771560625250158853504842",
 						"0",
 						"0",
-						"0",
+						"0", // proof type
 						"84239",
 						"19138858867670544632059759462262166457716876369433914941143240992974836226",
 						"1",
@@ -953,6 +954,178 @@ func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{
 			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld": loadSchema("kyc-nonmerklized.jsonld"),
+		},
+	}
+	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader))
+	require.NoError(t, err)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
+		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	require.Nil(t, err)
+	schemaLoader.assert(t)
+}
+
+func TestVerifyV3MessageWithMtpProof_Merkalized(t *testing.T) {
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 84239
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryV3CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"did:polygonid:polygon:mumbai:2qNFo5irybEbXTZpwU899rD4fYBfYwNmHGZa4WMaBN"},
+		"credentialSubject": map[string]interface{}{
+			"ZKPexperiance": map[string]interface{}{
+				"$eq": true,
+			},
+		},
+		"context":   "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
+		"type":      "KYCEmployee",
+		"proofType": "Iden3SparseMerkleTreeProof",
+	}
+
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qFJ9wtBn2qt6TKMaqiUzEKp2UQKHfFe36C8UqnsSs"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        84239,
+				CircuitID: mtpProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"6965202373806749753595119237643012354915153529698563124841152654942818398987",
+							"673374074667644746873214999542135530935680356622915148708283243318658257436",
+							"1",
+						},
+						B: [][]string{
+							{
+								"2505054156904703137279533870033583486788656311366303390602606845327685185363",
+								"9737656323886292174988782052089890290541803148418154769864123827496864763091",
+							},
+							{
+								"12942141635521124188156039696154746224671489745167113378695396268385260854161",
+								"18809706645956969136238313325494412058440772752302664799723354016952057265213",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"21520594163168445372857987723390875786933083369521727549973737722759920578834",
+							"21003312688080984581247329380876618614561314569322710608060783829956126562772",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"1",
+						"21913391677423199877483465376044619483783980239362003416752040748129325570",
+						"0",
+						"0",
+						"0",
+						"1",
+						"84239",
+						"23853335980884069535178441896668922698297837383201115318229128219926663682",
+						"1",
+						"10824448643610651845681067832606096087843173204988285221061356636910778727118",
+						"1698775524",
+						"219578617064540016234161640375755865412",
+						"0",
+						"1944808975288007371356450257872165609440470546066507760733183342797918372827",
+						"0",
+						"1",
+						"18586133768512220936620570745912940619677854269274689475585506675881198879027",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"10824448643610651845681067832606096087843173204988285221061356636910778727118",
+						"0",
+					},
+				},
+			},
+		},
+	}
+
+	schemaLoader := &mockJSONLDSchemaLoader{
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
 		},
 	}
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,

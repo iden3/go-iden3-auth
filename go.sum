@@ -115,6 +115,14 @@ github.com/iden3/go-circuits/v2 v2.0.1-0.20231030143421-65cba9665ca8 h1:Knpq8FWo
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231030143421-65cba9665ca8/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231030143742-03b9cc731ca9 h1:nUwGs72JNgqRcNFCqKSZSSC9p+9iXcVSr8tGghKYXJQ=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231030143742-03b9cc731ca9/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031165220-f54c4649a690 h1:0dzlOBSQqorHPmDeBswtnq1gWkMQV/MrByDhScOAKR0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031165220-f54c4649a690/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031181118-3d8f7e27fed5 h1:e+Cyjoq0MzPQRvlIUzSt650SKeyD0juBI3apX3AlMGs=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031181118-3d8f7e27fed5/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031182506-31b36351e96d h1:GwM8BY+HeH3vNXAiIzBUwWWOSdTZHwz+s1vijzmXTZ8=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031182506-31b36351e96d/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031183106-79f567968d71 h1:vf+FiTxQhukD3WLdsbIxUW6DwXXe8U12zHl72DfFbuQ=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231031183106-79f567968d71/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
 github.com/iden3/go-iden3-core/v2 v2.0.0 h1:sQEuuq3RLfyYSY8qPiqxQ6YBpGbiAwepHJD/vjf1adA=
 github.com/iden3/go-iden3-core/v2 v2.0.0/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.15 h1:4MJYlrot1l31Fzlo2sF56u7EVFeHHJkxGXXZCtESgK4=
