@@ -381,11 +381,10 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
-		// verifier ID exists only in V3 circuits.. move to query Check ?
-		// err = cv.VerifyVerifierID(response.To)
-		// if err != nil {
-		// 	return err
-		// }
+		err = cv.VerifyVerifierID(response.To)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

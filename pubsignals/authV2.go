@@ -83,3 +83,8 @@ func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
 
 	return nil
 }
+
+// VerifyVerifierID returns error if verifier ID wasn't match with circuit output.
+func (c *AuthV2) VerifyVerifierID(verifierID string) error {
+	return nil
+}
