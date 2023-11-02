@@ -78,7 +78,7 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[
 		return err
 	}
 
-	cfg := DefaultProofVerifyOpts
+	cfg := defaultProofVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -114,6 +114,6 @@ func (c *AtomicQuerySigV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 }
 
 // VerifyVerifierID returns error if verifier ID wasn't match with circuit output.
-func (c *AtomicQuerySigV2) VerifyVerifierID(verifierID string) error {
+func (c *AtomicQuerySigV2) VerifyVerifierID(_ string) error {
 	return nil
 }

@@ -89,7 +89,7 @@ func (c *AtomicQueryV3) VerifyStates(ctx context.Context, stateResolvers map[str
 		return err
 	}
 
-	cfg := DefaultProofVerifyOpts
+	cfg := defaultProofVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}

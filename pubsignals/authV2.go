@@ -50,7 +50,7 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 		return err
 	}
 
-	cfg := DefaultAuthVerifyOpts
+	cfg := defaultAuthVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -84,6 +84,6 @@ func (c *AuthV2) VerifyIDOwnership(sender string, challenge *big.Int) error {
 }
 
 // VerifyVerifierID returns error if verifier ID wasn't match with circuit output.
-func (c *AuthV2) VerifyVerifierID(verifierID string) error {
+func (c *AuthV2) VerifyVerifierID(_ string) error {
 	return nil
 }

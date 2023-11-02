@@ -75,7 +75,7 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context,
 		return err
 	}
 
-	cfg := DefaultProofVerifyOpts
+	cfg := defaultProofVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -111,6 +111,6 @@ func (c *AtomicQueryMTPV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 }
 
 // VerifyVerifierID returns error if verifier ID wasn't match with circuit output.
-func (c *AtomicQueryMTPV2) VerifyVerifierID(verifierID string) error {
+func (c *AtomicQueryMTPV2) VerifyVerifierID(_ string) error {
 	return nil
 }

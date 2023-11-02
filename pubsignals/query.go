@@ -102,7 +102,7 @@ func (q Query) Check(
 	verifiablePresentation json.RawMessage,
 	opts ...VerifyOpt,
 ) error {
-	if err := q.VerifyIssuer(pubSig); err != nil {
+	if err := q.verifyIssuer(pubSig); err != nil {
 		return err
 	}
 
@@ -129,7 +129,7 @@ func (q Query) Check(
 		return errors.New("check revocation is required")
 	}
 
-	cfg := DefaultProofVerifyOpts
+	cfg := defaultProofVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -204,7 +204,7 @@ func (q Query) verifyClaim(schemaBytes []byte, pubSig *CircuitOutputs,
 	return nil
 }
 
-func (q Query) VerifyIssuer(pubSig *CircuitOutputs) error {
+func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
 	userDID, err := core.ParseDIDFromID(*pubSig.IssuerID)
 	if err != nil {
 		return err

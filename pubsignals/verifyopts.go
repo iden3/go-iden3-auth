@@ -3,8 +3,8 @@ package pubsignals
 import "time"
 
 var (
-	DefaultAuthVerifyOpts  = VerifyConfig{AcceptedStateTransitionDelay: time.Minute * 5}
-	DefaultProofVerifyOpts = VerifyConfig{AcceptedStateTransitionDelay: time.Hour,
+	defaultAuthVerifyOpts  = VerifyConfig{AcceptedStateTransitionDelay: time.Minute * 5}
+	defaultProofVerifyOpts = VerifyConfig{AcceptedStateTransitionDelay: time.Hour,
 		AcceptedProofGenerationDelay: time.Hour * 24}
 )
 

@@ -834,7 +834,7 @@ func TestVerifyQuery_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.VerifyIssuer(tt.pubSig)
+			err := tt.query.verifyIssuer(tt.pubSig)
 			require.NoError(t, err)
 		})
 	}
@@ -881,7 +881,7 @@ func TestVerifyQuery_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.VerifyIssuer(tt.pubSig)
+			err := tt.query.verifyIssuer(tt.pubSig)
 			fmt.Println("err", err)
 			require.Error(t, err)
 			if tt.err != nil {
