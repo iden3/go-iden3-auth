@@ -11,8 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits/v2"
-	verifier "github.com/iden3/go-circuits/v2/verifier"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
+	"github.com/iden3/go-iden3-auth/v2/pubsignals"
+	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/go-rapidsnark/types"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/iden3/iden3comm/v2/packers"
@@ -58,7 +59,7 @@ func (r *mockJSONLDSchemaLoader) assert(t testing.TB) {
 /*
 mock for state resolver
 */
-var stateResolvers = map[string]verifier.StateResolver{
+var stateResolvers = map[string]pubsignals.StateResolver{
 	"polygon:mumbai": &mockStateResolver{},
 }
 
@@ -67,12 +68,12 @@ const proofGenerationDelay = time.Hour * 100000
 type mockStateResolver struct {
 }
 
-func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*verifier.ResolvedState, error) {
-	return &verifier.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
+func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*state.ResolvedState, error) {
+	return &state.ResolvedState{Latest: true, Genesis: false, TransitionTimestamp: 0}, nil
 }
 
-func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*verifier.ResolvedState, error) {
-	return &verifier.ResolvedState{Latest: true, TransitionTimestamp: 0}, nil
+func (r *mockStateResolver) ResolveGlobalRoot(_ context.Context, _ *big.Int) (*state.ResolvedState, error) {
+	return &state.ResolvedState{Latest: true, TransitionTimestamp: 0}, nil
 }
 
 func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
@@ -235,7 +236,7 @@ func TestVerifyMessageWithSigProof_NonMerkalized(t *testing.T) {
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
 	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
-		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.Nil(t, err)
 	schemaLoader.assert(t)
 }
@@ -402,7 +403,7 @@ func TestVerifyMessageWithMTPProof_Merkalized(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	err = authInstance.VerifyAuthResponse(context.Background(), message, request, verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
 }
@@ -462,7 +463,7 @@ func TestVerifier_FullVerify(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request, verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
 }
@@ -512,7 +513,7 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 		WithDocumentLoader(schemaLoader),
 		WithDIDResolver(mockedResolver))
 	require.NoError(t, err)
-	_, err = v.FullVerify(context.Background(), token, request, verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	_, err = v.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 
 	schemaLoader.assert(t)
@@ -675,7 +676,7 @@ func TestVerifyAuthResponseWithEmptyReq(t *testing.T) {
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
 	err = authInstance.VerifyAuthResponse(context.Background(), resp, authReq,
-		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
 }
@@ -744,7 +745,7 @@ func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request, verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
 }
@@ -780,7 +781,7 @@ func TestEmptyCredentialSubject(t *testing.T) {
 	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
-	_, err = authInstance.FullVerify(context.Background(), token, request, verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 
 	schemaLoader.assert(t)
@@ -960,7 +961,7 @@ func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
 	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
-		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.Nil(t, err)
 	schemaLoader.assert(t)
 }
@@ -1132,7 +1133,7 @@ func TestVerifyV3MessageWithMtpProof_Merkalized(t *testing.T) {
 		WithDocumentLoader(schemaLoader))
 	require.NoError(t, err)
 	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
-		verifier.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.Nil(t, err)
 	schemaLoader.assert(t)
 }

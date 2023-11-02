@@ -16,7 +16,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/iden3/contracts-abi/state/go/abi"
 	"github.com/iden3/go-circuits/v2"
-	verifier "github.com/iden3/go-circuits/v2/verifier"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
@@ -100,7 +99,7 @@ var UniversalDIDResolver = packers.DIDResolverHandlerFunc(func(did string) (*ver
 type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	documentLoader        ld.DocumentLoader
-	stateResolver         map[string]verifier.StateResolver
+	stateResolver         map[string]pubsignals.StateResolver
 	packageManager        iden3comm.PackageManager
 }
 
@@ -156,7 +155,7 @@ func newOpts() verifierOpts {
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
-	resolver map[string]verifier.StateResolver,
+	resolver map[string]pubsignals.StateResolver,
 	opts ...VerifierOption,
 ) (*Verifier, error) {
 	vOpts := newOpts()
@@ -315,7 +314,7 @@ func (v *Verifier) VerifyAuthResponse(
 	ctx context.Context,
 	response protocol.AuthorizationResponseMessage,
 	request protocol.AuthorizationRequestMessage,
-	opts ...verifier.VerifyOpt,
+	opts ...pubsignals.VerifyOpt,
 ) error {
 
 	if request.Body.Message != response.Body.Message {
@@ -350,7 +349,7 @@ func (v *Verifier) VerifyAuthResponse(
 		if err != nil {
 			return err
 		}
-		var query verifier.Query
+		var query pubsignals.Query
 		err = json.Unmarshal(queryBytes, &query)
 		if err != nil {
 			return err
@@ -394,7 +393,7 @@ func (v *Verifier) VerifyAuthResponse(
 func (v *Verifier) VerifyJWZ(
 	ctx context.Context,
 	token string,
-	opts ...verifier.VerifyOpt,
+	opts ...pubsignals.VerifyOpt,
 ) (t *jwz.Token, err error) {
 
 	t, err = jwz.Parse(token)
@@ -432,7 +431,7 @@ func (v *Verifier) FullVerify(
 	ctx context.Context,
 	token string,
 	request protocol.AuthorizationRequestMessage,
-	opts ...verifier.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
 ) (*protocol.AuthorizationResponseMessage, error) {
 
 	msg, _, err := v.packageManager.Unpack([]byte(token))
@@ -485,7 +484,7 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 
 }
 
-func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (verifier.Verifier, error) {
+func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
 	pubSignalBytes, err := json.Marshal(signals)
 	if err != nil {
 		return nil, err

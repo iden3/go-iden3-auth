@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/iden3/go-circuits/v2"
-	verifier "github.com/iden3/go-circuits/v2/verifier"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/piprate/json-gold/ld"
@@ -23,15 +22,15 @@ type AuthV2 struct {
 // VerifyQuery is not implemented for authV2 circuit.
 func (c *AuthV2) VerifyQuery(
 	_ context.Context,
-	_ verifier.Query,
+	_ Query,
 	_ ld.DocumentLoader,
 	_ json.RawMessage,
-	_ ...verifier.VerifyOpt) error {
+	_ ...VerifyOpt) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
 
 // VerifyStates verify AuthV2 tests.
-func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]verifier.StateResolver, opts ...verifier.VerifyOpt) error {
+func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	blockchain, err := core.BlockchainFromID(*c.UserID)
 	if err != nil {
 		return err
@@ -51,7 +50,7 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]ver
 		return err
 	}
 
-	cfg := verifier.DefaultAuthVerifyOpts
+	cfg := DefaultAuthVerifyOpts
 	for _, o := range opts {
 		o(&cfg)
 	}

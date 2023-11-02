@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	verifier "github.com/iden3/go-circuits/v2/verifier"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
@@ -91,14 +90,14 @@ func TestCheckRequest_Success(t *testing.T) {
 	now := time.Now().Unix()
 	tests := []struct {
 		name   string
-		query  verifier.Query
-		pubSig *verifier.CircuitOutputs
+		query  Query
+		pubSig *CircuitOutputs
 		vp     json.RawMessage
 		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Check merkalized query",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{
@@ -108,7 +107,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -129,7 +128,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		},
 		{
 			name: "Selective disclosure",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{},
@@ -137,7 +136,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -159,8 +158,8 @@ func TestCheckRequest_Success(t *testing.T) {
 			},
 		},
 		{
-			name: "verifier.Query with boolean type",
-			query: verifier.Query{
+			name: "Query with boolean type",
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"ZKPexperiance": map[string]interface{}{
@@ -170,7 +169,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
@@ -191,7 +190,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		},
 		{
 			name: "Selective disclosure with xsd:string type",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"position": map[string]interface{}{},
@@ -199,7 +198,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
@@ -225,7 +224,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		},
 		{
 			name: "EQ operator for xsd:string type",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"position": map[string]interface{}{
@@ -235,7 +234,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:    "KYCEmployee",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				ClaimPathKey: func() *big.Int {
@@ -260,7 +259,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		},
 		{
 			name: "Non merklized claim",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"birthday": map[string]interface{}{
@@ -270,7 +269,7 @@ func TestCheckRequest_Success(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
 				Type:    "KYCAgeCredential",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld#KYCAgeCredential")),
 				Operator:            1,
@@ -303,15 +302,15 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 	dayAndMinuteAgo := time.Now().AddDate(0, 0, -1).Add(durationMin).Unix()
 	tests := []struct {
 		name   string
-		query  verifier.Query
-		pubSig *verifier.CircuitOutputs
+		query  Query
+		pubSig *CircuitOutputs
 		vp     json.RawMessage
 		expErr error
 		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Generated proof is outdated",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{
@@ -321,7 +320,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:    "KYCCountryOfResidenceCredential",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -343,7 +342,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		},
 		{
 			name: "Empty disclosure value for disclosure request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{},
@@ -352,7 +351,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Type:    "KYCCountryOfResidenceCredential",
 			},
 			vp: nil,
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -374,7 +373,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		},
 		{
 			name: "Not EQ operation for disclosure request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{},
@@ -383,7 +382,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Type:    "KYCCountryOfResidenceCredential",
 			},
 			vp: vp,
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -405,7 +404,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		},
 		{
 			name: "Not array of values for disclosure request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{},
@@ -414,7 +413,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Type:    "KYCCountryOfResidenceCredential",
 			},
 			vp: vp,
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -436,7 +435,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		},
 		{
 			name: "Proof was generated for another disclosure value",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"countryCode": map[string]interface{}{},
@@ -445,7 +444,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Type:    "KYCCountryOfResidenceCredential",
 			},
 			vp: vp,
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -468,7 +467,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 		},
 		{
 			name: "Different key between proof and disclosure response",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
 					"documentType": map[string]interface{}{},
@@ -477,7 +476,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 				Type:    "KYCCountryOfResidenceCredential",
 			},
 			vp: vp,
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey: func() *big.Int {
@@ -513,35 +512,35 @@ func TestCheckRequest_Error(t *testing.T) {
 	now := time.Now().Unix()
 	tests := []struct {
 		name   string
-		query  verifier.Query
-		pubSig *verifier.CircuitOutputs
+		query  Query
+		pubSig *CircuitOutputs
 		expErr error
 		loader *mockJSONLDSchemaLoader
 	}{
 		{
 			name: "Invalid issuer",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"123"},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID: &issuerID,
 			},
-			expErr: verifier.ErrUnavailableIssuer,
+			expErr: ErrUnavailableIssuer,
 			loader: &mockJSONLDSchemaLoader{},
 		},
 		{
 			name: "Invalid Schema ID",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCAgeCredential",
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Timestamp:   now,
 			},
-			expErr: verifier.ErrSchemaID,
+			expErr: ErrSchemaID,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
@@ -550,7 +549,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Multiply query",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -559,7 +558,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					"req2": struct{}{},
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Timestamp:   now,
@@ -573,7 +572,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Failed params in request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -581,7 +580,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					"req1": 1,
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Timestamp:   now,
@@ -595,7 +594,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Multiple predicates in one request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -606,7 +605,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Timestamp:   now,
@@ -620,7 +619,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Proof was generated for another query operator",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -630,13 +629,13 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    3,
 				Timestamp:   now,
 			},
-			expErr: verifier.ErrRequestOperator,
+			expErr: ErrRequestOperator,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
@@ -645,7 +644,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Proof was generated for another values",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -655,14 +654,14 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:    &issuerID,
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:    5,
 				Value:       []*big.Int{big.NewInt(40)},
 				Timestamp:   now,
 			},
-			expErr: verifier.ErrInvalidValues,
+			expErr: ErrInvalidValues,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
@@ -671,7 +670,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Proof was generated for another path",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -681,7 +680,7 @@ func TestCheckRequest_Error(t *testing.T) {
 					},
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				ClaimPathKey:        big.NewInt(0),
@@ -700,7 +699,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Check revocation is required",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
@@ -711,7 +710,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 				SkipClaimRevocationCheck: false,
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Operator:            5,
@@ -730,7 +729,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Unsupported lt operator for xsd:boolean",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:           "KYCEmployee",
@@ -741,7 +740,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 				SkipClaimRevocationCheck: false,
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				Operator:            2,
@@ -760,7 +759,7 @@ func TestCheckRequest_Error(t *testing.T) {
 		},
 		{
 			name: "Negative value in request",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{issuerDID},
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
 				Type:           "KYCEmployee",
@@ -771,7 +770,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 				SkipClaimRevocationCheck: false,
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID:            &issuerID,
 				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
 				Operator:            1,
@@ -781,7 +780,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				IsRevocationChecked: 0,
 				Timestamp:           now,
 			},
-			expErr: verifier.ErrNegativeValue,
+			expErr: ErrNegativeValue,
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
@@ -802,15 +801,15 @@ func TestCheckRequest_Error(t *testing.T) {
 func TestVerifyQuery_Success(t *testing.T) {
 	tests := []struct {
 		name   string
-		query  verifier.Query
-		pubSig *verifier.CircuitOutputs
+		query  Query
+		pubSig *CircuitOutputs
 	}{
 		{
 			name: "Issuer DID is valid ID from public signals",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID: func() *core.ID {
 					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
 					userID, _ := core.IDFromInt(i)
@@ -820,10 +819,10 @@ func TestVerifyQuery_Success(t *testing.T) {
 		},
 		{
 			name: "All issuers are allowed",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"*"},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID: func() *core.ID {
 					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
 					userID, _ := core.IDFromInt(i)
@@ -844,16 +843,16 @@ func TestVerifyQuery_Success(t *testing.T) {
 func TestVerifyQuery_Error(t *testing.T) {
 	tests := []struct {
 		name   string
-		query  verifier.Query
-		pubSig *verifier.CircuitOutputs
+		query  Query
+		pubSig *CircuitOutputs
 		err    error
 	}{
 		{
 			name: "Invalid issuer in public signals",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{"did:polygonid:polygon:mumbai:2qHSHBGWGJ68AosMKcLCTp8FYdVrtYE6MtNHhq8xpK"},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID: func() *core.ID {
 					i, _ := big.NewInt(0).SetString("42", 10)
 					userID, _ := core.IDFromInt(i)
@@ -863,20 +862,20 @@ func TestVerifyQuery_Error(t *testing.T) {
 		},
 		{
 			name: "Issuer not found",
-			query: verifier.Query{
+			query: Query{
 				AllowedIssuers: []string{
 					"did:polygonid:polygon:mumbai:2qMe71smt9D591WQdKvkbJBSQfEUQXtvyPmzoCqDd7",
 					"did:polygonid:polygon:mumbai:2qPvUBjKWgqADsAr2diJabs1NkqNJii482E2y1ZciQ",
 				},
 			},
-			pubSig: &verifier.CircuitOutputs{
+			pubSig: &CircuitOutputs{
 				IssuerID: func() *core.ID {
 					i, _ := big.NewInt(0).SetString("22638457188543025296541325416907897762715008870723718557276875842936181250", 10)
 					userID, _ := core.IDFromInt(i)
 					return &userID
 				}(),
 			},
-			err: verifier.ErrUnavailableIssuer,
+			err: ErrUnavailableIssuer,
 		},
 	}
 
