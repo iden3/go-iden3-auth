@@ -66,13 +66,7 @@ func (c *AtomicQueryV3) VerifyStates(ctx context.Context, stateResolvers map[str
 		return errors.Errorf("%s resolver not found", resolver)
 	}
 
-	var state *big.Int
-	if c.ProofType == 0 {
-		state = c.IssuerAuthState.BigInt()
-	} else {
-		state = c.IssuerClaimIdenState.BigInt()
-	}
-	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), state)
+	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerState.BigInt())
 	if err != nil {
 		return err
 	}

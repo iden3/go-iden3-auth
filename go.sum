@@ -133,6 +133,8 @@ github.com/iden3/go-circuits/v2 v2.0.1-0.20231101084738-2cd9a3a21a72 h1:AmlNDKfJ
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231101084738-2cd9a3a21a72/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231101090223-c0f146e654ef h1:p8iZ/xa76r1EeQejWd9Qyrf8Epq6e2NMLZT1il2nTNQ=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231101090223-c0f146e654ef/go.mod h1:DVpm13bEuckWj6yntsJLW3/HTiOnBGIBaM9KymNTvB0=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231107104826-eb84f9065195 h1:UeFjbxOGP3/iVXF+YECgVib20IAI6uurR17YLvuoI/A=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231107104826-eb84f9065195/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
 github.com/iden3/go-iden3-core/v2 v2.0.0 h1:sQEuuq3RLfyYSY8qPiqxQ6YBpGbiAwepHJD/vjf1adA=
 github.com/iden3/go-iden3-core/v2 v2.0.0/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.15 h1:4MJYlrot1l31Fzlo2sF56u7EVFeHHJkxGXXZCtESgK4=

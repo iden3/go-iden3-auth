@@ -143,11 +143,11 @@ func (q Query) Check(
 	// V3 NEW
 	switch q.ProofType {
 	case string(verifiable.BJJSignatureProofType):
-		if pubSig.ProofType != 0 {
+		if pubSig.ProofType != 1 {
 			return ErrWronProofType
 		}
 	case string(verifiable.Iden3SparseMerkleTreeProofType):
-		if pubSig.ProofType != 1 {
+		if pubSig.ProofType != 2 {
 			return ErrWronProofType
 		}
 	default:
