@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
 	github.com/iden3/go-circuits/v2 v2.0.0
-	github.com/iden3/go-iden3-core/v2 v2.0.0
+	github.com/iden3/go-iden3-core/v2 v2.0.1-0.20231128141858-17766a668da1
 	github.com/iden3/go-jwz/v2 v2.0.0
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
