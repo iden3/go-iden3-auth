@@ -33,13 +33,13 @@ var allOperations = map[int]struct{}{
 }
 
 var availableTypesOperations = map[string]map[int]struct{}{
-	ld.XSDBoolean:                        {circuits.EQ: {}, circuits.NE: {}},
-	ld.XSDInteger:                        allOperations,
-	ld.XSDInteger + "nonNegativeInteger": allOperations,
-	ld.XSDInteger + "positiveInteger":    allOperations,
-	ld.XSDString:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
-	ld.XSDNS + "dateTime":                allOperations,
-	ld.XSDDouble:                         {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDBoolean:                   {circuits.EQ: {}, circuits.NE: {}},
+	ld.XSDInteger:                   allOperations,
+	ld.XSDNS + "nonNegativeInteger": allOperations,
+	ld.XSDNS + "positiveInteger":    allOperations,
+	ld.XSDString:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDNS + "dateTime":           allOperations,
+	ld.XSDDouble:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
 }
 
 // PathToSubjectType path to description of subject type.
