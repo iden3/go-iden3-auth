@@ -21,7 +21,6 @@ type Verifier interface {
 	VerifyQuery(ctx context.Context, query Query, schemaLoader ld.DocumentLoader, verifiablePresentation json.RawMessage, opts ...VerifyOpt) error
 	VerifyStates(ctx context.Context, resolvers map[string]StateResolver, opts ...VerifyOpt) error
 	VerifyIDOwnership(userIdentifier string, challenge *big.Int) error
-	VerifyVerifierID(verifier string) error
 
 	circuits.PubSignalsUnmarshaller
 }

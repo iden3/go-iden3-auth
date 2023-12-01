@@ -112,8 +112,3 @@ func (c *AtomicQuerySigV2) VerifyIDOwnership(sender string, requestID *big.Int) 
 	}
 	return nil
 }
-
-// VerifyVerifierID returns error if verifier ID wasn't match with circuit output.
-func (c *AtomicQuerySigV2) VerifyVerifierID(_ string) error {
-	return nil
-}

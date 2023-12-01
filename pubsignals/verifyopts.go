@@ -1,6 +1,10 @@
 package pubsignals
 
-import "time"
+import (
+	"time"
+
+	"github.com/iden3/go-iden3-core/v2/w3c"
+)
 
 var (
 	defaultAuthVerifyOpts  = VerifyConfig{AcceptedStateTransitionDelay: time.Minute * 5}
@@ -22,6 +26,13 @@ func WithAcceptedProofGenerationDelay(duration time.Duration) VerifyOpt {
 	}
 }
 
+// WithVerifierDID sets verifier to request
+func WithVerifierDID(did *w3c.DID) VerifyOpt {
+	return func(v *VerifyConfig) {
+		v.VerifierDID = did
+	}
+}
+
 // VerifyOpt sets options.
 type VerifyOpt func(v *VerifyConfig)
 
@@ -30,4 +41,5 @@ type VerifyConfig struct {
 	// is the period of time that a revoked state remains valid.
 	AcceptedStateTransitionDelay time.Duration
 	AcceptedProofGenerationDelay time.Duration
+	VerifierDID                  *w3c.DID
 }
