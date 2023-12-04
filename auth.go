@@ -375,11 +375,18 @@ func (v *Verifier) VerifyAuthResponse(
 			rawMessage = nil
 		}
 
-		aud, err := w3c.ParseDID(request.From) // TODO: this is assuming that response.TO is always DID.
-		if err != nil {
-			return err
+		cfg := &pubsignals.VerifyConfig{}
+		for _, o := range opts {
+			o(cfg)
 		}
-		opts = append(opts, pubsignals.WithVerifierDID(aud))
+		// check if VerifierDID is set to opts
+		if cfg.VerifierDID == nil {
+			aud, err := w3c.ParseDID(request.From) // TODO: this is assuming that response.TO is always DID.
+			if err != nil {
+				return err
+			}
+			opts = append(opts, pubsignals.WithVerifierDID(aud))
+		}
 
 		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, opts...)
 		if err != nil {

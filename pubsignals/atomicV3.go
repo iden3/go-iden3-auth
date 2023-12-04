@@ -66,7 +66,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 	}
 
 	// verify nullifier information
-	if c.Nullifier != nil && c.Nullifier.BitLen() != 0 {
+	if c.Nullifier != nil && c.Nullifier.Cmp(big.NewInt(0)) != 0 {
 		cfg := defaultProofVerifyOpts
 		for _, o := range opts {
 			o(&cfg)
