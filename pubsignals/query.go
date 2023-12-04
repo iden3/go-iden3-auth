@@ -14,7 +14,6 @@ import (
 	parser "github.com/iden3/go-schema-processor/v2/json"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/utils"
-	verifiable "github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -89,7 +88,7 @@ type CircuitOutputs struct {
 	// V3 NEW
 	LinkID            *big.Int
 	VerifierID        *core.ID
-	VerifierSessionID *core.ID
+	VerifierSessionID *big.Int
 
 	OperatorOutput *big.Int
 	Nullifier      *big.Int
@@ -142,43 +141,6 @@ func (q Query) Check(
 		time.Unix(pubSig.Timestamp, 0),
 	) > cfg.AcceptedProofGenerationDelay {
 		return ErrProofGenerationOutdated
-	}
-
-	// V3 NEW
-	switch q.ProofType {
-	case string(verifiable.BJJSignatureProofType):
-		if pubSig.ProofType != 1 {
-			return ErrWronProofType
-		}
-	case string(verifiable.Iden3SparseMerkleTreeProofType):
-		if pubSig.ProofType != 2 {
-			return ErrWronProofType
-		}
-	default:
-	}
-
-	// verify nullifier information
-
-	if pubSig.Nullifier != nil {
-		id, err := core.IDFromDID(*cfg.VerifierDID)
-		if err != nil {
-			return err
-		}
-		if pubSig.VerifierID.BigInt() != id.BigInt() {
-			return errors.New("wrong verifier is used for nullification")
-		}
-
-		verifierSessionID, ok := new(big.Int).SetString(q.VerifierSessionID, 10)
-		if !ok {
-			return errors.Errorf("verifier session id is not valid big int %s", verifierSessionID.String())
-		}
-		if pubSig.VerifierSessionID.BigInt() != verifierSessionID {
-			return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", verifierSessionID.String(), pubSig.VerifierSessionID.BigInt().String())
-		}
-	}
-
-	if q.LinkSessionID != "" && pubSig.LinkID == nil {
-		return errors.New("proof doesn't contain link id, but link session id is provided")
 	}
 
 	return q.verifyClaim(schemaBytes, pubSig, loader)

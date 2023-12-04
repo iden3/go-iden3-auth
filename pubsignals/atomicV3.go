@@ -10,6 +10,7 @@ import (
 	"github.com/iden3/go-circuits/v2"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
+	verifiable "github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -40,14 +41,57 @@ func (c *AtomicQueryV3) VerifyQuery(
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
 		// V3 NEW
-		LinkID:         c.LinkID,
-		VerifierID:     c.VerifierID,
-		OperatorOutput: c.OperatorOutput,
-		ProofType:      c.ProofType,
+		LinkID:            c.LinkID,
+		VerifierID:        c.VerifierID,
+		VerifierSessionID: c.VerifierSessionID,
+		OperatorOutput:    c.OperatorOutput,
+		Nullifier:         c.Nullifier,
+		ProofType:         c.ProofType,
 	}, verifiablePresentation, opts...)
 	if err != nil {
 		return err
 	}
+
+	// V3 NEW
+	switch query.ProofType {
+	case string(verifiable.BJJSignatureProofType):
+		if c.ProofType != 1 {
+			return ErrWronProofType
+		}
+	case string(verifiable.Iden3SparseMerkleTreeProofType):
+		if c.ProofType != 2 {
+			return ErrWronProofType
+		}
+	default:
+	}
+
+	// verify nullifier information
+	if c.Nullifier != nil && c.Nullifier.BitLen() != 0 {
+		cfg := defaultProofVerifyOpts
+		for _, o := range opts {
+			o(&cfg)
+		}
+		id, err := core.IDFromDID(*cfg.VerifierDID)
+		if err != nil {
+			return err
+		}
+		if c.VerifierID.BigInt().Cmp(id.BigInt()) != 0 {
+			return errors.New("wrong verifier is used for nullification")
+		}
+
+		verifierSessionID, ok := new(big.Int).SetString(query.VerifierSessionID, 10)
+		if !ok {
+			return errors.Errorf("verifier session id is not valid big int %s", verifierSessionID.String())
+		}
+		if c.VerifierSessionID != verifierSessionID {
+			return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", verifierSessionID.String(), c.VerifierSessionID.String())
+		}
+	}
+
+	if query.LinkSessionID != "" && c.LinkID == nil {
+		return errors.New("proof doesn't contain link id, but link session id is provided")
+	}
+
 	return nil
 }
 
