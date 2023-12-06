@@ -390,9 +390,9 @@ func (v *Verifier) VerifyAuthResponse(
 
 		// check if NullifierSessionID is set to opts
 		if cfg.NullifierSessionID == nil {
-			nullifierSessionIdParam, ok := proofRequest.Params["nullifierSessionID"]
+			nullifierSessionIDParam, ok := proofRequest.Params["nullifierSessionID"]
 			if ok {
-				nullifierSessionID, ok := new(big.Int).SetString(fmt.Sprintf("%v", nullifierSessionIdParam), 10)
+				nullifierSessionID, ok := new(big.Int).SetString(fmt.Sprintf("%v", nullifierSessionIDParam), 10)
 				if !ok {
 					return errors.Errorf("verifier session id is not valid big int %s", nullifierSessionID.String())
 				}
