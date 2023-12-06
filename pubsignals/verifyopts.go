@@ -1,6 +1,7 @@
 package pubsignals
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/iden3/go-iden3-core/v2/w3c"
@@ -33,6 +34,13 @@ func WithVerifierDID(did *w3c.DID) VerifyOpt {
 	}
 }
 
+// WithNullifierSessionID sets nullifierSessionID to request
+func WithNullifierSessionID(nullifierSessionID *big.Int) VerifyOpt {
+	return func(v *VerifyConfig) {
+		v.NullifierSessionID = nullifierSessionID
+	}
+}
+
 // VerifyOpt sets options.
 type VerifyOpt func(v *VerifyConfig)
 
@@ -42,4 +50,5 @@ type VerifyConfig struct {
 	AcceptedStateTransitionDelay time.Duration
 	AcceptedProofGenerationDelay time.Duration
 	VerifierDID                  *w3c.DID
+	NullifierSessionID           *big.Int
 }

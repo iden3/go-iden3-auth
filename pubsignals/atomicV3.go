@@ -41,12 +41,12 @@ func (c *AtomicQueryV3) VerifyQuery(
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
 		// V3 NEW
-		LinkID:            c.LinkID,
-		VerifierID:        c.VerifierID,
-		VerifierSessionID: c.VerifierSessionID,
-		OperatorOutput:    c.OperatorOutput,
-		Nullifier:         c.Nullifier,
-		ProofType:         c.ProofType,
+		LinkID:             c.LinkID,
+		VerifierID:         c.VerifierID,
+		NullifierSessionID: c.NullifierSessionID,
+		OperatorOutput:     c.OperatorOutput,
+		Nullifier:          c.Nullifier,
+		ProofType:          c.ProofType,
 	}, verifiablePresentation, opts...)
 	if err != nil {
 		return err
@@ -79,12 +79,8 @@ func (c *AtomicQueryV3) VerifyQuery(
 			return errors.New("wrong verifier is used for nullification")
 		}
 
-		verifierSessionID, ok := new(big.Int).SetString(query.VerifierSessionID, 10)
-		if !ok {
-			return errors.Errorf("verifier session id is not valid big int %s", verifierSessionID.String())
-		}
-		if c.VerifierSessionID != verifierSessionID {
-			return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", verifierSessionID.String(), c.VerifierSessionID.String())
+		if c.NullifierSessionID.Cmp(cfg.NullifierSessionID) != 0 {
+			return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", cfg.NullifierSessionID.String(), c.NullifierSessionID.String())
 		}
 	}
 

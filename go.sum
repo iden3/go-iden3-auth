@@ -109,6 +109,8 @@ github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3 h1:ZHFnK2dU3NJglY+igY4
 github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231107104826-eb84f9065195 h1:UeFjbxOGP3/iVXF+YECgVib20IAI6uurR17YLvuoI/A=
 github.com/iden3/go-circuits/v2 v2.0.1-0.20231107104826-eb84f9065195/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231206142403-a3ef66e48eee h1:HgDAwl7GR0Om2uZYD6vt8JVmK3BhF+TGRopilr54mN4=
+github.com/iden3/go-circuits/v2 v2.0.1-0.20231206142403-a3ef66e48eee/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
 github.com/iden3/go-iden3-core/v2 v2.0.1-0.20231130210351-b20901fdcaa6 h1:/aGy/IBE2cKFXaiAZxuuajh9ixpTOfKJs50EhNXuZKo=
 github.com/iden3/go-iden3-core/v2 v2.0.1-0.20231130210351-b20901fdcaa6/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-core/v2 v2.0.1-0.20231201093815-43513060218f h1:SckYN8tfMOBwmZLgaRDG7C18JM+fP1R6fpPErM5BuJo=
@@ -133,6 +135,8 @@ github.com/iden3/go-schema-processor/v2 v2.0.1 h1:eh54MdgEm+Au9LZzFpx56YxW342t3H
 github.com/iden3/go-schema-processor/v2 v2.0.1/go.mod h1:eWRQDbxixZ/9k/uPlciKIy6TUYlKX/6hdqyTuAQi3wE=
 github.com/iden3/iden3comm/v2 v2.0.0 h1:cFDfF6aJ589ENg5zlTBEPK6Qqv4I11C/gliAWZORpyY=
 github.com/iden3/iden3comm/v2 v2.0.0/go.mod h1:wrXoxi8eoQSLopatRW5+hYF9lDRvzGL2As9ZE88q/kA=
+github.com/iden3/iden3comm/v2 v2.0.1-0.20231206141252-dc3389b6e759 h1:VysOX75ElqQQkRK3GOuOJtDWezncf0VgSLlvqZbUzso=
+github.com/iden3/iden3comm/v2 v2.0.1-0.20231206141252-dc3389b6e759/go.mod h1:wrXoxi8eoQSLopatRW5+hYF9lDRvzGL2As9ZE88q/kA=
 github.com/ipfs/boxo v0.8.0 h1:UdjAJmHzQHo/j3g3b1bAcAXCj/GM6iTwvSlBDvPBNBs=
 github.com/ipfs/boxo v0.8.0/go.mod h1:RIsi4CnTyQ7AUsNn5gXljJYZlQrHBMnJp94p73liFiA=
 github.com/ipfs/go-cid v0.4.1 h1:A/T3qGvxi4kpKWWcPC/PgbvDA2bjVLO7n4UeVwnbs/s=

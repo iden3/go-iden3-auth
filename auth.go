@@ -388,6 +388,18 @@ func (v *Verifier) VerifyAuthResponse(
 			opts = append(opts, pubsignals.WithVerifierDID(aud))
 		}
 
+		// check if NullifierSessionID is set to opts
+		if cfg.NullifierSessionID == nil {
+			nullifierSessionIdParam, ok := proofRequest.Params["nullifierSessionID"]
+			if ok {
+				nullifierSessionID, ok := new(big.Int).SetString(fmt.Sprintf("%v", nullifierSessionIdParam), 10)
+				if !ok {
+					return errors.Errorf("verifier session id is not valid big int %s", nullifierSessionID.String())
+				}
+				opts = append(opts, pubsignals.WithNullifierSessionID(nullifierSessionID))
+			}
+		}
+
 		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, opts...)
 		if err != nil {
 			return err

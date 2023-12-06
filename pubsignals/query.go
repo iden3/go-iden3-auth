@@ -68,7 +68,6 @@ type Query struct {
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
 	ProofType                string                 `json:"proofType"`
-	VerifierSessionID        string                 `json:"verifierSessionId,omitempty"`
 	LinkSessionID            string                 `json:"linkSessionId"`
 }
 
@@ -86,9 +85,9 @@ type CircuitOutputs struct {
 	ValueArraySize      int
 	IsRevocationChecked int
 	// V3 NEW
-	LinkID            *big.Int
-	VerifierID        *core.ID
-	VerifierSessionID *big.Int
+	LinkID             *big.Int
+	VerifierID         *core.ID
+	NullifierSessionID *big.Int
 
 	OperatorOutput *big.Int
 	Nullifier      *big.Int
