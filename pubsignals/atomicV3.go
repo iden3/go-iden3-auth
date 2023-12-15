@@ -90,7 +90,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 			}
 		} else if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
 			// if no nullifierSessionID in params  - we need to verify that nullifier is zero
-			return errors.New("nullfifier id is generated but wasn't requested")
+			return errors.New("nullifier id is generated but wasn't requested")
 		}
 
 	}
