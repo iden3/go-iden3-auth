@@ -25,6 +25,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 	query Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
+	_ map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
 	err := query.Check(ctx, schemaLoader, &CircuitOutputs{

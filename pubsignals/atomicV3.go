@@ -26,6 +26,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 	query Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
+	params map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
 	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
@@ -65,23 +66,43 @@ func (c *AtomicQueryV3) VerifyQuery(
 	default:
 	}
 
+	if params != nil {
+		nullifierSessionIDparam, ok := params[ParamNameNullifierSessionID].(string)
+		if ok {
+			verifierDID, ok := params[ParamNameNullifierSessionID].(*w3c.DID)
+			if !ok {
+				return errors.New("verifier did is mandatory if nullifier session is set in the request")
+			}
+			id, err := core.IDFromDID(*verifierDID)
+			if err != nil {
+				return err
+			}
+			if c.VerifierID.BigInt().Cmp(id.BigInt()) != 0 {
+				return errors.New("wrong verifier is used for nullification")
+			}
+
+			nullifierSessionID, ok := new(big.Int).SetString(nullifierSessionIDparam, 10)
+			if !ok {
+				return errors.New("nullifier session is not a valid big integer")
+			}
+			if c.NullifierSessionID.Cmp(nullifierSessionID) != 0 {
+				return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", nullifierSessionID.String(), c.NullifierSessionID.String())
+			}
+		} else {
+			// if no nullifierSessionID in params  - we need to verify that nullifier is zero
+			if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
+				return errors.New("nullfifier id is generated but wasn't requested")
+			}
+		}
+
+	}
 	// verify nullifier information
 	if c.Nullifier != nil && c.Nullifier.Cmp(big.NewInt(0)) != 0 {
 		cfg := defaultProofVerifyOpts
 		for _, o := range opts {
 			o(&cfg)
 		}
-		id, err := core.IDFromDID(*cfg.VerifierDID)
-		if err != nil {
-			return err
-		}
-		if c.VerifierID.BigInt().Cmp(id.BigInt()) != 0 {
-			return errors.New("wrong verifier is used for nullification")
-		}
 
-		if c.NullifierSessionID.Cmp(cfg.NullifierSessionID) != 0 {
-			return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", cfg.NullifierSessionID.String(), c.NullifierSessionID.String())
-		}
 	}
 
 	if query.LinkSessionID != "" && c.LinkID == nil {

@@ -25,6 +25,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 	query Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
+	_ map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
 	return query.Check(ctx, schemaLoader, &CircuitOutputs{

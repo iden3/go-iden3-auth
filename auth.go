@@ -379,28 +379,17 @@ func (v *Verifier) VerifyAuthResponse(
 		for _, o := range opts {
 			o(cfg)
 		}
-		// check if VerifierDID is set to opts
-		if cfg.VerifierDID == nil {
-			aud, err := w3c.ParseDID(request.From) // TODO: this is assuming that response.TO is always DID.
-			if err != nil {
-				return err
-			}
-			opts = append(opts, pubsignals.WithVerifierDID(aud))
-		}
 
-		// check if NullifierSessionID is set to opts
-		if cfg.NullifierSessionID == nil {
-			nullifierSessionIDParam, ok := proofRequest.Params["nullifierSessionID"]
-			if ok {
-				nullifierSessionID, ok := new(big.Int).SetString(fmt.Sprintf("%v", nullifierSessionIDParam), 10)
-				if !ok {
-					return errors.Errorf("verifier session id is not valid big int %s", nullifierSessionID.String())
-				}
-				opts = append(opts, pubsignals.WithNullifierSessionID(nullifierSessionID))
-			}
+		if proofRequest.Params == nil {
+			proofRequest.Params = make(map[string]interface{})
 		}
+		verifierDID, err := w3c.ParseDID(request.From) // TODO: this is assuming that response.TO is always DID.
+		if err != nil {
+			return err
+		}
+		proofRequest.Params[pubsignals.ParamNameVerifierDID] = verifierDID
 
-		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, opts...)
+		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
 		if err != nil {
 			return err
 		}
