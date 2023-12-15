@@ -25,7 +25,7 @@ func (c *AuthV2) VerifyQuery(
 	_ Query,
 	_ ld.DocumentLoader,
 	_ json.RawMessage,
-
+	_ map[string]interface{},
 	_ ...VerifyOpt) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
