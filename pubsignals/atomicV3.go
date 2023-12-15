@@ -94,14 +94,6 @@ func (c *AtomicQueryV3) VerifyQuery(
 		}
 
 	}
-	// verify nullifier information
-	if c.Nullifier != nil && c.Nullifier.Cmp(big.NewInt(0)) != 0 {
-		cfg := defaultProofVerifyOpts
-		for _, o := range opts {
-			o(&cfg)
-		}
-
-	}
 
 	if query.GroupID != 0 && c.LinkID == nil {
 		return errors.New("proof doesn't contain link id, but group id is provided")
