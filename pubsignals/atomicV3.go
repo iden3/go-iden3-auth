@@ -88,11 +88,9 @@ func (c *AtomicQueryV3) VerifyQuery(
 			if c.NullifierSessionID.Cmp(nullifierSessionID) != 0 {
 				return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", nullifierSessionID.String(), c.NullifierSessionID.String())
 			}
-		} else {
+		} else if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
 			// if no nullifierSessionID in params  - we need to verify that nullifier is zero
-			if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
-				return errors.New("nullfifier id is generated but wasn't requested")
-			}
+			return errors.New("nullfifier id is generated but wasn't requested")
 		}
 
 	}
@@ -105,8 +103,8 @@ func (c *AtomicQueryV3) VerifyQuery(
 
 	}
 
-	if query.LinkSessionID != "" && c.LinkID == nil {
-		return errors.New("proof doesn't contain link id, but link session id is provided")
+	if query.GroupID != 0 && c.LinkID == nil {
+		return errors.New("proof doesn't contain link id, but group id is provided")
 	}
 
 	return nil

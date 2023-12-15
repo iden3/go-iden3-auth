@@ -68,7 +68,7 @@ type Query struct {
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
 	ProofType                string                 `json:"proofType"`
-	LinkSessionID            string                 `json:"linkSessionId"`
+	GroupID                  int                    `json:"groupId"`
 }
 
 // CircuitOutputs pub signals from circuit.
@@ -367,32 +367,6 @@ func (q Query) verifyEmptyCredentialSubject(
 
 	return nil
 }
-
-// func verifyLinkID(linkNonce string, claim *core.Claim, linkId string) error {
-// 	linkIdCalc, err := CalculateLinkID(linkNonce, claim)
-// 	if err != nil {
-// 		return errors.Errorf("failed to calculate link ID: %v", err)
-// 	}
-
-// 	if linkId != linkIdCalc {
-// 		return errors.Errorf("invalid link ID")
-// 	}
-
-// 	return nil
-// }
-
-// func verifyNullify(genesisID, claimSubjectProfileNonce, claimSchema, fieldValue, verifierID, crs, operatorOutput *big.Int) error {
-// 	nullify, err := CalculateNullify(genesisID, claimSubjectProfileNonce, claimSchema, fieldValue, verifierID, crs)
-// 	if err != nil {
-// 		return errors.Errorf("failed to calculate nullify: %v", err)
-// 	}
-
-// 	if nullify != operatorOutput.String() {
-// 		return errors.Errorf("invalid nullify value")
-// 	}
-
-// 	return nil
-// }
 
 func (q Query) isSelectivityDisclosure(
 	predicate map[string]interface{}) bool {
