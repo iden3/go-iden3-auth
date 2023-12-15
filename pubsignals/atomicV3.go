@@ -69,7 +69,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 	if params != nil {
 		nullifierSessionIDparam, ok := params[ParamNameNullifierSessionID].(string)
 		if ok {
-			verifierDID, ok := params[ParamNameNullifierSessionID].(*w3c.DID)
+			verifierDID, ok := params[ParamNameVerifierDID].(*w3c.DID)
 			if !ok {
 				return errors.New("verifier did is mandatory if nullifier session is set in the request")
 			}
