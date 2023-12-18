@@ -306,10 +306,8 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 				return errors.New("selective disclosure not available for array of values")
 			}
 		}
-	} else {
-		if pubSig.Operator != circuits.SD {
-			return errors.New("invalid pub signal operator for selective disclosure")
-		}
+	} else if pubSig.Operator != circuits.SD {
+		return errors.New("invalid pub signal operator for selective disclosure")
 	}
 
 	mz, err := merklize.MerklizeJSONLD(ctx,
