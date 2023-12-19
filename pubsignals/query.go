@@ -123,11 +123,6 @@ func (q Query) Check(
 		return err
 	}
 
-	cfg := defaultProofVerifyOpts
-	for _, o := range opts {
-		o(&cfg)
-	}
-
 	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
 		schemaBytes, loader, supportSdOperator); err != nil {
 		return err
@@ -135,6 +130,11 @@ func (q Query) Check(
 
 	if !q.SkipClaimRevocationCheck && pubSig.IsRevocationChecked == 0 {
 		return errors.New("check revocation is required")
+	}
+
+	cfg := defaultProofVerifyOpts
+	for _, o := range opts {
+		o(&cfg)
 	}
 
 	if time.Since(
