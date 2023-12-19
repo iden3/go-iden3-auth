@@ -302,11 +302,6 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 			return errors.New("selective disclosure available only for equal operation")
 		}
 
-		for i := 1; i < len(pubSig.Value); i++ {
-			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
-				return errors.New("selective disclosure not available for array of values")
-			}
-		}
 	} else {
 		if pubSig.Operator != circuits.SD {
 			return errors.New("invalid pub signal operator for selective disclosure")
@@ -314,6 +309,12 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 
 		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput == big.NewInt(0) {
 			return errors.New("operator output should be not null or empty")
+		}
+	}
+
+	for i := 1; i < len(pubSig.Value); i++ {
+		if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+			return errors.New("selective disclosure not available for array of values")
 		}
 	}
 
