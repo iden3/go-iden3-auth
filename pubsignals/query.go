@@ -297,33 +297,6 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 		return errors.New("selective disclosure value is missed")
 	}
 
-	if !suppordSdOperator {
-		if pubSig.Operator != circuits.EQ {
-			return errors.New("selective disclosure available only for equal operation")
-		}
-
-		for i := 1; i < len(pubSig.Value); i++ {
-			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
-				return errors.New("selective disclosure not available for array of values")
-			}
-		}
-
-	} else {
-		if pubSig.Operator != circuits.SD {
-			return errors.New("invalid pub signal operator for selective disclosure")
-		}
-
-		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput == big.NewInt(0) {
-			return errors.New("operator output should be not null or empty")
-		}
-
-		for i := 0; i < len(pubSig.Value); i++ {
-			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
-				return errors.New("selective disclosure values should be zero")
-			}
-		}
-	}
-
 	mz, err := merklize.MerklizeJSONLD(ctx,
 		bytes.NewBuffer(verifiablePresentation),
 		merklize.WithDocumentLoader(schemaLoader))
@@ -351,8 +324,35 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 		return errors.Errorf("failed to hash value: %v", err)
 	}
 
-	if pubSig.Value[0].Cmp(mvBig) != 0 {
-		return errors.New("different value between proof and disclosure value")
+	if !suppordSdOperator {
+		if pubSig.Operator != circuits.EQ {
+			return errors.New("selective disclosure available only for equal operation")
+		}
+
+		for i := 1; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure not available for array of values")
+			}
+		}
+
+		if pubSig.Value[0].Cmp(mvBig) != 0 {
+			return errors.New("different value between proof and disclosure value")
+		}
+
+	} else {
+		if pubSig.Operator != circuits.SD {
+			return errors.New("invalid pub signal operator for selective disclosure")
+		}
+
+		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput.Cmp(mvBig) != 0 {
+			return errors.New("operator output should be equal to disclosed value")
+		}
+		for i := 0; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure values should be zero")
+			}
+		}
+
 	}
 
 	return nil
