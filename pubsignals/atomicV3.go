@@ -48,7 +48,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 		OperatorOutput:     c.OperatorOutput,
 		Nullifier:          c.Nullifier,
 		ProofType:          c.ProofType,
-	}, verifiablePresentation, opts...)
+	}, verifiablePresentation, true, opts...)
 	if err != nil {
 		return err
 	}

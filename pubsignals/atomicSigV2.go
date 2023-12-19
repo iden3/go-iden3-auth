@@ -40,7 +40,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, verifiablePresentation, opts...)
+	}, verifiablePresentation, false, opts...)
 	if err != nil {
 		return err
 	}

@@ -289,7 +289,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
 			require.NoError(t, err)
 			tt.loader.assert(t)
 		})
@@ -501,7 +501,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})
@@ -791,7 +791,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil, false)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})

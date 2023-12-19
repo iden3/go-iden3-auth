@@ -102,6 +102,7 @@ func (q Query) Check(
 	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
+	supportSdOperator bool,
 	opts ...VerifyOpt,
 ) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
@@ -123,7 +124,7 @@ func (q Query) Check(
 	}
 
 	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
-		schemaBytes, loader); err != nil {
+		schemaBytes, loader, supportSdOperator); err != nil {
 		return err
 	}
 
@@ -226,6 +227,7 @@ func (q Query) verifyCredentialSubject(
 	verifiablePresentation json.RawMessage,
 	ctxBytes []byte,
 	schemaLoader ld.DocumentLoader,
+	supportSdOperator bool,
 ) error {
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
@@ -245,7 +247,7 @@ func (q Query) verifyCredentialSubject(
 	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
 		return q.validateDisclosure(ctx, pubSig, fieldName,
-			verifiablePresentation, schemaLoader)
+			verifiablePresentation, schemaLoader, supportSdOperator)
 	}
 
 	// validate empty credential subject request
@@ -289,19 +291,36 @@ func (q Query) verifyCredentialSubject(
 
 func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 	key string, verifiablePresentation json.RawMessage,
-	schemaLoader ld.DocumentLoader) error {
+	schemaLoader ld.DocumentLoader, suppordSdOperator bool) error {
 
 	if verifiablePresentation == nil {
 		return errors.New("selective disclosure value is missed")
 	}
 
-	if pubSig.Operator != circuits.EQ {
-		return errors.New("selective disclosure available only for equal operation")
-	}
+	if !suppordSdOperator {
+		if pubSig.Operator != circuits.EQ {
+			return errors.New("selective disclosure available only for equal operation")
+		}
 
-	for i := 1; i < len(pubSig.Value); i++ {
-		if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
-			return errors.New("selective disclosure not available for array of values")
+		for i := 1; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure not available for array of values")
+			}
+		}
+
+	} else {
+		if pubSig.Operator != circuits.SD {
+			return errors.New("invalid pub signal operator for selective disclosure")
+		}
+
+		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput == big.NewInt(0) {
+			return errors.New("operator output should be not null or empty")
+		}
+
+		for i := 0; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure values should be zero")
+			}
 		}
 	}
 
