@@ -40,7 +40,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, verifiablePresentation, opts...)
+	}, verifiablePresentation, false, opts...)
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.

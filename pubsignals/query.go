@@ -102,6 +102,7 @@ func (q Query) Check(
 	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
+	supportSdOperator bool,
 	opts ...VerifyOpt,
 ) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
@@ -128,7 +129,7 @@ func (q Query) Check(
 	}
 
 	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
-		schemaBytes, loader, cfg.SupportSdOperator); err != nil {
+		schemaBytes, loader, supportSdOperator); err != nil {
 		return err
 	}
 
@@ -306,8 +307,14 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 				return errors.New("selective disclosure not available for array of values")
 			}
 		}
-	} else if pubSig.Operator != circuits.SD {
-		return errors.New("invalid pub signal operator for selective disclosure")
+	} else {
+		if pubSig.Operator != circuits.SD {
+			return errors.New("invalid pub signal operator for selective disclosure")
+		}
+
+		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput == big.NewInt(0) {
+			return errors.New("operator output should be not null or empty")
+		}
 	}
 
 	mz, err := merklize.MerklizeJSONLD(ctx,

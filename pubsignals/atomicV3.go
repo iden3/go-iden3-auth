@@ -29,7 +29,6 @@ func (c *AtomicQueryV3) VerifyQuery(
 	params map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
-	opts = append(opts, WithSupportSdOperator(true))
 	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
@@ -49,7 +48,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 		OperatorOutput:     c.OperatorOutput,
 		Nullifier:          c.Nullifier,
 		ProofType:          c.ProofType,
-	}, verifiablePresentation, opts...)
+	}, verifiablePresentation, true, opts...)
 	if err != nil {
 		return err
 	}
