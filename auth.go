@@ -375,11 +375,6 @@ func (v *Verifier) VerifyAuthResponse(
 			rawMessage = nil
 		}
 
-		cfg := &pubsignals.VerifyConfig{}
-		for _, o := range opts {
-			o(cfg)
-		}
-
 		if proofRequest.Params == nil {
 			proofRequest.Params = make(map[string]interface{})
 		}
