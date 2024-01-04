@@ -20,6 +20,7 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
+	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-jwz/v2"
 	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
 	"github.com/iden3/go-schema-processor/v2/merklize"
@@ -321,6 +322,10 @@ func (v *Verifier) VerifyAuthResponse(
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
 
+	if request.From != response.To {
+		return errors.Errorf("sender of the request is not a target of response - expected %s, given %s", request.From, response.To)
+	}
+
 	for _, proofRequest := range request.Body.Scope {
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
@@ -370,7 +375,16 @@ func (v *Verifier) VerifyAuthResponse(
 			rawMessage = nil
 		}
 
-		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, opts...)
+		if proofRequest.Params == nil {
+			proofRequest.Params = make(map[string]interface{})
+		}
+		verifierDID, err := w3c.ParseDID(request.From) // TODO: this is assuming that response.TO is always DID.
+		if err != nil {
+			return err
+		}
+		proofRequest.Params[pubsignals.ParamNameVerifierDID] = verifierDID
+
+		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
 		if err != nil {
 			return err
 		}
@@ -379,6 +393,7 @@ func (v *Verifier) VerifyAuthResponse(
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return nil

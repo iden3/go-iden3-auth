@@ -289,7 +289,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
 			require.NoError(t, err)
 			tt.loader.assert(t)
 		})
@@ -399,6 +399,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -430,6 +431,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -501,7 +503,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})
@@ -791,7 +793,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil, false)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})

@@ -424,7 +424,7 @@ func TestVerifier_VerifyJWZ(t *testing.T) {
 
 func TestVerifier_FullVerify(t *testing.T) {
 	// request
-	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	verifierID := "did:polygonid:polygon:mumbai:2qJ689kpoJxcSzB5sAFJtPsSBSrHF5dq722BHMqURL"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
@@ -487,7 +487,7 @@ func TestVerifier_FullVerify_JWS(t *testing.T) {
 		"type":    "KYCAgeCredential",
 	}
 	request.Body.Scope = append(request.Body.Scope, sigReq)
-	request.From = "did:iden3:polygon:mumbai:x4jcHP4XHTK3vX58AHZPyHE8kYjneyE6FZRfz7K29"
+	request.From = "did:polygonid:polygon:mumbai:2qLPqvayNQz9TA2r5VPxUugoF18teGU583zJ859wfy"
 	request.To = "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
 
 	token := `eyJhbGciOiJFUzI1NkstUiIsImtpZCI6ImRpZDpwa2g6cG9seToweDcxNDFFNGQyMEY3NjQ0REM4YzBBZENBOGE1MjBFQzgzQzZjQUJENjUjUmVjb3ZlcnkyMDIwIiwidHlwIjoiYXBwbGljYXRpb24vaWRlbjNjb21tLXNpZ25lZC1qc29uIn0.eyJpZCI6IjJjOGQ5NzQ3LTQ0MTAtNGU5My1iZjg0LTRlYTNjZmY4MmY0MCIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zY29tbS1zaWduZWQtanNvbiIsInR5cGUiOiJodHRwczovL2lkZW4zLWNvbW11bmljYXRpb24uaW8vYXV0aG9yaXphdGlvbi8xLjAvcmVzcG9uc2UiLCJ0aGlkIjoiN2YzOGExOTMtMDkxOC00YTQ4LTlmYWMtMzZhZGZkYjhiNTQyIiwiYm9keSI6eyJzY29wZSI6W3siaWQiOjEsImNpcmN1aXRJZCI6ImNyZWRlbnRpYWxBdG9taWNRdWVyeVNpZ1YyIiwicHJvb2YiOnsicGlfYSI6WyIxMzI3Njk4Nzc5MjQ5MjM0OTA2MDcxMDc3NTEyOTUxMjYxNzY1NjMzODcxMDkxMzE3NDA0NzE0NTcyMDY4Mjk4NzU0MzUwNjY3NDY0IiwiMjA1NDcyOTI1MzQ0MDgxNzA4NDQwODc3MzY2MDQ0OTYyNjQ3MzI2NjUxNDkxMDEzMzMxNzk3NTg5NTAwMjM0NTgwMjA1Njg5NzMzNTYiLCIxIl0sInBpX2IiOltbIjcyNTI1MDEyNjE5ODM1NTYwMjM1NjA3MzI1MjIzODk2MjIxMDY4MTA5OTUxNzkxNjI0MjY2NzcyNDM2MjQwNTQ0Mzc2Nzc1ODI4MCIsIjgyNDU2MTQzMTExNjUzNTUyNzcyNTgyNTg1NTA0MTI5MTUzNjAzNTc2MjEyMDY5OTA0Mjk3NTE3ODk2NTgwNTI1ODY0Mjc2NjgyMDMiXSxbIjg0MjA4OTI3MTI5OTMyMTU5OTU3NjkwMDQ3MzU2Njc5MzY3MDk4MzY5MTY4MzU4MDM2Njc2NjI1NzQxMTcyNjEzNjI2OTgxMzI1MjkiLCIxMDgyOTQzMjI5MDkyODY3MjM1NjAzNjExMTgxNjE4NTQ0MDU3NTgwMDI1NDQzODAyMzUzNTA3MzUzNTY1ODMzOTE0MzMzODAzNDAyNyJdLFsiMSIsIjAiXV0sInBpX2MiOlsiMTIwNTc1NzM1NDQ2Mzc1NDA1MzE2MjIxNDc2NDg2NjE0MDc1NzM1MzY2MjU0MjM0MzY1ODE0MTk2OTY3NzYwOTMxOTY5Nzc5OTg2MzkiLCIxNTIwMzMwMjIxNjcyOTEzOTcwNjQyNjcyMzc5Mzk5Mjk0MjI5NjY1NTU0NDA4MTEwODkzMTE2MjIwMTQxOTcxNzI0MjU4NTQzOTg2NSIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2IiwiY3VydmUiOiJibjEyOCJ9LCJwdWJfc2lnbmFscyI6WyIxIiwiMjgwMTg1ODg4MjE0NzE5Mzk2MjQ3MTE0MjE5MjIwNzkzOTU0NTE1MDc3NTQzNzU5Nzg0MDgyMzA1MjQ3OTI3ODY4NjI5OTc1MDMiLCIxNDE5MzMwNDc0NzUwMTMzMTE4MTgwOTcxNTkxMjQ4NzIzNjUyNzAwMzkyNTA4MjEwNjc1MjM3Njc5NjA5OTg5MDIwMTkyODE4NTY5MCIsIjEiLCIyMjk0MjU5NDE1NjI2NjY2NTQyNjYxMzQ2Mjc3MTcyNTMyNzMxNDM4MjY0NzQyNjk1OTA0NDg2MzQ0Njg2NjYxMzAwMzc1MTkzOCIsIjEiLCIzMTY5NjEyMzY4MDg3OTA1MzQyNzg2NTE0MDk5NDQ5Mjk3NDA0MzgzODc0MzcxMzU2OTI0ODI4MDgyMTQzNjExOTUzNjIxODU5NzU5IiwiMTY4NzQzMzc0OCIsIjI2NzgzMTUyMTkyMjU1ODAyNzIwNjA4MjM5MDA0MzMyMTc5Njk0NCIsIjAiLCIyMDM3NjAzMzgzMjM3MTEwOTE3NzY4MzA0ODQ1NjAxNDUyNTkwNTExOTE3MzY3NDk4NTg0MzkxNTQ0NTYzNDcyNjE2NzQ1MDk4OTYzMCIsIjIiLCIyIiwiMjAwMDAxMDEiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiXX1dfSwiZnJvbSI6ImRpZDpwa2g6cG9seToweDcxNDFFNGQyMEY3NjQ0REM4YzBBZENBOGE1MjBFQzgzQzZjQUJENjUiLCJ0byI6ImRpZDpwb2x5Z29uaWQ6cG9seWdvbjptdW1iYWk6MnFMUHF2YXlOUXo5VEEycjVWUHhVdWdvRjE4dGVHVTU4M3pKODU5d2Z5In0.bWc2ECABj7nvHatD8AXWNJM2VtfhkIjNwz5BBIK9zBMsP0-UWLEWdAWcosiLkYoL0KWwZpgEOrPPepl6T5gC-AA`
@@ -712,7 +712,7 @@ func TestCreateAuthorizationRequestWithMessage(t *testing.T) {
 
 func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 	// request
-	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	verifierID := "did:polygonid:polygon:mumbai:2qJ689kpoJxcSzB5sAFJtPsSBSrHF5dq722BHMqURL"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
@@ -752,7 +752,7 @@ func TestVerifier_FullVerifySelectiveDisclosure(t *testing.T) {
 
 func TestEmptyCredentialSubject(t *testing.T) {
 	// request
-	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	verifierID := "did:polygonid:polygon:mumbai:2qJ689kpoJxcSzB5sAFJtPsSBSrHF5dq722BHMqURL"
 	callbackURL := "https://test.com/callback"
 	reason := "age verification"
 
@@ -793,4 +793,350 @@ func loadSchema(name string) string {
 		panic(err)
 	}
 	return string(bs)
+}
+
+func TestVerifyV3MessageWithSigProof_NonMerkalized(t *testing.T) {
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 84239
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryV3CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"*"},
+		"credentialSubject": map[string]interface{}{
+			"documentType": map[string]interface{}{
+				"$eq": 99,
+			},
+		},
+		"context":   "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
+		"type":      "KYCAgeCredential",
+		"proofType": "BJJSignature2021",
+	}
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qFXWZVHKTaYX1vmTGtStgRq1s8vUWhQ7HLjtqb2fV"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        84239,
+				CircuitID: mtpProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"15208931239306667614189217356426367087296508213411046833716711442163868780112",
+							"20490648944065703271613941501811057996992005137106581261392868037192830801319",
+							"1",
+						},
+						B: [][]string{
+							{
+								"9658837325736932089175519161219586340790605854199431170964132439402760343882",
+								"2229712957417570067219766417050901639838551011053815708957384652110672096636",
+							},
+							{
+								"8001092431519117455354797520811940294780537362771012429305941024017334317686",
+								"14862879727984936294040948959940841120433831193863247939940900720892674782281",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"10979201893913563932568403855542624651100292054247823659266571152101750130209",
+							"21286864035525845180147694216456377751365547090829007463506610939813242720910",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"0",
+						"22466018227912887497595444357663749526852544754809814096731120723497783810",
+						"7232286365358812826682228661780467195854751779823604018938921042558237169817",
+						"0",
+						"0",
+						"0",
+						"1",
+						"84239",
+						"26675680708205250151451142983868154544835349648265874601395279235340702210",
+						"1",
+						"7232286365358812826682228661780467195854751779823604018938921042558237169817",
+						"1702457100",
+						"198285726510688200335207273836123338699",
+						"1",
+						"0",
+						"3",
+						"1",
+						"99",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"22728440853100433399211827098349696449620101147489499428101651758549307906",
+						"0",
+					},
+				},
+			},
+		},
+	}
+
+	schemaLoader := &mockJSONLDSchemaLoader{
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld": loadSchema("kyc-nonmerklized.jsonld"),
+		},
+	}
+	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader))
+	require.NoError(t, err)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay),
+	)
+	require.Nil(t, err)
+	schemaLoader.assert(t)
+}
+
+func TestVerifyV3MessageWithMtpProof_Merkalized(t *testing.T) {
+	verifierID := "did:polygonid:polygon:mumbai:2qEevY9VnKdNsVDdXRv3qSLHRqoMGMRRdE5Gmc6iA7"
+	callbackURL := "https://test.com/callback"
+	reason := "test"
+
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest.ID = 84239
+	mtpProofRequest.CircuitID = string(circuits.AtomicQueryV3CircuitID)
+	opt := true
+	mtpProofRequest.Optional = &opt
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{"did:polygonid:polygon:mumbai:2qKKc4jxAhabrdFrAF3iC7boycfdQmWXq2qTBU4sPc"},
+		"credentialSubject": map[string]interface{}{
+			"ZKPexperiance": map[string]interface{}{
+				"$eq": true,
+			},
+		},
+		"context":   "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
+		"type":      "KYCEmployee",
+		"proofType": "Iden3SparseMerkleTreeProof",
+	}
+
+	request := CreateAuthorizationRequestWithMessage(reason, "message to sign", verifierID, callbackURL)
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest)
+
+	userID := "did:polygonid:polygon:mumbai:2qFXWZVHKTaYX1vmTGtStgRq1s8vUWhQ7HLjtqb2fV"
+	responseUUID := uuid.New()
+
+	// response
+	var message protocol.AuthorizationResponseMessage
+	message.Typ = packers.MediaTypePlainMessage
+	message.Type = protocol.AuthorizationResponseMessageType
+	message.From = userID
+	message.To = verifierID
+	message.ID = responseUUID.String()
+	message.ThreadID = request.ThreadID
+	message.Body = protocol.AuthorizationMessageResponseBody{
+		Message: "message to sign",
+		Scope: []protocol.ZeroKnowledgeProofResponse{
+			{
+				ID:        84239,
+				CircuitID: mtpProofRequest.CircuitID,
+				ZKProof: types.ZKProof{
+					Proof: &types.ProofData{
+						A: []string{
+							"2191675399003747228361650328748147195525067334657244384911902711268678817802",
+							"19948479904115663964234685946314006853666845209972027887002197866333362304394",
+							"1",
+						},
+						B: [][]string{
+							{
+								"422189606437031219571968003421368368386938453003241975855652752251201163758",
+								"9263822572774254449054388930060153687464515712228765747368750307969672340141",
+							},
+							{
+								"19293339395101879017873172109004141351276884864694548105955158013357482683356",
+								"2779213239514041287265984937924693652347623320831272361142245115033321578990",
+							},
+							{
+								"1",
+								"0",
+							}},
+						C: []string{
+							"3805936274754036854895936107504061566835912493410231954955974762213052034636",
+							"11817318886045212940702535466395270095280111730105021796772613798925818134104",
+							"1",
+						},
+						Protocol: "groth16",
+					},
+					PubSignals: []string{
+						"1",
+						"22466018227912887497595444357663749526852544754809814096731120723497783810",
+						"16501727979801979045409842472064689783782600072880560178348889772807800718289",
+						"0",
+						"0",
+						"0",
+						"2",
+						"84239",
+						"26675680708205250151451142983868154544835349648265874601395279235340702210",
+						"1",
+						"16501727979801979045409842472064689783782600072880560178348889772807800718289",
+						"1702457550",
+						"219578617064540016234161640375755865412",
+						"0",
+						"1944808975288007371356450257872165609440470546066507760733183342797918372827",
+						"0",
+						"1",
+						"18586133768512220936620570745912940619677854269274689475585506675881198879027",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"0",
+						"22728440853100433399211827098349696449620101147489499428101651758549307906",
+						"0",
+					},
+				},
+			},
+		},
+	}
+
+	schemaLoader := &mockJSONLDSchemaLoader{
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+		},
+	}
+	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader))
+	require.NoError(t, err)
+	err = authInstance.VerifyAuthResponse(context.Background(), message, request,
+		pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	require.Nil(t, err)
+	schemaLoader.assert(t)
 }

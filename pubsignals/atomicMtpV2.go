@@ -25,6 +25,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 	query Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
+	_ map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
 	return query.Check(ctx, schemaLoader, &CircuitOutputs{
@@ -39,7 +40,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, verifiablePresentation, opts...)
+	}, verifiablePresentation, false, opts...)
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.
@@ -82,7 +83,7 @@ func (c *AtomicQueryMTPV2) VerifyStates(ctx context.Context,
 
 	if !issuerNonRevStateResolved.Latest && time.Since(
 		time.Unix(issuerNonRevStateResolved.TransitionTimestamp, 0),
-	) > cfg.acceptedStateTransitionDelay {
+	) > cfg.AcceptedStateTransitionDelay {
 		return ErrIssuerNonRevocationClaimStateIsNotValid
 	}
 

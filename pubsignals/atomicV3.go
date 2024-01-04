@@ -10,22 +10,23 @@ import (
 	"github.com/iden3/go-circuits/v2"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
+	verifiable "github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
 
-// AtomicQuerySigV2 is a wrapper for circuits.AtomicQuerySigV2PubSignals.
-type AtomicQuerySigV2 struct {
-	circuits.AtomicQuerySigV2PubSignals
+// AtomicQueryV3 is a wrapper for circuits.AtomicQueryV3PubSignals.
+type AtomicQueryV3 struct {
+	circuits.AtomicQueryV3PubSignals
 }
 
-// VerifyQuery verifies query for atomic query mtp circuit.
-func (c *AtomicQuerySigV2) VerifyQuery(
+// VerifyQuery verifies query for atomic query V3 circuit.
+func (c *AtomicQueryV3) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader ld.DocumentLoader,
 	verifiablePresentation json.RawMessage,
-	_ map[string]interface{},
+	params map[string]interface{},
 	opts ...VerifyOpt,
 ) error {
 	err := query.Check(ctx, schemaLoader, &CircuitOutputs{
@@ -40,15 +41,69 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
-	}, verifiablePresentation, false, opts...)
+		// V3 NEW
+		LinkID:             c.LinkID,
+		VerifierID:         c.VerifierID,
+		NullifierSessionID: c.NullifierSessionID,
+		OperatorOutput:     c.OperatorOutput,
+		Nullifier:          c.Nullifier,
+		ProofType:          c.ProofType,
+	}, verifiablePresentation, true, opts...)
 	if err != nil {
 		return err
 	}
+
+	// V3 NEW
+	switch query.ProofType {
+	case string(verifiable.BJJSignatureProofType):
+		if c.ProofType != 1 {
+			return ErrWronProofType
+		}
+	case string(verifiable.Iden3SparseMerkleTreeProofType):
+		if c.ProofType != 2 {
+			return ErrWronProofType
+		}
+	default:
+	}
+
+	if params != nil {
+		nullifierSessionIDparam, ok := params[ParamNameNullifierSessionID].(string)
+		if ok {
+			verifierDID, ok := params[ParamNameVerifierDID].(*w3c.DID)
+			if !ok {
+				return errors.New("verifier did is mandatory if nullifier session is set in the request")
+			}
+			id, err := core.IDFromDID(*verifierDID)
+			if err != nil {
+				return err
+			}
+			if c.VerifierID.BigInt().Cmp(id.BigInt()) != 0 {
+				return errors.New("wrong verifier is used for nullification")
+			}
+
+			nullifierSessionID, ok := new(big.Int).SetString(nullifierSessionIDparam, 10)
+			if !ok {
+				return errors.New("nullifier session is not a valid big integer")
+			}
+			if c.NullifierSessionID.Cmp(nullifierSessionID) != 0 {
+				return errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", nullifierSessionID.String(), c.NullifierSessionID.String())
+			}
+		} else if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
+			// if no nullifierSessionID in params  - we need to verify that nullifier is zero
+			return errors.New("nullifier id is generated but wasn't requested")
+		}
+
+	}
+
+	if query.GroupID != 0 && c.LinkID == nil {
+		return errors.New("proof doesn't contain link id, but group id is provided")
+	}
+
 	return nil
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
+func (c *AtomicQueryV3) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
 	blockchain, err := core.BlockchainFromID(*c.IssuerID)
 	if err != nil {
 		return err
@@ -62,7 +117,7 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[
 		return errors.Errorf("%s resolver not found", resolver)
 	}
 
-	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerAuthState.BigInt())
+	issuerStateResolved, err := resolver.Resolve(ctx, c.IssuerID.BigInt(), c.IssuerState.BigInt())
 	if err != nil {
 		return err
 	}
@@ -94,7 +149,7 @@ func (c *AtomicQuerySigV2) VerifyStates(ctx context.Context, stateResolvers map[
 }
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
-func (c *AtomicQuerySigV2) VerifyIDOwnership(sender string, requestID *big.Int) error {
+func (c *AtomicQueryV3) VerifyIDOwnership(sender string, requestID *big.Int) error {
 	if c.RequestID.Cmp(requestID) != 0 {
 		return errors.New("invalid requestID in proof")
 	}

@@ -25,6 +25,7 @@ func (c *AuthV2) VerifyQuery(
 	_ Query,
 	_ ld.DocumentLoader,
 	_ json.RawMessage,
+	_ map[string]interface{},
 	_ ...VerifyOpt) error {
 	return errors.New("authV2 circuit doesn't support queries")
 }
@@ -55,7 +56,7 @@ func (c *AuthV2) VerifyStates(ctx context.Context, stateResolvers map[string]Sta
 		o(&cfg)
 	}
 
-	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.acceptedStateTransitionDelay {
+	if !resolvedState.Latest && time.Since(time.Unix(resolvedState.TransitionTimestamp, 0)) > cfg.AcceptedStateTransitionDelay {
 		return ErrGlobalStateIsNotValid
 	}
 	return nil

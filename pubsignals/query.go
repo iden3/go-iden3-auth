@@ -19,12 +19,16 @@ import (
 )
 
 var allOperations = map[int]struct{}{
-	circuits.EQ:  {},
-	circuits.LT:  {},
-	circuits.GT:  {},
-	circuits.IN:  {},
-	circuits.NIN: {},
-	circuits.NE:  {},
+	circuits.EQ:      {},
+	circuits.LT:      {},
+	circuits.LTE:     {},
+	circuits.GT:      {},
+	circuits.GTE:     {},
+	circuits.IN:      {},
+	circuits.NIN:     {},
+	circuits.NE:      {},
+	circuits.BETWEEN: {},
+	circuits.NULLIFY: {},
 }
 
 var availableTypesOperations = map[string]map[int]struct{}{
@@ -63,6 +67,8 @@ type Query struct {
 	Type                     string                 `json:"type"`
 	ClaimID                  string                 `json:"claimId,omitempty"`
 	SkipClaimRevocationCheck bool                   `json:"skipClaimRevocationCheck,omitempty"`
+	ProofType                string                 `json:"proofType"`
+	GroupID                  int                    `json:"groupId"`
 }
 
 // CircuitOutputs pub signals from circuit.
@@ -78,6 +84,14 @@ type CircuitOutputs struct {
 	ClaimPathNotExists  int
 	ValueArraySize      int
 	IsRevocationChecked int
+	// V3 NEW
+	LinkID             *big.Int
+	VerifierID         *core.ID
+	NullifierSessionID *big.Int
+
+	OperatorOutput *big.Int
+	Nullifier      *big.Int
+	ProofType      int
 }
 
 // Check checks if proof was created for this query.
@@ -88,6 +102,7 @@ func (q Query) Check(
 	loader ld.DocumentLoader,
 	pubSig *CircuitOutputs,
 	verifiablePresentation json.RawMessage,
+	supportSdOperator bool,
 	opts ...VerifyOpt,
 ) error {
 	if err := q.verifyIssuer(pubSig); err != nil {
@@ -109,7 +124,7 @@ func (q Query) Check(
 	}
 
 	if err := q.verifyCredentialSubject(pubSig, verifiablePresentation,
-		schemaBytes, loader); err != nil {
+		schemaBytes, loader, supportSdOperator); err != nil {
 		return err
 	}
 
@@ -124,7 +139,7 @@ func (q Query) Check(
 
 	if time.Since(
 		time.Unix(pubSig.Timestamp, 0),
-	) > cfg.acceptedProofGenerationDelay {
+	) > cfg.AcceptedProofGenerationDelay {
 		return ErrProofGenerationOutdated
 	}
 
@@ -212,6 +227,7 @@ func (q Query) verifyCredentialSubject(
 	verifiablePresentation json.RawMessage,
 	ctxBytes []byte,
 	schemaLoader ld.DocumentLoader,
+	supportSdOperator bool,
 ) error {
 	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
 	if err != nil {
@@ -231,7 +247,7 @@ func (q Query) verifyCredentialSubject(
 	if q.isSelectivityDisclosure(predicate) {
 		ctx := context.Background()
 		return q.validateDisclosure(ctx, pubSig, fieldName,
-			verifiablePresentation, schemaLoader)
+			verifiablePresentation, schemaLoader, supportSdOperator)
 	}
 
 	// validate empty credential subject request
@@ -275,20 +291,10 @@ func (q Query) verifyCredentialSubject(
 
 func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 	key string, verifiablePresentation json.RawMessage,
-	schemaLoader ld.DocumentLoader) error {
+	schemaLoader ld.DocumentLoader, suppordSdOperator bool) error {
 
 	if verifiablePresentation == nil {
 		return errors.New("selective disclosure value is missed")
-	}
-
-	if pubSig.Operator != circuits.EQ {
-		return errors.New("selective disclosure available only for equal operation")
-	}
-
-	for i := 1; i < len(pubSig.Value); i++ {
-		if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
-			return errors.New("selective disclosure not available for array of values")
-		}
 	}
 
 	mz, err := merklize.MerklizeJSONLD(ctx,
@@ -318,8 +324,35 @@ func (q Query) validateDisclosure(ctx context.Context, pubSig *CircuitOutputs,
 		return errors.Errorf("failed to hash value: %v", err)
 	}
 
-	if pubSig.Value[0].Cmp(mvBig) != 0 {
-		return errors.New("different value between proof and disclosure value")
+	if !suppordSdOperator {
+		if pubSig.Operator != circuits.EQ {
+			return errors.New("selective disclosure available only for equal operation")
+		}
+
+		for i := 1; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure not available for array of values")
+			}
+		}
+
+		if pubSig.Value[0].Cmp(mvBig) != 0 {
+			return errors.New("different value between proof and disclosure value")
+		}
+
+	} else {
+		if pubSig.Operator != circuits.SD {
+			return errors.New("invalid pub signal operator for selective disclosure")
+		}
+
+		if pubSig.OperatorOutput == nil || pubSig.OperatorOutput.Cmp(mvBig) != 0 {
+			return errors.New("operator output should be equal to disclosed value")
+		}
+		for i := 0; i < len(pubSig.Value); i++ {
+			if pubSig.Value[i].Cmp(big.NewInt(0)) != 0 {
+				return errors.New("selective disclosure values should be zero")
+			}
+		}
+
 	}
 
 	return nil
