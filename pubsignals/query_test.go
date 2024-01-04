@@ -399,6 +399,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
@@ -430,6 +431,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+					"https://www.w3.org/2018/credentials/v1":                                                         loadSchema("credentials-v1.json-ld"),
 				},
 			},
 		},
