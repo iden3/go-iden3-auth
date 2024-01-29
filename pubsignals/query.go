@@ -414,7 +414,7 @@ func parseFieldPredicate(
 			return nil, 0, errors.New("query operator is not supported")
 		}
 
-		if !isValidOperation(fieldType, operator) {
+		if !IsValidOperation(fieldType, operator) {
 			return nil, 0, errors.Errorf("invalid operation '%s' for field type '%s'", op, fieldType)
 		}
 
@@ -490,7 +490,7 @@ func isPositiveInteger(v interface{}) bool {
 	return number >= 0
 }
 
-func isValidOperation(typ string, op int) bool {
+func IsValidOperation(typ string, op int) bool {
 	if op == circuits.NOOP {
 		return true
 	}
