@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-crypto/poseidon"
@@ -57,7 +58,12 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		return outputs, err
 	}
 
-	for i := 0; i < len(queriesMetadata); i++ {
+	queryHashes := []*big.Int{}
+	for i := 0; i < circuits.LinkedMultiQueryLength; i++ {
+		if i >= len(queriesMetadata) {
+			queryHashes = append(queryHashes, big.NewInt(0))
+			continue
+		}
 		valueHash, err := poseidon.SpongeHashX(queriesMetadata[i].Values, 6)
 		if err != nil {
 			return outputs, err
@@ -79,7 +85,23 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			return outputs, err
 		}
 
-		if c.CircuitQueryHash[i].Cmp(queryHash) != 0 {
+		queryHashes = append(queryHashes, queryHash)
+	}
+
+	var circuitQueryHashArray BigIntArray = make(BigIntArray, len(c.CircuitQueryHash))
+	copy(circuitQueryHashArray, c.CircuitQueryHash)
+	sort.Sort(circuitQueryHashArray)
+
+	var calcQueryHashArray BigIntArray = make(BigIntArray, len(queryHashes))
+	copy(calcQueryHashArray, queryHashes)
+	sort.Sort(calcQueryHashArray)
+
+	if circuitQueryHashArray.Len() != calcQueryHashArray.Len() {
+		return outputs, fmt.Errorf("query hashes do not match")
+	}
+
+	for i := 0; i < circuitQueryHashArray.Len(); i++ {
+		if circuitQueryHashArray[i].Cmp(calcQueryHashArray[i]) != 0 {
 			return outputs, fmt.Errorf("query hashes do not match")
 		}
 	}
@@ -91,6 +113,12 @@ func (c *LinkedMultiQuery) VerifyQuery(
 
 	return outputs, nil
 }
+
+type BigIntArray []*big.Int
+
+func (a BigIntArray) Len() int           { return len(a) }
+func (a BigIntArray) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a BigIntArray) Less(i, j int) bool { return a[i].Cmp(a[j]) < 0 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *LinkedMultiQuery) VerifyStates(_ context.Context, _ map[string]StateResolver, _ ...VerifyOpt) error {
