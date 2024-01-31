@@ -26,26 +26,27 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	verifiablePresentation json.RawMessage,
 	params map[string]interface{},
 	opts ...VerifyOpt,
-) error {
+) (CircuitOutputs, error) {
+	var outputs CircuitOutputs
 	schemaDoc, err := schemaLoader.LoadDocument(query.Context)
 	if err != nil {
-		return fmt.Errorf("failed load schema by context: %w", err)
+		return outputs, fmt.Errorf("failed load schema by context: %w", err)
 	}
 
 	schemaBytes, err := json.Marshal(schemaDoc.Document)
 	if err != nil {
-		return fmt.Errorf("failed jsonify schema document: %w", err)
+		return outputs, fmt.Errorf("failed jsonify schema document: %w", err)
 	}
 
 	schemaID, err := merklize.Options{DocumentLoader: schemaLoader}.
 		TypeIDFromContext(schemaBytes, query.Type)
 	if err != nil {
-		return err
+		return outputs, err
 	}
 	schemaHash := utils.CreateSchemaHash([]byte(schemaID))
 
 	if schemaHash.BigInt() == nil {
-		return fmt.Errorf("query schema error")
+		return outputs, fmt.Errorf("query schema error")
 	}
 
 	merkOption := merklize.Options{
@@ -53,13 +54,13 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	}
 	queriesMetadata, err := ParseQueriesMetadata(ctx, query.Type, string(schemaBytes), query.CredentialSubject, merkOption)
 	if err != nil {
-		return err
+		return outputs, err
 	}
 
 	for i := 0; i < len(queriesMetadata); i++ {
 		valueHash, err := poseidon.SpongeHashX(queriesMetadata[i].Values, 6)
 		if err != nil {
-			return err
+			return outputs, err
 		}
 
 		merklizedSchema := big.NewInt(0)
@@ -76,11 +77,16 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		})
 
 		if c.CircuitQueryHash[i].Cmp(queryHash) != 0 {
-			return fmt.Errorf("query hashes do not match")
+			return outputs, fmt.Errorf("query hashes do not match")
 		}
 	}
 
-	return nil
+	outputs = CircuitOutputs{
+		LinkID:    c.LinkID,
+		Merklized: c.Merklized,
+	}
+
+	return outputs, nil
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.

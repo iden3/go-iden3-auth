@@ -1154,7 +1154,6 @@ func TestFullVerifyLinkedProofsVerification(t *testing.T) {
 	opt := false
 	mtpProofRequest1.Optional = &opt
 	mtpProofRequest1.Query = map[string]interface{}{
-		"groupId":        1,
 		"allowedIssuers": []string{"*"},
 		"credentialSubject": map[string]interface{}{
 			"documentType": map[string]interface{}{
