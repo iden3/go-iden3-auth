@@ -88,11 +88,11 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		queryHashes = append(queryHashes, queryHash)
 	}
 
-	var circuitQueryHashArray BigIntArray = make(BigIntArray, len(c.CircuitQueryHash))
+	circuitQueryHashArray := make(bigIntArray, len(c.CircuitQueryHash))
 	copy(circuitQueryHashArray, c.CircuitQueryHash)
 	sort.Sort(circuitQueryHashArray)
 
-	var calcQueryHashArray BigIntArray = make(BigIntArray, len(queryHashes))
+	calcQueryHashArray := make(bigIntArray, len(queryHashes))
 	copy(calcQueryHashArray, queryHashes)
 	sort.Sort(calcQueryHashArray)
 
@@ -114,11 +114,11 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	return outputs, nil
 }
 
-type BigIntArray []*big.Int
+type bigIntArray []*big.Int
 
-func (a BigIntArray) Len() int           { return len(a) }
-func (a BigIntArray) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a BigIntArray) Less(i, j int) bool { return a[i].Cmp(a[j]) < 0 }
+func (a bigIntArray) Len() int           { return len(a) }
+func (a bigIntArray) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a bigIntArray) Less(i, j int) bool { return a[i].Cmp(a[j]) < 0 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *LinkedMultiQuery) VerifyStates(_ context.Context, _ map[string]StateResolver, _ ...VerifyOpt) error {
