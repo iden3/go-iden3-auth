@@ -1202,9 +1202,7 @@ func TestFullVerifyLinkedProofsVerification(t *testing.T) {
 		"type":      "KYCEmployee",
 		"proofType": "BJJSignature2021",
 	}
-	request.Body.Scope = append(request.Body.Scope, mtpProofRequest1)
-	request.Body.Scope = append(request.Body.Scope, mtpProofRequest2)
-	request.Body.Scope = append(request.Body.Scope, mtpProofRequest3)
+	request.Body.Scope = append(append(append(request.Body.Scope, mtpProofRequest1), mtpProofRequest2), mtpProofRequest3)
 
 	schemaLoader := &mockJSONLDSchemaLoader{
 		schemas: map[string]string{

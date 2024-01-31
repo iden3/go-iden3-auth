@@ -23,9 +23,9 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader ld.DocumentLoader,
-	verifiablePresentation json.RawMessage,
-	params map[string]interface{},
-	opts ...VerifyOpt,
+	_ json.RawMessage,
+	_ map[string]interface{},
+	_ ...VerifyOpt,
 ) (CircuitOutputs, error) {
 	var outputs CircuitOutputs
 	schemaDoc, err := schemaLoader.LoadDocument(query.Context)
@@ -75,6 +75,9 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			merklizedSchema,
 			valueHash,
 		})
+		if err != nil {
+			return outputs, err
+		}
 
 		if c.CircuitQueryHash[i].Cmp(queryHash) != 0 {
 			return outputs, fmt.Errorf("query hashes do not match")
@@ -90,11 +93,11 @@ func (c *LinkedMultiQuery) VerifyQuery(
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
-func (c *LinkedMultiQuery) VerifyStates(ctx context.Context, stateResolvers map[string]StateResolver, opts ...VerifyOpt) error {
+func (c *LinkedMultiQuery) VerifyStates(_ context.Context, _ map[string]StateResolver, _ ...VerifyOpt) error {
 	return nil
 }
 
 // VerifyIDOwnership returns error if ownership id wasn't verified in circuit.
-func (c *LinkedMultiQuery) VerifyIDOwnership(sender string, requestID *big.Int) error {
+func (c *LinkedMultiQuery) VerifyIDOwnership(_ string, _ *big.Int) error {
 	return nil
 }

@@ -490,6 +490,7 @@ func isPositiveInteger(v interface{}) bool {
 	return number >= 0
 }
 
+// IsValidOperation checks if operation and type are supported.
 func IsValidOperation(typ string, op int) bool {
 	if op == circuits.NOOP {
 		return true

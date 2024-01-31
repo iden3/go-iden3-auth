@@ -486,13 +486,13 @@ func (v *Verifier) VerifyAuthResponse(
 		}
 		if groupID != 0 {
 			// verify grouping links
-			for groupId, metas := range groupIDToLinkIDMap {
+			for groupIDfromMap, metas := range groupIDToLinkIDMap {
 				// Check that all linkIDs are the same
 				if len(metas) > 1 {
 					firstLinkID := metas[0]["linkID"]
 					for _, meta := range metas[1:] {
 						if meta["linkID"].Cmp(firstLinkID) != 0 {
-							return errors.Errorf("Link id validation failed for group %d, request linkID to requestIds info: %v", groupId, metas)
+							return errors.Errorf("Link id validation failed for group %d, request linkID to requestIds info: %v", groupIDfromMap, metas)
 						}
 					}
 				}

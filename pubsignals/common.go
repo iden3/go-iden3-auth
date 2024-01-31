@@ -15,12 +15,15 @@ import (
 )
 
 // todo: move & reuse to/from go-schem-processor
+
+// PropertyQuery struct
 type PropertyQuery struct {
 	FieldName     string
 	Operator      int
 	OperatorValue any
 }
 
+// QueryMetadata struct describe query metadata
 type QueryMetadata struct {
 	PropertyQuery
 	SlotIndex       int
@@ -34,10 +37,11 @@ type QueryMetadata struct {
 const (
 	contextFullKey           = "@context"
 	serializationFullKey     = "iden3_serialization"
-	credentialSubjectFullKey = "https://www.w3.org/2018/credentials#credentialSubject"
+	credentialSubjectFullKey = "https://www.w3.org/2018/credentials#credentialSubject" // #nosec G101
 )
 
-func ParseCredentialSubject(ctx context.Context, credentialSubject any) (out []PropertyQuery, err error) {
+// ParseCredentialSubject parse credential subject and return array of property queries
+func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []PropertyQuery, err error) {
 	if credentialSubject == nil {
 		return []PropertyQuery{
 			{
@@ -87,7 +91,8 @@ func getObjectEntries(obj map[string]interface{}) map[string]interface{} {
 	return entries
 }
 
-func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldContextJSON string, credentialType string, options merklize.Options) (query *QueryMetadata, err error) {
+// ParseQueryMetadata parse property query and return query metadata
+func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldContextJSON, credentialType string, options merklize.Options) (query *QueryMetadata, err error) {
 	datatype, err := options.TypeFromContext([]byte(ldContextJSON), fmt.Sprintf("%s.%s", credentialType, propertyQuery.FieldName))
 	if err != nil {
 		return nil, err
@@ -134,7 +139,10 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 			if err != nil {
 				return nil, err
 			}
-			path.Prepend(credentialSubjectFullKey)
+			err = path.Prepend(credentialSubjectFullKey)
+			if err != nil {
+				return nil, err
+			}
 
 			query.ClaimPathKey, err = path.MtEntry()
 			if err != nil {
@@ -158,7 +166,8 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 	return query, err
 }
 
-func ParseQueriesMetadata(ctx context.Context, credentialType string, ldContextJSON string, credentialSubject any, options merklize.Options) (out []QueryMetadata, err error) {
+// ParseQueriesMetadata parse credential subject and return array of query metadata
+func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON string, credentialSubject any, options merklize.Options) (out []QueryMetadata, err error) {
 	queriesMetadata, err := ParseCredentialSubject(ctx, credentialSubject)
 	if err != nil {
 		return nil, err
@@ -174,7 +183,7 @@ func ParseQueriesMetadata(ctx context.Context, credentialType string, ldContextJ
 	return out, err
 }
 
-func transformQueryValueToBigInts(ctx context.Context, value any, ldType string) (out []*big.Int, err error) {
+func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (out []*big.Int, err error) {
 	out = make([]*big.Int, 64)
 	for i := 0; i < 64; i++ {
 		out[i] = big.NewInt(0)
