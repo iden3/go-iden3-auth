@@ -59,7 +59,12 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 	}
 
 	if len(jsonObject) == 0 {
-		return nil, errors.New("query must have at least 1 predicate")
+		return []PropertyQuery{
+			{
+				Operator:  circuits.EQ,
+				FieldName: "",
+			},
+		}, nil
 	}
 	for fieldName, fieldReq := range jsonObject {
 		fieldReqEntries := fieldReq.(map[string]interface{})
