@@ -382,7 +382,7 @@ func checkIssuersEquality(issuers1, issuers2 []string) bool {
 	return true
 }
 
-type linkIdRequestId struct {
+type linkIDRequestID struct {
 	linkID    *big.Int
 	requestID uint32
 }
@@ -408,7 +408,7 @@ func (v *Verifier) VerifyAuthResponse(
 		return err
 	}
 
-	groupIDToLinkIDMap := make(map[int][]linkIdRequestId)
+	groupIDToLinkIDMap := make(map[int][]linkIDRequestID)
 	for _, proofRequest := range request.Body.Scope {
 		// prepare query from request
 		query, err := unmarshalQuery(proofRequest.Query)
@@ -477,7 +477,7 @@ func (v *Verifier) VerifyAuthResponse(
 			return errors.Errorf("proof response doesn't contain from field")
 		}
 
-		err = verifyGroupIdMathch(pubSignals.LinkID, groupID, proofResponse.ID, groupIDToLinkIDMap)
+		err = verifyGroupIDMathch(pubSignals.LinkID, groupID, proofResponse.ID, groupIDToLinkIDMap)
 		if err != nil {
 			return err
 		}
@@ -487,17 +487,17 @@ func (v *Verifier) VerifyAuthResponse(
 	return nil
 }
 
-func verifyGroupIdMathch(linkID *big.Int, groupID int, requestID uint32, groupIDToLinkIDMap map[int][]linkIdRequestId) error {
+func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupIDToLinkIDMap map[int][]linkIDRequestID) error {
 	if groupID == 0 {
 		return nil
 	}
 	if linkID != nil {
 		if existingLinks, exists := groupIDToLinkIDMap[groupID]; exists {
-			linkIDMap := linkIdRequestId{linkID: linkID, requestID: requestID}
+			linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
 			groupIDToLinkIDMap[groupID] = append(existingLinks, linkIDMap)
 		} else {
-			linkIDMap := linkIdRequestId{linkID: linkID, requestID: requestID}
-			groupIDToLinkIDMap[groupID] = []linkIdRequestId{linkIDMap}
+			linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
+			groupIDToLinkIDMap[groupID] = []linkIDRequestID{linkIDMap}
 		}
 	}
 	// verify grouping links
