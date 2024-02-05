@@ -58,12 +58,11 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 		return nil, errors.New("Failed to convert credential subject to JSONObject")
 	}
 
-	entries := getObjectEntries(jsonObject)
-	if len(entries) == 0 {
+	if len(jsonObject) == 0 {
 		return nil, errors.New("query must have at least 1 predicate")
 	}
-	for fieldName, fieldReq := range entries {
-		fieldReqEntries := getObjectEntries(fieldReq.(map[string]interface{}))
+	for fieldName, fieldReq := range jsonObject {
+		fieldReqEntries := fieldReq.(map[string]interface{})
 		isSelectiveDisclosure := len(fieldReqEntries) == 0
 
 		if isSelectiveDisclosure {
@@ -81,14 +80,6 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 	}
 
 	return out, nil
-}
-
-func getObjectEntries(obj map[string]interface{}) map[string]interface{} {
-	entries := make(map[string]interface{})
-	for k, v := range obj {
-		entries[k] = v
-	}
-	return entries
 }
 
 // ParseQueryMetadata parse property query and return query metadata
@@ -139,17 +130,18 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 			if err != nil {
 				return nil, err
 			}
-			err = path.Prepend(credentialSubjectFullKey)
-			if err != nil {
-				return nil, err
-			}
-
-			query.ClaimPathKey, err = path.MtEntry()
-			if err != nil {
-				return nil, err
-			}
-			query.Path = &path
 		}
+
+		err = path.Prepend(credentialSubjectFullKey)
+		if err != nil {
+			return nil, err
+		}
+
+		query.ClaimPathKey, err = path.MtEntry()
+		if err != nil {
+			return nil, err
+		}
+		query.Path = &path
 
 		if propertyQuery.OperatorValue != nil {
 			if !IsValidOperation(datatype, propertyQuery.Operator) {
