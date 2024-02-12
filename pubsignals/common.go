@@ -45,7 +45,7 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 	if credentialSubject == nil {
 		return []PropertyQuery{
 			{
-				Operator:  circuits.EQ,
+				Operator:  circuits.NOOP,
 				FieldName: "",
 			},
 		}, nil
@@ -58,16 +58,14 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 		return nil, errors.New("Failed to convert credential subject to JSONObject")
 	}
 
-	if len(jsonObject) == 0 {
-		return []PropertyQuery{
-			{
-				Operator:  circuits.EQ,
-				FieldName: "",
-			},
-		}, nil
-	}
+	// if len(jsonObject) == 0 {
+	// 	return nil, errors.New("query must have at least 1 predicate")
+	// }
 	for fieldName, fieldReq := range jsonObject {
-		fieldReqEntries := fieldReq.(map[string]interface{})
+		fieldReqEntries, ok := fieldReq.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("failed cast type map[string]interface")
+		}
 		isSelectiveDisclosure := len(fieldReqEntries) == 0
 
 		if isSelectiveDisclosure {
@@ -150,7 +148,8 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 
 		if propertyQuery.OperatorValue != nil {
 			if !IsValidOperation(datatype, propertyQuery.Operator) {
-				return nil, fmt.Errorf("operator %d is not supported for datatype %s", propertyQuery.Operator, datatype)
+				operatorName, _ := getKeyByValue(circuits.QueryOperators, propertyQuery.Operator)
+				return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, datatype)
 			}
 		}
 
@@ -186,15 +185,24 @@ func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (
 		out[i] = big.NewInt(0)
 	}
 
-	if reflect.TypeOf(value).Kind() == reflect.Array {
+	if value == nil {
+		return out, nil
+	}
+	if reflect.TypeOf(value).Kind() == reflect.Array || reflect.TypeOf(value).Kind() == reflect.Slice {
 		v := reflect.ValueOf(value)
 		for i := 0; i < v.Len(); i++ {
+			if !isPositiveInteger(v) {
+				return nil, ErrNegativeValue
+			}
 			out[i], err = merklize.HashValue(ldType, v.Index(i).Interface())
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
+		if !isPositiveInteger(value) {
+			return nil, ErrNegativeValue
+		}
 		out[0], err = merklize.HashValue(ldType, value)
 		if err != nil {
 			return nil, err
@@ -242,4 +250,13 @@ func getSerializationAttrFromParsedContext(ldCtx *ld.Context,
 	}
 
 	return "", nil
+}
+
+func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
+	for key, value := range m {
+		if value == targetValue {
+			return key, true
+		}
+	}
+	return "", false
 }
