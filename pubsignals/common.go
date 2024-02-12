@@ -58,9 +58,6 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 		return nil, errors.New("Failed to convert credential subject to JSONObject")
 	}
 
-	// if len(jsonObject) == 0 {
-	// 	return nil, errors.New("query must have at least 1 predicate")
-	// }
 	for fieldName, fieldReq := range jsonObject {
 		fieldReqEntries, ok := fieldReq.(map[string]interface{})
 		if !ok {

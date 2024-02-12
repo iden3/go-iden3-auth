@@ -376,11 +376,6 @@ func (q Query) verifyEmptyCredentialSubject(
 	return nil
 }
 
-func (q Query) isSelectivityDisclosure(
-	predicate map[string]interface{}) bool {
-	return q.CredentialSubject != nil && len(predicate) == 0
-}
-
 func (q Query) isEmptyCredentialSubject(
 	operator,
 	isMerklized int,
