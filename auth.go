@@ -310,8 +310,8 @@ func CreateContractInvokeRequestWithMessage(
 	}
 }
 
-// VerifyAuthRequest verifies auth request message
-func VerifyAuthRequest(request protocol.AuthorizationRequestMessage) error {
+// ValidateAuthRequest verifies auth request message
+func ValidateAuthRequest(request protocol.AuthorizationRequestMessage) error {
 	groupIDValidationMap := make(map[int][]pubsignals.Query)
 
 	for _, proofRequest := range request.Body.Scope {
@@ -403,7 +403,7 @@ func (v *Verifier) VerifyAuthResponse(
 		return errors.Errorf("sender of the request is not a target of response - expected %s, given %s", request.From, response.To)
 	}
 
-	err := VerifyAuthRequest(request)
+	err := ValidateAuthRequest(request)
 	if err != nil {
 		return err
 	}
