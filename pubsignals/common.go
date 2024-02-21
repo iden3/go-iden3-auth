@@ -10,11 +10,10 @@ import (
 	"github.com/iden3/go-circuits/v2"
 	parser "github.com/iden3/go-schema-processor/v2/json"
 	"github.com/iden3/go-schema-processor/v2/merklize"
+	"github.com/iden3/go-schema-processor/v2/verifiable"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
-
-// todo: move & reuse to/from go-schem-processor
 
 // PropertyQuery struct
 type PropertyQuery struct {
@@ -110,7 +109,7 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 		return nil, err
 	}
 
-	serAttr, err := getSerializationAttrFromParsedContext(ldCtx, credentialType)
+	serAttr, err := verifiable.GetSerializationAttrFromParsedContext(ldCtx, credentialType)
 	if err != nil {
 		return nil, err
 	}
@@ -206,47 +205,6 @@ func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (
 		}
 	}
 	return out, err
-}
-
-// todo: exists in go-schem-processor (private)
-func getSerializationAttrFromParsedContext(ldCtx *ld.Context,
-	tp string) (string, error) {
-
-	termDef, ok := ldCtx.AsMap()["termDefinitions"]
-	if !ok {
-		return "", errors.New("types now found in context")
-	}
-
-	termDefM, ok := termDef.(map[string]any)
-	if !ok {
-		return "", errors.New("terms definitions is not of correct type")
-	}
-
-	for typeName, typeDef := range termDefM {
-		typeDefM, ok := typeDef.(map[string]any)
-		if !ok {
-			// not a type
-			continue
-		}
-		typeCtx, ok := typeDefM[contextFullKey]
-		if !ok {
-			// not a type
-			continue
-		}
-		typeCtxM, ok := typeCtx.(map[string]any)
-		if !ok {
-			return "", errors.New("type @context is not of correct type")
-		}
-		typeID, _ := typeDefM["@id"].(string)
-		if typeName != tp && typeID != tp {
-			continue
-		}
-
-		serStr, _ := typeCtxM[serializationFullKey].(string)
-		return serStr, nil
-	}
-
-	return "", nil
 }
 
 func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
