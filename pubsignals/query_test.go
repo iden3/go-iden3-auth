@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/iden3/go-circuits/v2"
 	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
@@ -114,8 +115,11 @@ func TestCheckRequest_Success(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 5,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -143,8 +147,11 @@ func TestCheckRequest_Success(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -176,8 +183,11 @@ func TestCheckRequest_Success(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("1944808975288007371356450257872165609440470546066507760733183342797918372827", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{bigIntTrueHash},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{bigIntTrueHash}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -208,7 +218,8 @@ func TestCheckRequest_Success(t *testing.T) {
 				Operator: 1,
 				Value: func() []*big.Int {
 					v, _ := big.NewInt(0).SetString("957410455271905675920624030785024750144198809104092676617070098470852489834", 10)
-					return []*big.Int{v}
+					r, _ := circuits.PrepareCircuitArrayValues([]*big.Int{v}, 64)
+					return r
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
@@ -244,7 +255,8 @@ func TestCheckRequest_Success(t *testing.T) {
 				Operator: 1,
 				Value: func() []*big.Int {
 					v, _ := big.NewInt(0).SetString("7481731651336040098616464366227645531920423822088928207225802836605991806542", 10)
-					return []*big.Int{v}
+					r, _ := circuits.PrepareCircuitArrayValues([]*big.Int{v}, 64)
+					return r
 				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
@@ -270,10 +282,13 @@ func TestCheckRequest_Success(t *testing.T) {
 				Type:    "KYCAgeCredential",
 			},
 			pubSig: &CircuitOutputs{
-				IssuerID:            &issuerID,
-				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld#KYCAgeCredential")),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(19960424)},
+				IssuerID:    &issuerID,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld#KYCAgeCredential")),
+				Operator:    1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(19960424)}, 64)
+					return v
+				}(),
 				Merklized:           0,
 				SlotIndex:           2,
 				IsRevocationChecked: 1,
@@ -327,8 +342,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 5,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           dayAndMinuteAgo,
@@ -358,8 +376,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -389,8 +410,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 5,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -421,8 +445,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(800), big.NewInt(801)},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800), big.NewInt(801)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -453,8 +480,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(1)},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(1)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -485,8 +515,11 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
 					return v
 				}(),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(800)},
+				Operator: 1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(800)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -556,8 +589,12 @@ func TestCheckRequest_Error(t *testing.T) {
 				Context:        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
 				Type:           "KYCCountryOfResidenceCredential",
 				CredentialSubject: map[string]interface{}{
-					"req1": struct{}{},
-					"req2": struct{}{},
+					"countryCode": map[string]interface{}{
+						"$nin": []interface{}{float64(800)},
+					},
+					"documentType": map[string]interface{}{
+						"$eq": []interface{}{float64(1)},
+					},
 				},
 			},
 			pubSig: &CircuitOutputs{
@@ -683,11 +720,14 @@ func TestCheckRequest_Error(t *testing.T) {
 				},
 			},
 			pubSig: &CircuitOutputs{
-				IssuerID:            &issuerID,
-				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
-				ClaimPathKey:        big.NewInt(0),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(20)},
+				IssuerID:     &issuerID,
+				ClaimSchema:  utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				ClaimPathKey: big.NewInt(0),
+				Operator:     5,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(20)}, 64)
+					return v
+				}(),
 				Merklized:           1,
 				IsRevocationChecked: 1,
 				Timestamp:           now,
@@ -713,10 +753,13 @@ func TestCheckRequest_Error(t *testing.T) {
 				SkipClaimRevocationCheck: false,
 			},
 			pubSig: &CircuitOutputs{
-				IssuerID:            &issuerID,
-				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
-				Operator:            5,
-				Value:               []*big.Int{big.NewInt(20)},
+				IssuerID:    &issuerID,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				Operator:    5,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(20)}, 64)
+					return v
+				}(),
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,
@@ -773,10 +816,13 @@ func TestCheckRequest_Error(t *testing.T) {
 				SkipClaimRevocationCheck: false,
 			},
 			pubSig: &CircuitOutputs{
-				IssuerID:            &issuerID,
-				ClaimSchema:         utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
-				Operator:            1,
-				Value:               []*big.Int{big.NewInt(-1)},
+				IssuerID:    &issuerID,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld#KYCEmployee")),
+				Operator:    1,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(-1)}, 64)
+					return v
+				}(),
 				Merklized:           0,
 				SlotIndex:           0,
 				IsRevocationChecked: 0,

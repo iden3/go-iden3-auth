@@ -229,59 +229,48 @@ func (q Query) verifyCredentialSubject(
 	schemaLoader ld.DocumentLoader,
 	supportSdOperator bool,
 ) error {
-	fieldName, predicate, err := extractQueryFields(q.CredentialSubject)
+
+	ctx := context.Background()
+
+	queriesMetadata, err := ParseQueriesMetadata(ctx, q.Type, string(ctxBytes), q.CredentialSubject, merklize.Options{DocumentLoader: schemaLoader})
 	if err != nil {
 		return err
 	}
 
-	var fieldType string
-	if fieldName != "" {
-		fieldType, err = merklize.Options{DocumentLoader: schemaLoader}.
-			TypeFromContext(ctxBytes, fmt.Sprintf("%s.%s", q.Type, fieldName))
-		if err != nil {
-			return err
+	if len(queriesMetadata) > 1 {
+		if queriesMetadata[0].FieldName == queriesMetadata[1].FieldName {
+			return errors.New("multiple predicates for one field not supported")
 		}
+		return errors.New("multiple requests not supported")
+	}
+
+	var metadata QueryMetadata
+
+	if len(queriesMetadata) == 1 {
+		metadata = queriesMetadata[0]
 	}
 
 	// validate selectivity disclosure request
-	if q.isSelectivityDisclosure(predicate) {
-		ctx := context.Background()
-		return q.validateDisclosure(ctx, pubSig, fieldName,
+	if metadata.Operator == circuits.SD {
+		return q.validateDisclosure(ctx, pubSig, metadata.FieldName,
 			verifiablePresentation, schemaLoader, supportSdOperator)
 	}
 
 	// validate empty credential subject request
-	if q.isEmptyCredentialSubject(predicate, pubSig.Merklized) {
+	if q.isEmptyCredentialSubject(metadata.Operator, pubSig.Merklized) {
 		return q.verifyEmptyCredentialSubject(pubSig)
 	}
 
-	values, operator, err := parseFieldPredicate(fieldType, predicate)
-	if err != nil {
-		return err
-	}
-
-	if operator != pubSig.Operator {
+	if metadata.Operator != pubSig.Operator {
 		return ErrRequestOperator
 	}
 
-	if operator == circuits.NOOP {
+	if metadata.Operator == circuits.NOOP {
 		return nil
 	}
 
-	if len(values) > len(pubSig.Value) {
-		return ErrValuesSize
-	}
-
-	if len(values) < pubSig.ValueArraySize {
-		diff := pubSig.ValueArraySize - len(values)
-		for diff > 0 {
-			values = append(values, big.NewInt(0))
-			diff--
-		}
-	}
-
-	for i := 0; i < len(values); i++ {
-		if values[i].Cmp(pubSig.Value[i]) != 0 {
+	for i := 0; i < len(metadata.Values); i++ {
+		if metadata.Values[i].Cmp(pubSig.Value[i]) != 0 {
 			return ErrInvalidValues
 		}
 	}
@@ -387,46 +376,11 @@ func (q Query) verifyEmptyCredentialSubject(
 	return nil
 }
 
-func (q Query) isSelectivityDisclosure(
-	predicate map[string]interface{}) bool {
-	return q.CredentialSubject != nil && len(predicate) == 0
-}
-
 func (q Query) isEmptyCredentialSubject(
-	predicate map[string]interface{},
+	operator,
 	isMerklized int,
 ) bool {
-	return q.CredentialSubject == nil && len(predicate) == 0 && isMerklized == 1
-}
-
-func parseFieldPredicate(
-	fieldType string,
-	fieldPredicate map[string]interface{},
-) (
-	values []*big.Int,
-	operator int,
-	err error,
-) {
-	for op, v := range fieldPredicate {
-		var ok bool
-		operator, ok = circuits.QueryOperators[op]
-		if !ok {
-			return nil, 0, errors.New("query operator is not supported")
-		}
-
-		if !IsValidOperation(fieldType, operator) {
-			return nil, 0, errors.Errorf("invalid operation '%s' for field type '%s'", op, fieldType)
-		}
-
-		values, err = getValuesAsArray(v, fieldType)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		// only one predicate for field is supported
-		break
-	}
-	return values, operator, nil
+	return q.CredentialSubject == nil && operator == circuits.NOOP && isMerklized == 1
 }
 
 func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPredicate map[string]interface{}, err error) {
@@ -448,37 +402,6 @@ func extractQueryFields(req map[string]interface{}) (fieldName string, fieldPred
 		break
 	}
 	return fieldName, fieldPredicate, nil
-}
-
-func getValuesAsArray(v interface{}, valueType string) ([]*big.Int, error) {
-	var values []*big.Int
-
-	listOfValues, ok := v.([]interface{})
-	if ok {
-		values = make([]*big.Int, len(listOfValues))
-		for i, item := range listOfValues {
-			if !isPositiveInteger(item) {
-				return nil, ErrNegativeValue
-			}
-			hashedValue, err := merklize.HashValue(valueType, item)
-			if err != nil {
-				return nil, err
-			}
-			values[i] = hashedValue
-		}
-		return values, nil
-	}
-
-	if !isPositiveInteger(v) {
-		return nil, ErrNegativeValue
-	}
-	hashedValue, err := merklize.HashValue(valueType, v)
-	if err != nil {
-		return nil, err
-	}
-	values = append(values, hashedValue)
-
-	return values, nil
 }
 
 func isPositiveInteger(v interface{}) bool {
