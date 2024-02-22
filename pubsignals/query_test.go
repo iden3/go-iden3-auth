@@ -97,7 +97,7 @@ func TestCheckRequest_Success(t *testing.T) {
 		loader *mockJSONLDSchemaLoader
 	}{
 		{
-			name: "Check merkalized query",
+			name: "Check merklized query",
 			query: Query{
 				AllowedIssuers: []string{"*"},
 				CredentialSubject: map[string]interface{}{
@@ -304,7 +304,7 @@ func TestCheckRequest_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, circuits.AtomicQuerySigV2CircuitID)
 			require.NoError(t, err)
 			tt.loader.assert(t)
 		})
@@ -536,7 +536,7 @@ func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, false)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, circuits.AtomicQuerySigV2CircuitID)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})
@@ -839,7 +839,7 @@ func TestCheckRequest_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil, false)
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, nil, circuits.AtomicQuerySigV2CircuitID)
 			require.EqualError(t, err, tt.expErr.Error())
 			tt.loader.assert(t)
 		})

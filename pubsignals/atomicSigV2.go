@@ -41,7 +41,7 @@ func (c *AtomicQuerySigV2) VerifyQuery(
 		ValueArraySize:      c.ValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
 	}
-	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, false, opts...)
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, circuits.AtomicQuerySigV2CircuitID, opts...)
 	return CircuitVerificationResult{}, err
 }
 

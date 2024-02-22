@@ -52,7 +52,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 		Nullifier:          c.Nullifier,
 		ProofType:          c.ProofType,
 	}
-	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, true, opts...)
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, circuits.AtomicQueryV3CircuitID, opts...)
 	if err != nil {
 		return output, err
 	}

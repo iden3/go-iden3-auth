@@ -1,10 +1,12 @@
 package pubsignals
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-crypto/poseidon"
@@ -173,7 +175,7 @@ func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON str
 
 func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (out []*big.Int, err error) {
 	if value == nil {
-		return out, nil
+		return make([]*big.Int, 0), nil
 	}
 
 	listOfValues, ok := value.([]interface{})
@@ -199,6 +201,33 @@ func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (
 	}
 
 	return []*big.Int{hashValue}, err
+}
+
+func isPositiveInteger(v interface{}) bool {
+	number, err := strconv.ParseFloat(fmt.Sprintf("%v", v), 64)
+	if err != nil {
+		// value is not a number
+		return true
+	}
+	return number >= 0
+}
+
+// IsValidOperation checks if operation and type are supported.
+func IsValidOperation(typ string, op int) bool {
+	if op == circuits.NOOP {
+		return true
+	}
+
+	ops, ok := availableTypesOperations[typ]
+	if !ok {
+		// by default all unknown types will be considered as string
+		ops = availableTypesOperations[ld.XSDString]
+		_, ok = ops[op]
+		return ok
+	}
+
+	_, ok = ops[op]
+	return ok
 }
 
 func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
@@ -236,4 +265,38 @@ func CalculateQueryHash(
 		valueHash,
 	})
 
+}
+
+func fieldValueFromVerifiablePresentation(ctx context.Context, verifiablePresentation json.RawMessage, schemaLoader ld.DocumentLoader, key string) (*big.Int, error) {
+	if verifiablePresentation == nil {
+		return nil, errors.New("selective disclosure value is missed")
+	}
+
+	mz, err := merklize.MerklizeJSONLD(ctx,
+		bytes.NewBuffer(verifiablePresentation),
+		merklize.WithDocumentLoader(schemaLoader))
+	if err != nil {
+		return nil, errors.Errorf("failed to merklize doc: %v", err)
+	}
+
+	merklizedPath, err := merklize.Options{DocumentLoader: schemaLoader}.
+		NewPathFromDocument(verifiablePresentation,
+			fmt.Sprintf("verifiableCredential.credentialSubject.%s", key))
+	if err != nil {
+		return nil, errors.Errorf("failed build path to '%s' key: %v", key, err)
+	}
+
+	proof, valueByPath, err := mz.Proof(ctx, merklizedPath)
+	if err != nil {
+		return nil, errors.Errorf("failed get raw value: %v", err)
+	}
+	if !proof.Existence {
+		return nil, errors.Errorf("path '%v' doesn't exist in document", merklizedPath.Parts())
+	}
+
+	mvBig, err := valueByPath.MtEntry()
+	if err != nil {
+		return nil, errors.Errorf("failed to hash value: %v", err)
+	}
+	return mvBig, nil
 }
