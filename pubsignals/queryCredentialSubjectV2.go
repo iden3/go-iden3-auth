@@ -27,7 +27,7 @@ func verifyCredentialSubjectV2(
 	}
 
 	// validate empty credential subject request
-	if pubSig.Operator == circuits.NOOP && metadata.FieldName == "" && pubSig.Merklized == 1 {
+	if metadata.Operator == circuits.NOOP && metadata.FieldName == "" && pubSig.Merklized == 1 {
 		return verifyEmptyCredentialSubjectV2(pubSig, metadata.Path)
 	}
 
@@ -39,8 +39,8 @@ func verifyCredentialSubjectV2(
 		return ErrValuesSize
 	}
 
-	if len(metadata.Values) < pubSig.ValueArraySize {
-		diff := pubSig.ValueArraySize - len(metadata.Values)
+	if len(metadata.Values) < len(pubSig.Value) {
+		diff := len(pubSig.Value) - len(metadata.Values)
 		for diff > 0 {
 			metadata.Values = append(metadata.Values, big.NewInt(0))
 			diff--

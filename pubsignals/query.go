@@ -166,12 +166,15 @@ func (q Query) Check(
 	if err != nil {
 		return err
 	}
-	return q.verifyClaimInclusion(pubSig, metadata)
+	return q.verifyFieldValueInclusion(pubSig, metadata)
 }
 
-func (q Query) verifyClaimInclusion(pubSig *CircuitOutputs,
+func (q Query) verifyFieldValueInclusion(pubSig *CircuitOutputs,
 	metadata QueryMetadata) error {
 
+	if metadata.Operator == circuits.NOOP {
+		return nil
+	}
 	if pubSig.Merklized == 1 {
 
 		if metadata.ClaimPathKey.Cmp(pubSig.ClaimPathKey) != 0 {

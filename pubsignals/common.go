@@ -54,6 +54,14 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 	if !ok {
 		return nil, errors.New("Failed to convert credential subject to JSONObject")
 	}
+	if len(jsonObject) == 0 {
+		return []PropertyQuery{
+			{
+				Operator:  circuits.NOOP,
+				FieldName: "",
+			},
+		}, nil
+	}
 
 	for fieldName, fieldReq := range jsonObject {
 		fieldReqEntries, ok := fieldReq.(map[string]interface{})
@@ -81,19 +89,22 @@ func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []Pro
 
 // ParseQueryMetadata parse property query and return query metadata
 func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldContextJSON, credentialType string, options merklize.Options) (query *QueryMetadata, err error) {
-	datatype, err := options.TypeFromContext([]byte(ldContextJSON), fmt.Sprintf("%s.%s", credentialType, propertyQuery.FieldName))
-	if err != nil {
-		return nil, err
-	}
 
 	query = &QueryMetadata{
 		PropertyQuery:   propertyQuery,
 		SlotIndex:       0,
 		MerklizedSchema: false,
-		Datatype:        datatype,
+		Datatype:        "",
 		ClaimPathKey:    big.NewInt(0),
 		Values:          []*big.Int{},
 		Path:            &merklize.Path{},
+	}
+
+	if query.FieldName != "" {
+		query.Datatype, err = options.TypeFromContext([]byte(ldContextJSON), fmt.Sprintf("%s.%s", credentialType, propertyQuery.FieldName))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var ctxObj map[string]interface{}
@@ -141,14 +152,14 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 		query.Path = &path
 	}
 
-	if propertyQuery.OperatorValue != nil {
-		if !IsValidOperation(datatype, propertyQuery.Operator) {
+	if propertyQuery.OperatorValue != nil && query.Datatype != "" {
+		if !IsValidOperation(query.Datatype, propertyQuery.Operator) {
 			operatorName, _ := getKeyByValue(circuits.QueryOperators, propertyQuery.Operator)
-			return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, datatype)
+			return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, query.Datatype)
 		}
 	}
 
-	query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, datatype)
+	query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, query.Datatype)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +168,7 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 }
 
 // ParseQueriesMetadata parse credential subject and return array of query metadata
-func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON string, credentialSubject any, options merklize.Options) (out []QueryMetadata, err error) {
+func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON string, credentialSubject map[string]interface{}, options merklize.Options) (out []QueryMetadata, err error) {
 	queriesMetadata, err := ParseCredentialSubject(ctx, credentialSubject)
 	if err != nil {
 		return nil, err
@@ -174,6 +185,10 @@ func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON str
 }
 
 func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (out []*big.Int, err error) {
+	if ldType == "" {
+		return []*big.Int{}, nil
+	}
+
 	if value == nil {
 		return make([]*big.Int, 0), nil
 	}
