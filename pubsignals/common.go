@@ -33,11 +33,7 @@ type QueryMetadata struct {
 	MerklizedSchema bool
 }
 
-const (
-	contextFullKey           = "@context"
-	serializationFullKey     = "iden3_serialization"
-	credentialSubjectFullKey = "https://www.w3.org/2018/credentials#credentialSubject" // #nosec G101
-)
+const credentialSubjectFullKey = "https://www.w3.org/2018/credentials#credentialSubject" // #nosec G101
 
 // ParseCredentialSubject parse credential subject and return array of property queries
 func ParseCredentialSubject(_ context.Context, credentialSubject any) (out []PropertyQuery, err error) {
