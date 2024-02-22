@@ -50,7 +50,7 @@ func verifyCredentialSubjectV3(
 
 	for i := pubSig.ValueArraySize; i < len(pubSig.Value); i++ {
 		if pubSig.Value[i].Cmp(new(big.Int)) != 0 {
-			return errors.New("signal values other then values queries must be set to zero.")
+			return errors.New("signal values other then values queries must be set to zero")
 		}
 	}
 

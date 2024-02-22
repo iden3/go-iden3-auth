@@ -58,8 +58,8 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		return outputs, err
 	}
 
-	requests := []QueryRequest{}
-	querySignalsMeta := make(queryMetaPubSignals, len(c.CircuitQueryHash))
+	requests := []queryRequest{}
+	querySignalsMeta := make(queriesMetaPubSignals, len(c.CircuitQueryHash))
 	for i, q := range c.CircuitQueryHash {
 		querySignalsMeta[i] = struct {
 			OperatorOutput *big.Int
@@ -99,7 +99,7 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		}{QueryMetadata: &queriesMetadata[i], QueryHash: queryHash})
 	}
 
-	sortedPubsignalsMetadata := make(queryMetaPubSignals, len(c.CircuitQueryHash))
+	sortedPubsignalsMetadata := make(queriesMetaPubSignals, len(c.CircuitQueryHash))
 	copy(sortedPubsignalsMetadata, querySignalsMeta)
 	sort.Sort(sortedPubsignalsMetadata)
 
@@ -136,21 +136,21 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	return outputs, nil
 }
 
-type QueryRequest struct {
+type queryRequest struct {
 	QueryMetadata *QueryMetadata
 	QueryHash     *big.Int
 }
-type QueryMetaPubSignals struct {
+type queryMetaPubSignals struct {
 	OperatorOutput *big.Int
 	QueryHash      *big.Int
 }
-type queryMetaPubSignals []QueryMetaPubSignals
+type queriesMetaPubSignals []queryMetaPubSignals
 
-func (q queryMetaPubSignals) Len() int           { return len(q) }
-func (q queryMetaPubSignals) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
-func (q queryMetaPubSignals) Less(i, j int) bool { return q[i].QueryHash.Cmp(q[j].QueryHash) < 0 }
+func (q queriesMetaPubSignals) Len() int           { return len(q) }
+func (q queriesMetaPubSignals) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q queriesMetaPubSignals) Less(i, j int) bool { return q[i].QueryHash.Cmp(q[j].QueryHash) < 0 }
 
-type queryRequests []QueryRequest
+type queryRequests []queryRequest
 
 func (q queryRequests) Len() int           { return len(q) }
 func (q queryRequests) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }

@@ -180,11 +180,10 @@ func (q Query) verifyClaimInclusion(pubSig *CircuitOutputs,
 		if pubSig.ClaimPathNotExists == 1 {
 			return errors.New("proof doesn't contains target query key")
 		}
-	} else {
-
-		if metadata.SlotIndex != pubSig.SlotIndex {
-			return errors.New("proof was generated for another slot")
-		}
+		return nil
+	}
+	if metadata.SlotIndex != pubSig.SlotIndex {
+		return errors.New("proof was generated for another slot")
 	}
 
 	return nil
