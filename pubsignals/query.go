@@ -246,7 +246,10 @@ func (q Query) verifyCredentialSubject(
 		return errors.New("multiple requests not supported")
 	}
 
-	var metadata = queriesMetadata[0]
+	var metadata QueryMetadata
+	if len(queriesMetadata) == 1 {
+		metadata = queriesMetadata[0]
+	}
 
 	// validate selectivity disclosure request
 	if metadata.Operator == circuits.SD {

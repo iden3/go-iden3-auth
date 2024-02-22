@@ -193,17 +193,16 @@ func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (
 			}
 		}
 		return out, err
-	} else {
-		if !isPositiveInteger(value) {
-			return nil, ErrNegativeValue
-		}
-		hashValue, err := merklize.HashValue(ldType, value)
-		if err != nil {
-			return nil, err
-		}
-
-		return []*big.Int{hashValue}, err
 	}
+	if !isPositiveInteger(value) {
+		return nil, ErrNegativeValue
+	}
+	hashValue, err := merklize.HashValue(ldType, value)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*big.Int{hashValue}, err
 }
 
 func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
@@ -215,6 +214,7 @@ func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
 	return "", false
 }
 
+// CalculateQueryHash calculates query hash
 func CalculateQueryHash(
 	values []*big.Int,
 	schemaHash *big.Int,
