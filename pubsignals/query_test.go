@@ -649,7 +649,7 @@ func TestCheckRequest_Error(t *testing.T) {
 				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
 				Timestamp:   now,
 			},
-			expErr: errors.New("multiple predicates for one field not supported"),
+			expErr: errors.New("multiple requests not supported"),
 			loader: &mockJSONLDSchemaLoader{
 				schemas: map[string]string{
 					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),

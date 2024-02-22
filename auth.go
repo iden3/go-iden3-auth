@@ -403,6 +403,10 @@ func (v *Verifier) VerifyAuthResponse(
 		return errors.Errorf("sender of the request is not a target of response - expected %s, given %s", request.From, response.To)
 	}
 
+	if response.From == "" {
+		return errors.Errorf("proof response doesn't contain from field")
+	}
+
 	err := ValidateAuthRequest(request)
 	if err != nil {
 		return err
@@ -415,7 +419,6 @@ func (v *Verifier) VerifyAuthResponse(
 		if err != nil {
 			return err
 		}
-		groupID := query.GroupID
 
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
@@ -463,7 +466,7 @@ func (v *Verifier) VerifyAuthResponse(
 		}
 		proofRequest.Params[pubsignals.ParamNameVerifierDID] = verifierDID
 
-		pubSignals, err := cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
+		verifyResult, err := cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
 		if err != nil {
 			return err
 		}
@@ -473,11 +476,7 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
-		if response.From == "" {
-			return errors.Errorf("proof response doesn't contain from field")
-		}
-
-		err = verifyGroupIDMathch(pubSignals.LinkID, groupID, proofResponse.ID, groupIDToLinkIDMap)
+		err = verifyGroupIDMathch(verifyResult.LinkID, query.GroupID, proofResponse.ID, groupIDToLinkIDMap)
 		if err != nil {
 			return err
 		}
@@ -491,14 +490,17 @@ func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupID
 	if groupID == 0 {
 		return nil
 	}
-	if linkID != nil {
-		if existingLinks, exists := groupIDToLinkIDMap[groupID]; exists {
-			linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
-			groupIDToLinkIDMap[groupID] = append(existingLinks, linkIDMap)
-		} else {
-			linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
-			groupIDToLinkIDMap[groupID] = []linkIDRequestID{linkIDMap}
-		}
+
+	if linkID == nil {
+		return errors.Errorf("Link id is not found for groupID %d", groupID)
+	}
+
+	if existingLinks, exists := groupIDToLinkIDMap[groupID]; exists {
+		linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
+		groupIDToLinkIDMap[groupID] = append(existingLinks, linkIDMap)
+	} else {
+		linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
+		groupIDToLinkIDMap[groupID] = []linkIDRequestID{linkIDMap}
 	}
 	// verify grouping links
 	for groupIDfromMap, metas := range groupIDToLinkIDMap {

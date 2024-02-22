@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"reflect"
 
 	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/go-iden3-crypto/poseidon"
 	parser "github.com/iden3/go-schema-processor/v2/json"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/verifiable"
@@ -141,18 +141,18 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 			return nil, err
 		}
 		query.Path = &path
+	}
 
-		if propertyQuery.OperatorValue != nil {
-			if !IsValidOperation(datatype, propertyQuery.Operator) {
-				operatorName, _ := getKeyByValue(circuits.QueryOperators, propertyQuery.Operator)
-				return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, datatype)
-			}
+	if propertyQuery.OperatorValue != nil {
+		if !IsValidOperation(datatype, propertyQuery.Operator) {
+			operatorName, _ := getKeyByValue(circuits.QueryOperators, propertyQuery.Operator)
+			return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, datatype)
 		}
+	}
 
-		query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, datatype)
-		if err != nil {
-			return nil, err
-		}
+	query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, datatype)
+	if err != nil {
+		return nil, err
 	}
 
 	return query, err
@@ -176,35 +176,34 @@ func ParseQueriesMetadata(ctx context.Context, credentialType, ldContextJSON str
 }
 
 func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (out []*big.Int, err error) {
-	out = make([]*big.Int, 64)
-	for i := 0; i < 64; i++ {
-		out[i] = big.NewInt(0)
-	}
-
 	if value == nil {
 		return out, nil
 	}
-	if reflect.TypeOf(value).Kind() == reflect.Array || reflect.TypeOf(value).Kind() == reflect.Slice {
-		v := reflect.ValueOf(value)
-		for i := 0; i < v.Len(); i++ {
-			if !isPositiveInteger(v) {
+
+	listOfValues, ok := value.([]interface{})
+	if ok {
+		out = make([]*big.Int, len(listOfValues))
+		for i := 0; i < len(listOfValues); i++ {
+			if !isPositiveInteger(listOfValues[i]) {
 				return nil, ErrNegativeValue
 			}
-			out[i], err = merklize.HashValue(ldType, v.Index(i).Interface())
+			out[i], err = merklize.HashValue(ldType, listOfValues[i])
 			if err != nil {
 				return nil, err
 			}
 		}
+		return out, err
 	} else {
 		if !isPositiveInteger(value) {
 			return nil, ErrNegativeValue
 		}
-		out[0], err = merklize.HashValue(ldType, value)
+		hashValue, err := merklize.HashValue(ldType, value)
 		if err != nil {
 			return nil, err
 		}
+
+		return []*big.Int{hashValue}, err
 	}
-	return out, err
 }
 
 func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
@@ -214,4 +213,31 @@ func getKeyByValue(m map[string]int, targetValue int) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func CalculateQueryHash(
+	values []*big.Int,
+	schemaHash *big.Int,
+	slotIndex int,
+	operator int,
+	claimPathKey *big.Int,
+	claimPathNotExists *big.Int) (*big.Int, error) {
+	circuitValues, err := circuits.PrepareCircuitArrayValues(values, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	valueHash, err := poseidon.SpongeHashX(circuitValues, 6)
+	if err != nil {
+		return nil, err
+	}
+	return poseidon.Hash([]*big.Int{
+		schemaHash,
+		big.NewInt(int64(slotIndex)),
+		big.NewInt(int64(operator)),
+		claimPathKey,
+		claimPathNotExists,
+		valueHash,
+	})
+
 }

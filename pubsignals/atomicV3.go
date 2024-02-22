@@ -28,8 +28,11 @@ func (c *AtomicQueryV3) VerifyQuery(
 	verifiablePresentation json.RawMessage,
 	params map[string]interface{},
 	opts ...VerifyOpt,
-) (CircuitOutputs, error) {
-	outputs := CircuitOutputs{
+) (CircuitVerificationResult, error) {
+	output := CircuitVerificationResult{
+		LinkID: c.LinkID,
+	}
+	pubSig := CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,
@@ -49,20 +52,20 @@ func (c *AtomicQueryV3) VerifyQuery(
 		Nullifier:          c.Nullifier,
 		ProofType:          c.ProofType,
 	}
-	err := query.Check(ctx, schemaLoader, &outputs, verifiablePresentation, true, opts...)
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, true, opts...)
 	if err != nil {
-		return outputs, err
+		return output, err
 	}
 
 	// V3 NEW
 	switch query.ProofType {
 	case string(verifiable.BJJSignatureProofType):
 		if c.ProofType != 1 {
-			return outputs, ErrWronProofType
+			return output, ErrWronProofType
 		}
 	case string(verifiable.Iden3SparseMerkleTreeProofType):
 		if c.ProofType != 2 {
-			return outputs, ErrWronProofType
+			return output, ErrWronProofType
 		}
 	default:
 	}
@@ -72,35 +75,35 @@ func (c *AtomicQueryV3) VerifyQuery(
 		if ok {
 			verifierDID, ok := params[ParamNameVerifierDID].(*w3c.DID)
 			if !ok {
-				return outputs, errors.New("verifier did is mandatory if nullifier session is set in the request")
+				return output, errors.New("verifier did is mandatory if nullifier session is set in the request")
 			}
 			id, err := core.IDFromDID(*verifierDID)
 			if err != nil {
-				return outputs, err
+				return output, err
 			}
 			if c.VerifierID.BigInt().Cmp(id.BigInt()) != 0 {
-				return outputs, errors.New("wrong verifier is used for nullification")
+				return output, errors.New("wrong verifier is used for nullification")
 			}
 
 			nullifierSessionID, ok := new(big.Int).SetString(nullifierSessionIDparam, 10)
 			if !ok {
-				return outputs, errors.New("nullifier session is not a valid big integer")
+				return output, errors.New("nullifier session is not a valid big integer")
 			}
 			if c.NullifierSessionID.Cmp(nullifierSessionID) != 0 {
-				return outputs, errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", nullifierSessionID.String(), c.NullifierSessionID.String())
+				return output, errors.Errorf("wrong verifier session id is used for nullification: expected %s given %s,", nullifierSessionID.String(), c.NullifierSessionID.String())
 			}
 		} else if c.NullifierSessionID != nil && c.NullifierSessionID.Int64() != 0 {
 			// if no nullifierSessionID in params  - we need to verify that nullifier is zero
-			return outputs, errors.New("nullifier id is generated but wasn't requested")
+			return output, errors.New("nullifier id is generated but wasn't requested")
 		}
 
 	}
 
 	if query.GroupID != 0 && c.LinkID == nil {
-		return outputs, errors.New("proof doesn't contain link id, but group id is provided")
+		return output, errors.New("proof doesn't contain link id, but group id is provided")
 	}
 
-	return outputs, nil
+	return output, nil
 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.

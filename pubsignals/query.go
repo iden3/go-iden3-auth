@@ -71,6 +71,11 @@ type Query struct {
 	GroupID                  int                    `json:"groupId"`
 }
 
+// CircuitVerificationResult struct for verification result.
+type CircuitVerificationResult struct {
+	LinkID *big.Int
+}
+
 // CircuitOutputs pub signals from circuit.
 type CircuitOutputs struct {
 	IssuerID            *core.ID
@@ -238,17 +243,10 @@ func (q Query) verifyCredentialSubject(
 	}
 
 	if len(queriesMetadata) > 1 {
-		if queriesMetadata[0].FieldName == queriesMetadata[1].FieldName {
-			return errors.New("multiple predicates for one field not supported")
-		}
 		return errors.New("multiple requests not supported")
 	}
 
-	var metadata QueryMetadata
-
-	if len(queriesMetadata) == 1 {
-		metadata = queriesMetadata[0]
-	}
+	var metadata = queriesMetadata[0]
 
 	// validate selectivity disclosure request
 	if metadata.Operator == circuits.SD {
@@ -267,6 +265,18 @@ func (q Query) verifyCredentialSubject(
 
 	if metadata.Operator == circuits.NOOP {
 		return nil
+	}
+
+	if len(metadata.Values) > len(pubSig.Value) {
+		return ErrValuesSize
+	}
+
+	if len(metadata.Values) < pubSig.ValueArraySize {
+		diff := pubSig.ValueArraySize - len(metadata.Values)
+		for diff > 0 {
+			metadata.Values = append(metadata.Values, big.NewInt(0))
+			diff--
+		}
 	}
 
 	for i := 0; i < len(metadata.Values); i++ {

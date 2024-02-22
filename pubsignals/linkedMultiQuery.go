@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/iden3/go-circuits/v2"
-	"github.com/iden3/go-iden3-crypto/poseidon"
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
@@ -27,8 +26,8 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	_ json.RawMessage,
 	_ map[string]interface{},
 	_ ...VerifyOpt,
-) (CircuitOutputs, error) {
-	var outputs CircuitOutputs
+) (CircuitVerificationResult, error) {
+	var outputs CircuitVerificationResult
 	schemaDoc, err := schemaLoader.LoadDocument(query.Context)
 	if err != nil {
 		return outputs, fmt.Errorf("failed load schema by context: %w", err)
@@ -64,23 +63,20 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			queryHashes = append(queryHashes, big.NewInt(0))
 			continue
 		}
-		valueHash, err := poseidon.SpongeHashX(queriesMetadata[i].Values, 6)
-		if err != nil {
-			return outputs, err
-		}
 
 		merklizedSchema := big.NewInt(0)
 		if !queriesMetadata[i].MerklizedSchema {
-			merklizedSchema = big.NewInt(0)
+			merklizedSchema = big.NewInt(1)
 		}
-		queryHash, err := poseidon.Hash([]*big.Int{
+
+		queryHash, err := CalculateQueryHash(
+			queriesMetadata[i].Values,
 			schemaHash.BigInt(),
-			big.NewInt(int64(queriesMetadata[i].SlotIndex)),
-			big.NewInt(int64(queriesMetadata[i].Operator)),
+			queriesMetadata[i].SlotIndex,
+			queriesMetadata[i].Operator,
 			queriesMetadata[i].ClaimPathKey,
-			merklizedSchema,
-			valueHash,
-		})
+			merklizedSchema)
+
 		if err != nil {
 			return outputs, err
 		}
@@ -106,9 +102,8 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		}
 	}
 
-	outputs = CircuitOutputs{
-		LinkID:    c.LinkID,
-		Merklized: c.Merklized,
+	outputs = CircuitVerificationResult{
+		LinkID: c.LinkID,
 	}
 
 	return outputs, nil

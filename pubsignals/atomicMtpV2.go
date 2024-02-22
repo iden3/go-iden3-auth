@@ -27,8 +27,8 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 	verifiablePresentation json.RawMessage,
 	_ map[string]interface{},
 	opts ...VerifyOpt,
-) (CircuitOutputs, error) {
-	outputs := CircuitOutputs{
+) (CircuitVerificationResult, error) {
+	pubSig := CircuitOutputs{
 		IssuerID:            c.IssuerID,
 		ClaimSchema:         c.ClaimSchema,
 		SlotIndex:           c.SlotIndex,
@@ -42,8 +42,8 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		IsRevocationChecked: c.IsRevocationChecked,
 	}
 
-	err := query.Check(ctx, schemaLoader, &outputs, verifiablePresentation, false, opts...)
-	return outputs, err
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, false, opts...)
+	return CircuitVerificationResult{}, err
 }
 
 // VerifyStates verifies user state and issuer claim issuance state in the smart contract.
