@@ -310,6 +310,83 @@ func CreateContractInvokeRequestWithMessage(
 	}
 }
 
+// ValidateAuthRequest verifies auth request message
+func ValidateAuthRequest(request protocol.AuthorizationRequestMessage) error {
+	groupIDValidationMap := make(map[int][]pubsignals.Query)
+
+	for _, proofRequest := range request.Body.Scope {
+		proofRequestQuery, err := unmarshalQuery(proofRequest.Query)
+		if err != nil {
+			return err
+		}
+		groupID := proofRequestQuery.GroupID
+		if groupID != 0 {
+			existingQueries := groupIDValidationMap[groupID]
+
+			// Validate that all requests in the group have the same schema, issuer, and circuit
+			for _, existingQuery := range existingQueries {
+				if existingQuery.Type != proofRequestQuery.Type {
+					return errors.New("all requests in the group should have the same type")
+				}
+
+				if existingQuery.Context != proofRequestQuery.Context {
+					return errors.New("all requests in the group should have the same context")
+				}
+
+				allowedIssuers := proofRequestQuery.AllowedIssuers
+				existingRequestAllowedIssuers := existingQuery.AllowedIssuers
+				if !checkIssuersEquality(allowedIssuers, existingRequestAllowedIssuers) {
+					return errors.New("all requests in the group should have the same issuer")
+				}
+			}
+
+			groupIDValidationMap[groupID] = append(existingQueries, proofRequestQuery)
+		}
+	}
+
+	return nil
+}
+
+func unmarshalQuery(queryMap map[string]interface{}) (out pubsignals.Query, err error) {
+	// prepare query from request
+	queryBytes, err := json.Marshal(queryMap)
+	if err != nil {
+		return out, err
+	}
+	err = json.Unmarshal(queryBytes, &out)
+	if err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
+func checkIssuersEquality(issuers1, issuers2 []string) bool {
+	if len(issuers1) != len(issuers2) {
+		return false
+	}
+
+	for _, issuer := range issuers1 {
+		found := false
+		for _, existingIssuer := range issuers2 {
+			if issuer == existingIssuer || existingIssuer == "*" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+type linkIDRequestID struct {
+	linkID    *big.Int
+	requestID uint32
+}
+
 // VerifyAuthResponse performs verification of auth response based on auth request
 func (v *Verifier) VerifyAuthResponse(
 	ctx context.Context,
@@ -326,7 +403,23 @@ func (v *Verifier) VerifyAuthResponse(
 		return errors.Errorf("sender of the request is not a target of response - expected %s, given %s", request.From, response.To)
 	}
 
+	if response.From == "" {
+		return errors.Errorf("proof response doesn't contain from field")
+	}
+
+	err := ValidateAuthRequest(request)
+	if err != nil {
+		return err
+	}
+
+	groupIDToLinkIDMap := make(map[int][]linkIDRequestID)
 	for _, proofRequest := range request.Body.Scope {
+		// prepare query from request
+		query, err := unmarshalQuery(proofRequest.Query)
+		if err != nil {
+			return err
+		}
+
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
 			return errors.Errorf("proof for zk request id %v is presented not found", proofRequest.ID)
@@ -347,17 +440,6 @@ func (v *Verifier) VerifyAuthResponse(
 		cv, err := getPublicSignalsVerifier(circuits.CircuitID(proofResponse.CircuitID), proofResponse.PubSignals)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("circuit with id %s is not supported by library", proofRequest.CircuitID))
-		}
-
-		// prepare query from request
-		queryBytes, err := json.Marshal(proofRequest.Query)
-		if err != nil {
-			return err
-		}
-		var query pubsignals.Query
-		err = json.Unmarshal(queryBytes, &query)
-		if err != nil {
-			return err
 		}
 
 		// verify proof author
@@ -384,7 +466,7 @@ func (v *Verifier) VerifyAuthResponse(
 		}
 		proofRequest.Params[pubsignals.ParamNameVerifierDID] = verifierDID
 
-		err = cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
+		verifyResult, err := cv.VerifyQuery(ctx, query, v.documentLoader, rawMessage, proofRequest.Params, opts...)
 		if err != nil {
 			return err
 		}
@@ -394,8 +476,44 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
+		err = verifyGroupIDMathch(verifyResult.LinkID, query.GroupID, proofResponse.ID, groupIDToLinkIDMap)
+		if err != nil {
+			return err
+		}
+
 	}
 
+	return nil
+}
+
+func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupIDToLinkIDMap map[int][]linkIDRequestID) error {
+	if groupID == 0 {
+		return nil
+	}
+
+	if linkID == nil {
+		return errors.Errorf("Link id is not found for groupID %d", groupID)
+	}
+
+	if existingLinks, exists := groupIDToLinkIDMap[groupID]; exists {
+		linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
+		groupIDToLinkIDMap[groupID] = append(existingLinks, linkIDMap)
+	} else {
+		linkIDMap := linkIDRequestID{linkID: linkID, requestID: requestID}
+		groupIDToLinkIDMap[groupID] = []linkIDRequestID{linkIDMap}
+	}
+	// verify grouping links
+	for groupIDfromMap, metas := range groupIDToLinkIDMap {
+		// Check that all linkIDs are the same
+		if len(metas) > 1 {
+			firstLinkID := metas[0].linkID
+			for _, meta := range metas[1:] {
+				if meta.linkID.Cmp(firstLinkID) != 0 {
+					return errors.Errorf("Link id validation failed for group %d, request linkID to requestIds info: %v", groupIDfromMap, metas)
+				}
+			}
+		}
+	}
 	return nil
 }
 
