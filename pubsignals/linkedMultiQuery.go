@@ -67,12 +67,28 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		}{OperatorOutput: c.OperatorOutput[i], QueryHash: q}
 	}
 
+	merklized := false
+	if len(queriesMetadata) > 0 && queriesMetadata[0].MerklizedSchema {
+		merklized = true
+	}
 	for i := 0; i < circuits.LinkedMultiQueryLength; i++ {
 		if i >= len(queriesMetadata) {
+			queryHash, err := CalculateQueryHash(
+				[]*big.Int{},
+				schemaHash.BigInt(),
+				0,
+				0,
+				big.NewInt(0),
+				merklized)
+
+			if err != nil {
+				return outputs, err
+			}
+
 			requests = append(requests, struct {
 				QueryMetadata *QueryMetadata
 				QueryHash     *big.Int
-			}{QueryMetadata: nil, QueryHash: big.NewInt(0)})
+			}{QueryMetadata: nil, QueryHash: queryHash})
 			continue
 		}
 
@@ -82,7 +98,7 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			queriesMetadata[i].SlotIndex,
 			queriesMetadata[i].Operator,
 			queriesMetadata[i].ClaimPathKey,
-			queriesMetadata[i].MerklizedSchema)
+			merklized)
 
 		if err != nil {
 			return outputs, err
