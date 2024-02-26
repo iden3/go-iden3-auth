@@ -95,3 +95,26 @@ func verifyEmptyCredentialSubjectV3(
 	}
 	return nil
 }
+
+func (q Query) verifyFieldValueInclusionV3(pubSig *CircuitOutputs,
+	metadata QueryMetadata) error {
+
+	if metadata.Operator == circuits.NOOP {
+		return nil
+	}
+	if metadata.Operator == circuits.EXISTS && pubSig.Merklized == 0 {
+		return errors.New("$exists operator is not supported for non-merklized credential")
+	}
+	if pubSig.Merklized == 1 {
+
+		if metadata.ClaimPathKey.Cmp(pubSig.ClaimPathKey) != 0 {
+			return errors.New("proof was generated for another path")
+		}
+		return nil
+	}
+	if metadata.SlotIndex != pubSig.SlotIndex {
+		return errors.New("proof was generated for another slot")
+	}
+
+	return nil
+}

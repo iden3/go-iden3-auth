@@ -106,3 +106,26 @@ func verifyEmptyCredentialSubjectV2(
 
 	return nil
 }
+
+func (q Query) verifyFieldValueInclusionV2(pubSig *CircuitOutputs,
+	metadata QueryMetadata) error {
+
+	if metadata.Operator == circuits.NOOP {
+		return nil
+	}
+	if pubSig.Merklized == 1 {
+
+		if metadata.ClaimPathKey.Cmp(pubSig.ClaimPathKey) != 0 {
+			return errors.New("proof was generated for another path")
+		}
+		if pubSig.ClaimPathNotExists == 1 {
+			return errors.New("proof doesn't contains target query key")
+		}
+		return nil
+	}
+	if metadata.SlotIndex != pubSig.SlotIndex {
+		return errors.New("proof was generated for another slot")
+	}
+
+	return nil
+}

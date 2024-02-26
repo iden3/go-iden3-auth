@@ -76,18 +76,13 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			continue
 		}
 
-		merklizedSchema := big.NewInt(0)
-		if !queriesMetadata[i].MerklizedSchema {
-			merklizedSchema = big.NewInt(1)
-		}
-
 		queryHash, err := CalculateQueryHash(
 			queriesMetadata[i].Values,
 			schemaHash.BigInt(),
 			queriesMetadata[i].SlotIndex,
 			queriesMetadata[i].Operator,
 			queriesMetadata[i].ClaimPathKey,
-			merklizedSchema)
+			queriesMetadata[i].MerklizedSchema)
 
 		if err != nil {
 			return outputs, err

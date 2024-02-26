@@ -119,6 +119,10 @@ github.com/iden3/go-circuits/v2 v2.0.2-0.20240222162432-02da937afe32 h1:huNdsxXf
 github.com/iden3/go-circuits/v2 v2.0.2-0.20240222162432-02da937afe32/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
 github.com/iden3/go-circuits/v2 v2.0.2-0.20240223084228-ef66f50c3d34 h1:Ffq3Q5Ax0ucOWJpDueK2F38AvhME/KeEYELe9bP+yoQ=
 github.com/iden3/go-circuits/v2 v2.0.2-0.20240223084228-ef66f50c3d34/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
+github.com/iden3/go-circuits/v2 v2.0.2-0.20240226093955-e1ae87fa9d64 h1:6p5KIyN0x2U9niC6PDcpIG5KkAG3GAL54PZEnXYsUz0=
+github.com/iden3/go-circuits/v2 v2.0.2-0.20240226093955-e1ae87fa9d64/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
+github.com/iden3/go-circuits/v2 v2.0.2-0.20240226095705-0aeaa87480ea h1:IFFX6DO8V3xY97cdewjNMWlmnk3haguiv6voxc4sFTQ=
+github.com/iden3/go-circuits/v2 v2.0.2-0.20240226095705-0aeaa87480ea/go.mod h1:VIFIp51+IH0hOzjnKhb84bCeyq7hq76zX/C14ua6zh4=
 github.com/iden3/go-iden3-core/v2 v2.0.3 h1:ce9Jbw10zDsinWXFc05SiK2Hof/wu4zV4/ai5gQy29k=
 github.com/iden3/go-iden3-core/v2 v2.0.3/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.15 h1:4MJYlrot1l31Fzlo2sF56u7EVFeHHJkxGXXZCtESgK4=

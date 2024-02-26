@@ -41,7 +41,6 @@ func (c *AtomicQueryV3) VerifyQuery(
 		Timestamp:           c.Timestamp,
 		Merklized:           c.Merklized,
 		ClaimPathKey:        c.ClaimPathKey,
-		ClaimPathNotExists:  c.ClaimPathNotExists,
 		ValueArraySize:      c.ActualValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
 		// V3 NEW

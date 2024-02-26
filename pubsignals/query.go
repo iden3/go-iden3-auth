@@ -156,40 +156,21 @@ func (q Query) Check(
 	switch circuitID {
 	case circuits.AtomicQueryV3CircuitID:
 		err = verifyCredentialSubjectV3(pubSig, verifiablePresentation, loader, metadata)
+		if err != nil {
+			return err
+		}
+		return q.verifyFieldValueInclusionV2(pubSig, metadata)
 	case circuits.AtomicQueryMTPV2CircuitID, circuits.AtomicQuerySigV2CircuitID:
 		err = verifyCredentialSubjectV2(pubSig, verifiablePresentation, loader, metadata)
+		if err != nil {
+			return err
+		}
+		return q.verifyFieldValueInclusionV3(pubSig, metadata)
 
 	default:
 		return errors.Errorf("circuit id %s is not supported", circuitID)
 	}
 
-	if err != nil {
-		return err
-	}
-	return q.verifyFieldValueInclusion(pubSig, metadata)
-}
-
-func (q Query) verifyFieldValueInclusion(pubSig *CircuitOutputs,
-	metadata QueryMetadata) error {
-
-	if metadata.Operator == circuits.NOOP {
-		return nil
-	}
-	if pubSig.Merklized == 1 {
-
-		if metadata.ClaimPathKey.Cmp(pubSig.ClaimPathKey) != 0 {
-			return errors.New("proof was generated for another path")
-		}
-		if pubSig.ClaimPathNotExists == 1 {
-			return errors.New("proof doesn't contains target query key")
-		}
-		return nil
-	}
-	if metadata.SlotIndex != pubSig.SlotIndex {
-		return errors.New("proof was generated for another slot")
-	}
-
-	return nil
 }
 
 func (q Query) verifyIssuer(pubSig *CircuitOutputs) error {
