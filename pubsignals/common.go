@@ -158,8 +158,11 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 			return nil, fmt.Errorf("invalid operation '%s' for field type '%s'", operatorName, query.Datatype)
 		}
 	}
-
-	query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, query.Datatype)
+	if propertyQuery.Operator == circuits.EXISTS {
+		query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, ld.XSDBoolean) // TODO: refactor
+	} else {
+		query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, query.Datatype)
+	}
 	if err != nil {
 		return nil, err
 	}
