@@ -263,16 +263,16 @@ func CalculateQueryHash(
 	claimPathKey *big.Int,
 	isMerklized bool,
 ) (*big.Int, error) {
-	claimPathNotExists := new(big.Int)
+	claimPathNotExists := big.NewInt(0)
 	if operator == circuits.EXISTS && values[0].Cmp(new(big.Int)) == 0 {
 		claimPathNotExists.SetInt64(1)
 	}
-	merklized := new(big.Int)
+	merklized := big.NewInt(0)
 	if isMerklized {
 		merklized.SetInt64(1)
 	}
 
-	valArrSize := new(big.Int).SetInt64(int64(len(values)))
+	valArrSize := big.NewInt(int64(len(values)))
 	circuitValues, err := circuits.PrepareCircuitArrayValues(values, 64)
 	if err != nil {
 		return nil, err
