@@ -16,26 +16,28 @@ import (
 )
 
 var allOperations = map[int]struct{}{
-	circuits.EQ:      {},
-	circuits.LT:      {},
-	circuits.LTE:     {},
-	circuits.GT:      {},
-	circuits.GTE:     {},
-	circuits.IN:      {},
-	circuits.NIN:     {},
-	circuits.NE:      {},
-	circuits.BETWEEN: {},
-	circuits.NULLIFY: {},
+	circuits.EQ:         {},
+	circuits.LT:         {},
+	circuits.LTE:        {},
+	circuits.GT:         {},
+	circuits.GTE:        {},
+	circuits.IN:         {},
+	circuits.NIN:        {},
+	circuits.NE:         {},
+	circuits.BETWEEN:    {},
+	circuits.NULLIFY:    {},
+	circuits.EXISTS:     {},
+	circuits.NONBETWEEN: {},
 }
 
 var availableTypesOperations = map[string]map[int]struct{}{
-	ld.XSDBoolean:                   {circuits.EQ: {}, circuits.NE: {}},
+	ld.XSDBoolean:                   {circuits.EQ: {}, circuits.NE: {}, circuits.EXISTS: {}},
 	ld.XSDInteger:                   allOperations,
 	ld.XSDNS + "nonNegativeInteger": allOperations,
 	ld.XSDNS + "positiveInteger":    allOperations,
-	ld.XSDString:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDString:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}, circuits.EXISTS: {}},
 	ld.XSDNS + "dateTime":           allOperations,
-	ld.XSDDouble:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}},
+	ld.XSDDouble:                    {circuits.EQ: {}, circuits.NE: {}, circuits.IN: {}, circuits.NIN: {}, circuits.EXISTS: {}},
 }
 
 // PathToSubjectType path to description of subject type.
