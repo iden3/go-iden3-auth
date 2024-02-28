@@ -266,10 +266,6 @@ func CalculateQueryHash(
 	claimPathKey *big.Int,
 	isMerklized bool,
 ) (*big.Int, error) {
-	claimPathNotExists := big.NewInt(0)
-	if operator == circuits.EXISTS && values[0].Cmp(new(big.Int)) == 0 {
-		claimPathNotExists.SetInt64(1)
-	}
 	merklized := big.NewInt(0)
 	if isMerklized {
 		merklized.SetInt64(1)
@@ -290,7 +286,7 @@ func CalculateQueryHash(
 		big.NewInt(int64(slotIndex)),
 		big.NewInt(int64(operator)),
 		claimPathKey,
-		claimPathNotExists,
+		merklized,
 		valueHash,
 	})
 	if err != nil {
@@ -299,7 +295,7 @@ func CalculateQueryHash(
 	return poseidon.Hash([]*big.Int{
 		firstPart,
 		valArrSize,
-		merklized,
+		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
