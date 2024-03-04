@@ -42,7 +42,7 @@ func (c *AtomicQueryMTPV2) VerifyQuery(
 		IsRevocationChecked: c.IsRevocationChecked,
 	}
 
-	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, false, opts...)
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, circuits.AtomicQueryMTPV2CircuitID, opts...)
 	return CircuitVerificationResult{}, err
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/iden3/go-schema-processor/v2/merklize"
 	"github.com/iden3/go-schema-processor/v2/utils"
 	"github.com/piprate/json-gold/ld"
+	"github.com/pkg/errors"
 )
 
 // LinkedMultiQuery is a wrapper for circuits.LinkedMultiQueryPubSignals.
@@ -23,7 +24,7 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	ctx context.Context,
 	query Query,
 	schemaLoader ld.DocumentLoader,
-	_ json.RawMessage,
+	vp json.RawMessage,
 	_ map[string]interface{},
 	_ ...VerifyOpt,
 ) (CircuitVerificationResult, error) {
@@ -57,16 +58,38 @@ func (c *LinkedMultiQuery) VerifyQuery(
 		return outputs, err
 	}
 
-	queryHashes := []*big.Int{}
+	requests := []queryRequest{}
+	querySignalsMeta := make(queriesMetaPubSignals, len(c.CircuitQueryHash))
+	for i, q := range c.CircuitQueryHash {
+		querySignalsMeta[i] = struct {
+			OperatorOutput *big.Int
+			QueryHash      *big.Int
+		}{OperatorOutput: c.OperatorOutput[i], QueryHash: q}
+	}
+
+	merklized := false
+	if len(queriesMetadata) > 0 && queriesMetadata[0].MerklizedSchema {
+		merklized = true
+	}
 	for i := 0; i < circuits.LinkedMultiQueryLength; i++ {
 		if i >= len(queriesMetadata) {
-			queryHashes = append(queryHashes, big.NewInt(0))
-			continue
-		}
+			queryHash, err := CalculateQueryHash(
+				[]*big.Int{},
+				schemaHash.BigInt(),
+				0,
+				0,
+				big.NewInt(0),
+				merklized)
 
-		merklizedSchema := big.NewInt(0)
-		if !queriesMetadata[i].MerklizedSchema {
-			merklizedSchema = big.NewInt(1)
+			if err != nil {
+				return outputs, err
+			}
+
+			requests = append(requests, struct {
+				QueryMetadata *QueryMetadata
+				QueryHash     *big.Int
+			}{QueryMetadata: nil, QueryHash: queryHash})
+			continue
 		}
 
 		queryHash, err := CalculateQueryHash(
@@ -75,31 +98,46 @@ func (c *LinkedMultiQuery) VerifyQuery(
 			queriesMetadata[i].SlotIndex,
 			queriesMetadata[i].Operator,
 			queriesMetadata[i].ClaimPathKey,
-			merklizedSchema)
+			merklized)
 
 		if err != nil {
 			return outputs, err
 		}
 
-		queryHashes = append(queryHashes, queryHash)
+		requests = append(requests, struct {
+			QueryMetadata *QueryMetadata
+			QueryHash     *big.Int
+		}{QueryMetadata: &queriesMetadata[i], QueryHash: queryHash})
 	}
 
-	circuitQueryHashArray := make(bigIntArray, len(c.CircuitQueryHash))
-	copy(circuitQueryHashArray, c.CircuitQueryHash)
-	sort.Sort(circuitQueryHashArray)
+	sortedPubsignalsMetadata := make(queriesMetaPubSignals, len(c.CircuitQueryHash))
+	copy(sortedPubsignalsMetadata, querySignalsMeta)
+	sort.Sort(sortedPubsignalsMetadata)
 
-	calcQueryHashArray := make(bigIntArray, len(queryHashes))
-	copy(calcQueryHashArray, queryHashes)
-	sort.Sort(calcQueryHashArray)
+	sortedRequests := make(queryRequests, len(requests))
+	copy(sortedRequests, requests)
+	sort.Sort(sortedRequests)
 
-	if circuitQueryHashArray.Len() != calcQueryHashArray.Len() {
+	if sortedPubsignalsMetadata.Len() != sortedRequests.Len() {
 		return outputs, fmt.Errorf("query hashes do not match")
 	}
 
-	for i := 0; i < circuitQueryHashArray.Len(); i++ {
-		if circuitQueryHashArray[i].Cmp(calcQueryHashArray[i]) != 0 {
+	for i := 0; i < sortedPubsignalsMetadata.Len(); i++ {
+		if sortedPubsignalsMetadata[i].QueryHash.Cmp(sortedRequests[i].QueryHash) != 0 {
 			return outputs, fmt.Errorf("query hashes do not match")
 		}
+
+		if sortedRequests[i].QueryMetadata != nil && sortedRequests[i].QueryMetadata.Operator == circuits.SD {
+			disclosedValue, err2 := fieldValueFromVerifiablePresentation(ctx, vp, schemaLoader, sortedRequests[i].QueryMetadata.FieldName)
+			if err2 != nil {
+				return outputs, err2
+			}
+			if disclosedValue.Cmp(sortedPubsignalsMetadata[i].OperatorOutput) != 0 {
+				return outputs, errors.New("disclosed value is not in the proof outputs")
+
+			}
+		}
+
 	}
 
 	outputs = CircuitVerificationResult{
@@ -109,11 +147,25 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	return outputs, nil
 }
 
-type bigIntArray []*big.Int
+type queryRequest struct {
+	QueryMetadata *QueryMetadata
+	QueryHash     *big.Int
+}
+type queryMetaPubSignals struct {
+	OperatorOutput *big.Int
+	QueryHash      *big.Int
+}
+type queriesMetaPubSignals []queryMetaPubSignals
 
-func (a bigIntArray) Len() int           { return len(a) }
-func (a bigIntArray) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a bigIntArray) Less(i, j int) bool { return a[i].Cmp(a[j]) < 0 }
+func (q queriesMetaPubSignals) Len() int           { return len(q) }
+func (q queriesMetaPubSignals) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q queriesMetaPubSignals) Less(i, j int) bool { return q[i].QueryHash.Cmp(q[j].QueryHash) < 0 }
+
+type queryRequests []queryRequest
+
+func (q queryRequests) Len() int           { return len(q) }
+func (q queryRequests) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q queryRequests) Less(i, j int) bool { return q[i].QueryHash.Cmp(q[j].QueryHash) < 0 }
 
 // VerifyStates verifies user state and issuer auth claim state in the smart contract.
 func (c *LinkedMultiQuery) VerifyStates(_ context.Context, _ map[string]StateResolver, _ ...VerifyOpt) error {

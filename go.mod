@@ -8,7 +8,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
-	github.com/iden3/go-circuits/v2 v2.0.2-0.20240131165639-deb061a1b3e6
+	github.com/iden3/go-circuits/v2 v2.1.0
 	github.com/iden3/go-iden3-core/v2 v2.0.3
 	github.com/iden3/go-iden3-crypto v0.0.15
 	github.com/iden3/go-jwz/v2 v2.0.1

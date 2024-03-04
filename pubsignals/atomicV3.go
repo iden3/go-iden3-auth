@@ -41,8 +41,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 		Timestamp:           c.Timestamp,
 		Merklized:           c.Merklized,
 		ClaimPathKey:        c.ClaimPathKey,
-		ClaimPathNotExists:  c.ClaimPathNotExists,
-		ValueArraySize:      c.ValueArraySize,
+		ValueArraySize:      c.ActualValueArraySize,
 		IsRevocationChecked: c.IsRevocationChecked,
 		// V3 NEW
 		LinkID:             c.LinkID,
@@ -52,7 +51,7 @@ func (c *AtomicQueryV3) VerifyQuery(
 		Nullifier:          c.Nullifier,
 		ProofType:          c.ProofType,
 	}
-	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, true, opts...)
+	err := query.Check(ctx, schemaLoader, &pubSig, verifiablePresentation, circuits.AtomicQueryV3CircuitID, opts...)
 	if err != nil {
 		return output, err
 	}
