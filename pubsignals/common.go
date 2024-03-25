@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 	"strconv"
 
 	"github.com/iden3/go-circuits/v2"
@@ -159,7 +160,7 @@ func ParseQueryMetadata(ctx context.Context, propertyQuery PropertyQuery, ldCont
 		}
 	}
 	if propertyQuery.Operator == circuits.EXISTS {
-		query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, ld.XSDBoolean) // TODO: refactor
+		query.Values, err = transformExistsOperatorValueToBigInt(ctx, propertyQuery.OperatorValue)
 	} else {
 		query.Values, err = transformQueryValueToBigInts(ctx, propertyQuery.OperatorValue, query.Datatype)
 	}
@@ -219,6 +220,18 @@ func transformQueryValueToBigInts(_ context.Context, value any, ldType string) (
 	}
 
 	return []*big.Int{hashValue}, err
+}
+
+func transformExistsOperatorValueToBigInt(_ context.Context, value any) (out []*big.Int, err error) {
+	t := reflect.TypeOf(value).Kind()
+	if t != reflect.Bool {
+		return nil, errors.New("only boolean value is supported for operator $exists")
+	}
+	val := new(big.Int)
+	if value == true {
+		val.SetInt64(1)
+	}
+	return []*big.Int{val}, err
 }
 
 func isPositiveInteger(v interface{}) bool {
