@@ -310,7 +310,60 @@ func TestCheckRequest_Success(t *testing.T) {
 		})
 	}
 }
+func TestCheckRequestV3_Success(t *testing.T) {
+	now := time.Now().Unix()
+	tests := []struct {
+		name   string
+		query  Query
+		pubSig *CircuitOutputs
+		vp     json.RawMessage
+		loader *mockJSONLDSchemaLoader
+	}{
+		{
+			name: "Check merklized query, exists operator",
+			query: Query{
+				AllowedIssuers: []string{"*"},
+				CredentialSubject: map[string]interface{}{
+					"countryCode": map[string]interface{}{
+						"$exists": true,
+					},
+				},
+				Context: "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
+				Type:    "KYCCountryOfResidenceCredential",
+			},
+			pubSig: &CircuitOutputs{
+				IssuerID:    &issuerID,
+				ClaimSchema: utils.CreateSchemaHash([]byte("https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld#KYCCountryOfResidenceCredential")),
+				ClaimPathKey: func() *big.Int {
+					v, _ := big.NewInt(0).SetString("17002437119434618783545694633038537380726339994244684348913844923422470806844", 10)
+					return v
+				}(),
+				Operator: 11,
+				Value: func() []*big.Int {
+					v, _ := circuits.PrepareCircuitArrayValues([]*big.Int{big.NewInt(1)}, 64)
+					return v
+				}(),
+				Merklized:           1,
+				IsRevocationChecked: 1,
+				ValueArraySize:      1,
+				Timestamp:           now,
+			},
+			loader: &mockJSONLDSchemaLoader{
+				schemas: map[string]string{
+					"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld": loadSchema("kyc-v3.json-ld"),
+				},
+			},
+		},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.query.Check(context.Background(), tt.loader, tt.pubSig, tt.vp, circuits.AtomicQueryV3CircuitID)
+			require.NoError(t, err)
+			tt.loader.assert(t)
+		})
+	}
+}
 func TestCheckRequest_SelectiveDisclosure_Error(t *testing.T) {
 	now := time.Now().Unix()
 	durationMin, _ := time.ParseDuration("-1m")
