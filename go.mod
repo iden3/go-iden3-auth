@@ -6,16 +6,16 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.3
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.3.0
-	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3
-	github.com/iden3/go-circuits/v2 v2.1.0
-	github.com/iden3/go-iden3-core/v2 v2.0.3
+	github.com/google/uuid v1.6.0
+	github.com/iden3/contracts-abi/state/go/abi v1.0.1
+	github.com/iden3/go-circuits/v2 v2.2.0
+	github.com/iden3/go-iden3-core/v2 v2.1.0
 	github.com/iden3/go-iden3-crypto v0.0.15
-	github.com/iden3/go-jwz/v2 v2.0.1
+	github.com/iden3/go-jwz/v2 v2.0.2
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
-	github.com/iden3/go-schema-processor/v2 v2.3.1
-	github.com/iden3/iden3comm/v2 v2.1.0
+	github.com/iden3/go-schema-processor/v2 v2.3.3
+	github.com/iden3/iden3comm/v2 v2.3.2
 	github.com/ipfs/go-ipfs-api v0.7.0
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
