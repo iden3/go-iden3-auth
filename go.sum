@@ -108,8 +108,8 @@ github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpO
 github.com/huin/goupnp v1.2.0 h1:uOKW26NG1hsSSbXIZ1IR7XP9Gjd1U8pnLaCMgntmkmY=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1 h1:FsaLJSy3NSyJl5k1yfDxc5DhUHRY7Z/UCj0/1YueMrY=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
-github.com/iden3/go-circuits/v2 v2.2.1 h1:ww+qOmEZJjL3bolLlnZv2SuukiVolgdcSaL3vonXoxI=
-github.com/iden3/go-circuits/v2 v2.2.1/go.mod h1:Q6IFYauDdWo0hES4XzHXxz7hUYpmNsVmtP36Lxkjc/0=
+github.com/iden3/go-circuits/v2 v2.3.0 h1:xzDVuq4JkTgtz+AjatquuPgGVbOxRpcWMhUOcWEZJN4=
+github.com/iden3/go-circuits/v2 v2.3.0/go.mod h1:APhXQaRQr4txd+u0Y7liBjN/Wnox0d31wR40LkXywAE=
 github.com/iden3/go-iden3-core/v2 v2.2.0 h1:PcMSxJRLAoJausj1gKstzgt25HS18K+IHLaSPeI9p8Q=
 github.com/iden3/go-iden3-core/v2 v2.2.0/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.16 h1:zN867xiz6HgErXVIV/6WyteGcOukE9gybYTorBMEdsk=
