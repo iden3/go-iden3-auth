@@ -114,8 +114,8 @@ github.com/iden3/go-iden3-core/v2 v2.2.0 h1:PcMSxJRLAoJausj1gKstzgt25HS18K+IHLaS
 github.com/iden3/go-iden3-core/v2 v2.2.0/go.mod h1:L9PxhWPvoS9qTb3inEkZBm1RpjHBt+VTwvxssdzbAdw=
 github.com/iden3/go-iden3-crypto v0.0.16 h1:zN867xiz6HgErXVIV/6WyteGcOukE9gybYTorBMEdsk=
 github.com/iden3/go-iden3-crypto v0.0.16/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
-github.com/iden3/go-jwz/v2 v2.1.0 h1:qb0igVnbbLg5iWQmPGrPFQxh5C5/4tlo1PamZzSg1dY=
-github.com/iden3/go-jwz/v2 v2.1.0/go.mod h1:DbQsEnfYowxX1dkmZTaQJkxw6MbzE+IIMkdAV7u4CT4=
+github.com/iden3/go-jwz/v2 v2.1.1 h1:6274wip59HAi9GkKewG0kKj/WBJeT6T4B+IotQM8IrY=
+github.com/iden3/go-jwz/v2 v2.1.1/go.mod h1:1mEhNrtAO4eACWZeg9k6T0CxadN4XUkj/dfWUBk3exE=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4 h1:Dp089P3YNX1BE8+T1tKQHWTtnk84Y/Kr7ZAGTqwscoY=
 github.com/iden3/go-merkletree-sql/v2 v2.0.4/go.mod h1:kRhHKYpui5DUsry5RpveP6IC4XMe6iApdV9VChRYuEk=
 github.com/iden3/go-rapidsnark/prover v0.0.10 h1:NvOfRPpex/k646UsqOcUy7a7uVl17t4ok9kWvpQg4+k=
@@ -130,8 +130,8 @@ github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e
 github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e/go.mod h1:UEBifEzw62T6VzIHJeHuUgeLg2U/J9ttf7hOwQEqnYk=
 github.com/iden3/go-schema-processor/v2 v2.4.0 h1:SlyWHTBKeS6P7asDvGKA9R2nWxwqOdeMRirU3TnDLyM=
 github.com/iden3/go-schema-processor/v2 v2.4.0/go.mod h1:eBtILnPjh4wnsAg3LWnvcZlGG+5IkAJaRqhVBnDjerg=
-github.com/iden3/iden3comm/v2 v2.5.0 h1:+NAjNdRlK4OzpkR800r4gZP8DAnPISVLESZsDFNlZiY=
-github.com/iden3/iden3comm/v2 v2.5.0/go.mod h1:0DxA+7ck9oQu9HGTlAa5oV2avZ2cWRBD0WjyX6MU/v4=
+github.com/iden3/iden3comm/v2 v2.5.1 h1:Tp0jRa91r96fBREKOa7aXckusfrqyWfosTHJi+8g+nw=
+github.com/iden3/iden3comm/v2 v2.5.1/go.mod h1:j9Vh4b2azIc7J7g0WzHV54z7MpYmq89KkvxsVyBkjIE=
 github.com/ipfs/boxo v0.12.0 h1:AXHg/1ONZdRQHQLgG5JHsSC3XoE4DjCAMgK+asZvUcQ=
 github.com/ipfs/boxo v0.12.0/go.mod h1:xAnfiU6PtxWCnRqu7dcXQ10bB5/kvI1kXRotuGqGBhg=
 github.com/ipfs/go-cid v0.4.1 h1:A/T3qGvxi4kpKWWcPC/PgbvDA2bjVLO7n4UeVwnbs/s=
