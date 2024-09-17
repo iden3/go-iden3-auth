@@ -575,16 +575,34 @@ func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupID
 
 // VerifyJWZ performs verification of jwz token
 func (v *Verifier) VerifyJWZ(
-	_ context.Context,
+	ctx context.Context,
 	token string,
-	_ ...pubsignals.VerifyOpt,
+	opts ...pubsignals.VerifyOpt,
 ) (t *jwz.Token, err error) {
 
-	_, _, err = v.packageManager.Unpack([]byte(token))
+	t, err = jwz.Parse(token)
 	if err != nil {
 		return nil, err
 	}
-	t, err = jwz.Parse(token)
+
+	verificationKey, err := v.verificationKeyLoader.Load(circuits.CircuitID(t.CircuitID))
+	if err != nil {
+		return nil, errors.Errorf("verification key for circuit with id %s not found", t.CircuitID)
+	}
+	isValid, err := t.Verify(verificationKey)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, errors.New("zero knowledge proof of jwz is not valid")
+	}
+
+	circuitVerifier, err := getPublicSignalsVerifier(circuits.CircuitID(t.CircuitID), t.ZkProof.PubSignals)
+	if err != nil {
+		return nil, err
+	}
+
+	err = circuitVerifier.VerifyStates(ctx, v.stateResolver, opts...)
 	if err != nil {
 		return nil, err
 	}
