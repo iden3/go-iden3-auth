@@ -239,7 +239,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
@@ -518,6 +518,7 @@ func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupID
 }
 
 // VerifyJWZ performs verification of jwz token
+// Deprecated: Use VerifyToken instead
 func (v *Verifier) VerifyJWZ(
 	ctx context.Context,
 	token string,
@@ -554,14 +555,8 @@ func (v *Verifier) VerifyJWZ(
 	return t, err
 }
 
-// FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(
-	ctx context.Context,
-	token string,
-	request protocol.AuthorizationRequestMessage,
-	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
-) (*protocol.AuthorizationResponseMessage, error) {
-
+// VerifyToken performs verification of jws/jwz token using the registered packers in package manager
+func (v *Verifier) VerifyToken(token string) (*protocol.AuthorizationResponseMessage, error) {
 	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
@@ -577,9 +572,24 @@ func (v *Verifier) FullVerify(
 	if err != nil {
 		return nil, err
 	}
-
-	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, opts...)
 	return &authMsgResponse, err
+}
+
+// FullVerify performs verification of jwz token and auth request
+func (v *Verifier) FullVerify(
+	ctx context.Context,
+	token string,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+) (*protocol.AuthorizationResponseMessage, error) {
+
+	authMsgResponse, err := v.VerifyToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v.VerifyAuthResponse(ctx, *authMsgResponse, request, opts...)
+	return authMsgResponse, err
 }
 
 // VerifyState allows to verify state without binding to  verifier instance
