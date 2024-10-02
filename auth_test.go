@@ -446,9 +446,9 @@ func TestVerifier_VerifyToken(t *testing.T) {
 			name:  "Verify JWS token",
 			token: tokenJWS,
 			expected: expected{
-				Typ:  packers.MediaTypePlainMessage,
-				From: "did:polygonid:polygon:mumbai:2qPDLXDaU1xa1ERTb1XKBfPCB3o2wA46q49neiXWwY",
-				To:   "did:polygonid:polygon:mumbai:2qJ689kpoJxcSzB5sAFJtPsSBSrHF5dq722BHMqURL",
+				Typ:  packers.MediaTypeSignedMessage,
+				From: "did:pkh:poly:0x7141E4d20F7644DC8c0AdCA8a520EC83C6cABD65",
+				To:   "did:polygonid:polygon:mumbai:2qLPqvayNQz9TA2r5VPxUugoF18teGU583zJ859wfy",
 			},
 		},
 		{
@@ -469,8 +469,13 @@ func TestVerifier_VerifyToken(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := authInstance.VerifyToken(tc.token)
+			authResp, err := authInstance.VerifyToken(tc.token)
 			require.Equal(t, tc.expected.err, err != nil)
+			if err == nil {
+				assert.Equal(t, tc.expected.Typ, authResp.Typ)
+				assert.Equal(t, tc.expected.From, authResp.From)
+				assert.Equal(t, tc.expected.To, authResp.To)
+			}
 		})
 	}
 }
