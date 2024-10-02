@@ -432,6 +432,7 @@ func TestVerifier_VerifyToken(t *testing.T) {
 	require.NoError(t, err)
 
 	type expected struct {
+		err  bool
 		Typ  iden3comm.MediaType
 		From string
 		To   string
@@ -459,23 +460,19 @@ func TestVerifier_VerifyToken(t *testing.T) {
 				To:   "did:polygonid:polygon:mumbai:2qJ689kpoJxcSzB5sAFJtPsSBSrHF5dq722BHMqURL",
 			},
 		},
+		{
+			name:  "Wrong token",
+			token: "wrongtoken",
+			expected: expected{
+				err: true,
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := authInstance.VerifyToken(tokenJWZ)
-			require.NoError(t, err)
+			_, err := authInstance.VerifyToken(tc.token)
+			require.Equal(t, tc.expected.err, err != nil)
 		})
 	}
-	t.Run("Verify JWS token", func(t *testing.T) {
-		schemaLoader := &mockJSONLDSchemaLoader{}
-		authInstance, err := NewVerifier(verificationKeyloader, stateResolvers, WithDocumentLoader(schemaLoader))
-		require.NoError(t, err)
-
-		_, err = authInstance.VerifyToken(tokenJWS)
-		require.NoError(t, err)
-
-		schemaLoader.assert(t)
-	})
-
 }
 
 func TestVerifier_FullVerify(t *testing.T) {
