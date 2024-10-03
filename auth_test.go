@@ -467,6 +467,13 @@ func TestVerifier_VerifyToken(t *testing.T) {
 				err: true,
 			},
 		},
+		{
+			name:  "A dummy JWT token",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			expected: expected{
+				err: true,
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			authResp, err := authInstance.VerifyToken(tc.token)
