@@ -28,7 +28,6 @@ import (
 	"github.com/iden3/iden3comm/v2"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
-	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -117,7 +116,7 @@ func WithDocumentLoader(docLoader ld.DocumentLoader) VerifierOption {
 // WithIPFSClient sets the IPFS client for document loader of Verifier instance.
 // If document loader is set with WithDocumentLoader function, this option is
 // ignored.
-func WithIPFSClient(ipfsCli *shell.Shell) VerifierOption {
+func WithIPFSClient(ipfsCli schemaloaders.IPFSClient) VerifierOption {
 	return func(opts *verifierOpts) {
 		opts.ipfsCli = ipfsCli
 	}
@@ -142,7 +141,7 @@ func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
 
 type verifierOpts struct {
 	docLoader   ld.DocumentLoader
-	ipfsCli     *shell.Shell
+	ipfsCli     schemaloaders.IPFSClient
 	ipfsGW      string
 	didResolver packers.DIDResolverHandlerFunc
 }
@@ -649,7 +648,7 @@ func findProofByRequestID(arr []protocol.ZeroKnowledgeProofResponse, id uint32) 
 	return nil
 }
 
-func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli *shell.Shell,
+func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSClient,
 	ipfsGW string) ld.DocumentLoader {
 
 	if docLoader != nil {
