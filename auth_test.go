@@ -1225,3 +1225,75 @@ func TestFullVerifyLinkedProofsVerification(t *testing.T) {
 	require.NotNil(t, returnMsg)
 	schemaLoader.assert(t)
 }
+
+func TestParseConnectionString(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    map[string]pubsignals.StateResolver
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "Valid input",
+			input:   "1=http://localhost:8545|0x1234567890abcdef1234567890abcdef12345678",
+			want:    map[string]pubsignals.StateResolver{"eth:main": state.NewETHResolver("http://localhost:8545", "0x1234567890abcdef1234567890abcdef12345678")},
+			wantErr: false,
+		},
+		{
+			name:    "Invalid format - missing =",
+			input:   "1http://localhost:8545|0x1234567890abcdef1234567890abcdef12345678",
+			wantErr: true,
+			errMsg:  "invalid format: '1http://localhost:8545|0x1234567890abcdef1234567890abcdef12345678'",
+		},
+		{
+			name:    "Invalid format - missing |",
+			input:   "1=http://localhost:85450x1234567890abcdef1234567890abcdef12345678",
+			wantErr: true,
+			errMsg:  "invalid format: 'http://localhost:85450x1234567890abcdef1234567890abcdef12345678'",
+		},
+		{
+			name:    "Invalid RPC URL",
+			input:   "1=invalid_url|0x1234567890abcdef1234567890abcdef12345678",
+			wantErr: true,
+			errMsg:  "invalid rpc url: 'invalid_url'",
+		},
+		{
+			name:    "Invalid contract address",
+			input:   "1=http://localhost:8545|invalid_address",
+			wantErr: true,
+			errMsg:  "invalid contract address: 'invalid_address'",
+		},
+		{
+			name:    "Invalid chain ID",
+			input:   "invalid_chain_id=http://localhost:8545|0x1234567890abcdef1234567890abcdef12345678",
+			wantErr: true,
+			errMsg:  "invalid chain id: 'invalid_chain_id'",
+		},
+		{
+			name:    "Unknown chain ID",
+			input:   "9999=http://localhost:8545|0x1234567890abcdef1234567890abcdef12345678",
+			wantErr: true,
+			errMsg:  "invalid chain id: '9999'",
+		},
+		{
+			name:    "Empty input",
+			input:   "",
+			wantErr: true,
+			errMsg:  "invalid format: ''",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseConnectionString(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

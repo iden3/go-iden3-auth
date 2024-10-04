@@ -9,6 +9,9 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +23,7 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-jwz/v2"
 	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
@@ -152,6 +156,58 @@ func newOpts() verifierOpts {
 	}
 }
 
+// ParseConnectionString parses the connection string and returns a map of state resolvers.
+// The connection string format is as follows:
+//
+//	chainID1=rpcURL1|contractAddress1;chainID2=rpcURL2|contractAddress2;...
+//
+// Each chainID is an integer representing the blockchain ID.
+// Each rpcURL is the URL of the RPC endpoint for the blockchain.
+// Each contractAddress is the address of the contract on the blockchain.
+// The function returns an error if the connection string is in an invalid format or if the contract address is invalid.
+// If the length of the result is 0, it means no connection info was found and an error is returned.
+func ParseConnectionString(str string) (map[string]pubsignals.StateResolver, error) {
+	str = strings.TrimSpace(str)
+	result := make(map[string]pubsignals.StateResolver)
+	connectionInfo := strings.Split(str, ";")
+	for _, chain := range connectionInfo {
+		parts := strings.Split(chain, "=")
+		if len(parts) != 2 {
+			return nil, errors.Errorf("invalid format: '%s'", chain)
+		}
+		chainIDstr := parts[0]
+		rpcToContractAddress := strings.Split(parts[1], "|")
+		if len(rpcToContractAddress) != 2 {
+			return nil, errors.Errorf("invalid format: '%s'", parts[1])
+		}
+
+		_, err := url.ParseRequestURI(rpcToContractAddress[0])
+		if err != nil {
+			return nil, errors.Errorf("invalid rpc url: '%s'", rpcToContractAddress[0])
+		}
+		if common.HexToAddress(rpcToContractAddress[1]).Hex() == (common.Address{}).Hex() {
+			return nil, errors.Errorf("invalid contract address: '%s'", rpcToContractAddress[1])
+		}
+
+		chainID, err := strconv.Atoi(chainIDstr)
+		if err != nil {
+			return nil, errors.Errorf("invalid chain id: '%s'", chainIDstr)
+		}
+		//nolint:gosec // integer overflow is not possible here
+		blockchain, network, err := core.NetworkByChainID(core.ChainID(chainID))
+		if err != nil {
+			return nil, errors.Errorf("invalid chain id: '%s'", chainIDstr)
+		}
+
+		c := state.NewETHResolver(rpcToContractAddress[0], rpcToContractAddress[1])
+		result[fmt.Sprintf("%s:%s", blockchain, network)] = c
+	}
+	if len(result) == 0 {
+		return nil, errors.New("no connection info found")
+	}
+	return result, nil
+}
+
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
@@ -238,7 +294,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
