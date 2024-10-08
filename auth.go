@@ -288,6 +288,7 @@ func CreateContractInvokeRequest(
 }
 
 // CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
+// Deprecated:
 func CreateContractInvokeRequestWithMessage(
 	reason, message, sender string,
 	transactionData protocol.TransactionData,
@@ -302,7 +303,6 @@ func CreateContractInvokeRequestWithMessage(
 		From:     sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
 			Reason:          reason,
-			Message:         message,
 			TransactionData: transactionData,
 			Scope:           zkRequests,
 		},
