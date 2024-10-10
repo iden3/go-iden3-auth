@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/contracts-abi/state/go/abi"
+	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/proofs"
@@ -100,6 +101,7 @@ type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	documentLoader        ld.DocumentLoader
 	stateResolver         map[string]pubsignals.StateResolver
+	ethResolvers          map[int]eth.Resolver
 	packageManager        iden3comm.PackageManager
 }
 
@@ -139,17 +141,46 @@ func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
 	}
 }
 
-type verifierOpts struct {
-	docLoader   ld.DocumentLoader
-	ipfsCli     schemaloaders.IPFSClient
-	ipfsGW      string
-	didResolver packers.DIDResolverHandlerFunc
+// WithEthereumResolvers set the ethereum resolvers to use. It will overwrite the
+// default ones.
+func WithEthereumResolvers(resolvers map[int]eth.Resolver) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.ethResolvers = resolvers
+	}
 }
 
-func newOpts() verifierOpts {
-	return verifierOpts{
-		didResolver: UniversalDIDResolver,
+type verifierOpts struct {
+	docLoader    ld.DocumentLoader
+	ipfsCli      schemaloaders.IPFSClient
+	ipfsGW       string
+	didResolver  packers.DIDResolverHandlerFunc
+	ethResolvers map[int]eth.Resolver
+}
+
+func defaultEthResolver() (map[int]eth.Resolver, error) {
+	const (
+		chainID      = 21000
+		rpc          = "https://rpc-mainnet.privado.id"
+		contractAddr = "0x58485809CfAc875B7E6F54E3fCb5f24614f202e9"
+	)
+	r, err := eth.NewResolver(rpc, contractAddr)
+	if err != nil {
+		return nil, err
 	}
+	return map[int]eth.Resolver{
+		chainID: *r,
+	}, nil
+}
+
+func newOpts() (verifierOpts, error) {
+	ethRes, err := defaultEthResolver()
+	if err != nil {
+		return verifierOpts{}, err
+	}
+	return verifierOpts{
+		didResolver:  UniversalDIDResolver,
+		ethResolvers: ethRes,
+	}, nil
 }
 
 // NewVerifier returns setup instance of auth library
@@ -158,7 +189,10 @@ func NewVerifier(
 	resolver map[string]pubsignals.StateResolver,
 	opts ...VerifierOption,
 ) (*Verifier, error) {
-	vOpts := newOpts()
+	vOpts, err := newOpts()
+	if err != nil {
+		return nil, err
+	}
 	for _, optFn := range opts {
 		optFn(&vOpts)
 	}
@@ -168,11 +202,12 @@ func NewVerifier(
 	v := &Verifier{
 		verificationKeyLoader: keyLoader,
 		documentLoader:        docLoader,
+		ethResolvers:          vOpts.ethResolvers,
 		stateResolver:         resolver,
 		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
-	err := v.SetupAuthV2ZKPPacker()
+	err = v.SetupAuthV2ZKPPacker()
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +273,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
@@ -288,6 +323,7 @@ func CreateContractInvokeRequest(
 }
 
 // CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
+// Deprecated:
 func CreateContractInvokeRequestWithMessage(
 	reason, message, sender string,
 	transactionData protocol.TransactionData,
@@ -302,7 +338,6 @@ func CreateContractInvokeRequestWithMessage(
 		From:     sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
 			Reason:          reason,
-			Message:         message,
 			TransactionData: transactionData,
 			Scope:           zkRequests,
 		},
@@ -475,7 +510,7 @@ func (v *Verifier) VerifyAuthResponse(
 			return err
 		}
 
-		err = verifyGroupIDMathch(verifyResult.LinkID, query.GroupID, proofResponse.ID, groupIDToLinkIDMap)
+		err = verifyGroupIDMatch(verifyResult.LinkID, query.GroupID, proofResponse.ID, groupIDToLinkIDMap)
 		if err != nil {
 			return err
 		}
@@ -485,7 +520,7 @@ func (v *Verifier) VerifyAuthResponse(
 	return nil
 }
 
-func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupIDToLinkIDMap map[int][]linkIDRequestID) error {
+func verifyGroupIDMatch(linkID *big.Int, groupID int, requestID uint32, groupIDToLinkIDMap map[int][]linkIDRequestID) error {
 	if groupID == 0 {
 		return nil
 	}
@@ -517,6 +552,7 @@ func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupID
 }
 
 // VerifyJWZ performs verification of jwz token
+// Deprecated: Use VerifyToken instead
 func (v *Verifier) VerifyJWZ(
 	ctx context.Context,
 	token string,
@@ -553,15 +589,29 @@ func (v *Verifier) VerifyJWZ(
 	return t, err
 }
 
-// FullVerify performs verification of jwz token and auth request
-func (v *Verifier) FullVerify(
-	ctx context.Context,
+// VerifyToken performs verification of jws/jwz token using the registered packers in package manager
+func (v *Verifier) VerifyToken(
 	token string,
-	request protocol.AuthorizationRequestMessage,
-	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+	opts ...packers.DefaultZKPUnpackerOption,
 ) (*protocol.AuthorizationResponseMessage, error) {
 
-	msg, _, err := v.packageManager.Unpack([]byte(token))
+	pm := v.packageManager.Clone()
+	if opts != nil {
+		authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
+		if err != nil {
+			return nil, fmt.Errorf("failed upload circuits files: %w", err)
+		}
+
+		if err := pm.UpdatePacker(
+			packers.DefaultZKPUnpacker(
+				authV2Set,
+				v.ethResolvers,
+				opts...)); err != nil {
+			return nil, fmt.Errorf("failed to update packer: %w", err)
+		}
+	}
+
+	msg, _, err := pm.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
 	}
@@ -576,9 +626,24 @@ func (v *Verifier) FullVerify(
 	if err != nil {
 		return nil, err
 	}
-
-	err = v.VerifyAuthResponse(ctx, authMsgResponse, request, opts...)
 	return &authMsgResponse, err
+}
+
+// FullVerify performs verification of jwz token and auth request
+func (v *Verifier) FullVerify(
+	ctx context.Context,
+	token string,
+	request protocol.AuthorizationRequestMessage,
+	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
+) (*protocol.AuthorizationResponseMessage, error) {
+
+	authMsgResponse, err := v.VerifyToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v.VerifyAuthResponse(ctx, *authMsgResponse, request, opts...)
+	return authMsgResponse, err
 }
 
 // VerifyState allows to verify state without binding to  verifier instance
