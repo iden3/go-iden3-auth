@@ -71,11 +71,11 @@ type mockStateResolver struct {
 }
 
 func (r *mockStateResolver) GetRPCUrl() string {
-	return "https://"
+	return "https://rpc-mainnet.privado.id"
 }
 
 func (r *mockStateResolver) GetContractAddr() common.Address {
-	return common.Address{}
+	return common.HexToAddress("0x58485809CfAc875B7E6F54E3fCb5f24614f202e9")
 }
 
 func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*state.ResolvedState, error) {

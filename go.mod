@@ -10,6 +10,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.0.1
+	github.com/iden3/driver-did-iden3 v0.0.6
 	github.com/iden3/go-circuits/v2 v2.4.0
 	github.com/iden3/go-iden3-core/v2 v2.3.1
 	github.com/iden3/go-iden3-crypto v0.0.17
@@ -17,7 +18,7 @@ require (
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
 	github.com/iden3/go-schema-processor/v2 v2.5.0
-	github.com/iden3/iden3comm/v2 v2.7.1-0.20241015160531-d8ea65210731
+	github.com/iden3/iden3comm/v2 v2.7.1-0.20241018161806-011c8a15266f
 	github.com/piprate/json-gold v0.5.1-0.20230111113000-6ddbe6e6f19f
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
@@ -40,7 +41,6 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
 	github.com/huin/goupnp v1.2.0 // indirect
-	github.com/iden3/driver-did-iden3 v0.0.5 // indirect
 	github.com/iden3/go-merkletree-sql/v2 v2.0.4 // indirect
 	github.com/iden3/go-rapidsnark/prover v0.0.10 // indirect
 	github.com/iden3/go-rapidsnark/witness/v2 v2.0.0 // indirect

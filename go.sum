@@ -112,6 +112,8 @@ github.com/iden3/contracts-abi/state/go/abi v1.0.1 h1:FsaLJSy3NSyJl5k1yfDxc5DhUH
 github.com/iden3/contracts-abi/state/go/abi v1.0.1/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
 github.com/iden3/driver-did-iden3 v0.0.5 h1:N3B9S3CBZHqWIZWspAiq2JFaLyq0eLZf26sN3ZEMAhQ=
 github.com/iden3/driver-did-iden3 v0.0.5/go.mod h1:TcEG6fkExW6hgafjrU4ObOQ/HZqIRPQoL3TMU+URbS0=
+github.com/iden3/driver-did-iden3 v0.0.6 h1:6TI2GQaRUTFxujNeCY7GEadCm10NxS7Vckfgfoqr9K4=
+github.com/iden3/driver-did-iden3 v0.0.6/go.mod h1:TcEG6fkExW6hgafjrU4ObOQ/HZqIRPQoL3TMU+URbS0=
 github.com/iden3/go-circuits/v2 v2.4.0 h1:m+7uYtrvJKuc+gVhbXDXl1BJQyK7sWdW7OWttM3R/8I=
 github.com/iden3/go-circuits/v2 v2.4.0/go.mod h1:k0uYx/ZdZPiDEIy7kI3MAixnREKcc7NdCKDRw8Q+iFA=
 github.com/iden3/go-iden3-core/v2 v2.3.1 h1:ytQqiclnVAIWyRKR2LF31hfz4DGRBD6nMjiPILXGSKk=
@@ -134,7 +136,10 @@ github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e
 github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e/go.mod h1:UEBifEzw62T6VzIHJeHuUgeLg2U/J9ttf7hOwQEqnYk=
 github.com/iden3/go-schema-processor/v2 v2.5.0 h1:MX84oFb9kYq0ntKiU4DrPPaRgCDUCKlurtHB6nvPPAs=
 github.com/iden3/go-schema-processor/v2 v2.5.0/go.mod h1:hMqYi4lKOzEGkmCRks/r4Crj8H4G8YaTt8H4jZHzX9Y=
+github.com/iden3/iden3comm/v2 v2.7.1-0.20241015160531-d8ea65210731 h1:KtKfR3VP54VzRWpji8HM5jtNOwQ9ISO6qcY5Vck6h3M=
 github.com/iden3/iden3comm/v2 v2.7.1-0.20241015160531-d8ea65210731/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
+github.com/iden3/iden3comm/v2 v2.7.1-0.20241018161806-011c8a15266f h1:5jFypweLQ1l9hzmVdSoix6cZar8EZn5p3ArYI978klE=
+github.com/iden3/iden3comm/v2 v2.7.1-0.20241018161806-011c8a15266f/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
