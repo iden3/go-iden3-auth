@@ -103,7 +103,6 @@ type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	documentLoader        ld.DocumentLoader
 	stateResolver         map[string]pubsignals.StateResolver
-	ethResolvers          map[int]eth.Resolver
 	packageManager        iden3comm.PackageManager
 	unpacker              iden3comm.Packer
 }

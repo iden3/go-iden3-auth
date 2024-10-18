@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
@@ -67,6 +68,14 @@ var stateResolvers = map[string]pubsignals.StateResolver{
 const proofGenerationDelay = time.Hour * 100000
 
 type mockStateResolver struct {
+}
+
+func (r *mockStateResolver) GetRPCUrl() string {
+	return "https://"
+}
+
+func (r *mockStateResolver) GetContractAddr() common.Address {
+	return common.Address{}
 }
 
 func (r *mockStateResolver) Resolve(_ context.Context, _, _ *big.Int) (*state.ResolvedState, error) {
