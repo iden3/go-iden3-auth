@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +22,7 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-jwz/v2"
 	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
@@ -103,6 +105,7 @@ type Verifier struct {
 	stateResolver         map[string]pubsignals.StateResolver
 	ethResolvers          map[int]eth.Resolver
 	packageManager        iden3comm.PackageManager
+	unpacker              iden3comm.Packer
 }
 
 // VerifierOption is a function to set options for Verifier instance
@@ -141,46 +144,15 @@ func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
 	}
 }
 
-// WithEthereumResolvers set the ethereum resolvers to use. It will overwrite the
-// default ones.
-func WithEthereumResolvers(resolvers map[int]eth.Resolver) VerifierOption {
-	return func(opts *verifierOpts) {
-		opts.ethResolvers = resolvers
-	}
-}
-
 type verifierOpts struct {
-	docLoader    ld.DocumentLoader
-	ipfsCli      schemaloaders.IPFSClient
-	ipfsGW       string
-	didResolver  packers.DIDResolverHandlerFunc
-	ethResolvers map[int]eth.Resolver
+	docLoader   ld.DocumentLoader
+	ipfsCli     schemaloaders.IPFSClient
+	ipfsGW      string
+	didResolver packers.DIDResolverHandlerFunc
 }
 
-func defaultEthResolver() (map[int]eth.Resolver, error) {
-	const (
-		chainID      = 21000
-		rpc          = "https://rpc-mainnet.privado.id"
-		contractAddr = "0x58485809CfAc875B7E6F54E3fCb5f24614f202e9"
-	)
-	r, err := eth.NewResolver(rpc, contractAddr)
-	if err != nil {
-		return nil, err
-	}
-	return map[int]eth.Resolver{
-		chainID: *r,
-	}, nil
-}
-
-func newOpts() (verifierOpts, error) {
-	ethRes, err := defaultEthResolver()
-	if err != nil {
-		return verifierOpts{}, err
-	}
-	return verifierOpts{
-		didResolver:  UniversalDIDResolver,
-		ethResolvers: ethRes,
-	}, nil
+func newOpts() verifierOpts {
+	return verifierOpts{didResolver: UniversalDIDResolver}
 }
 
 // NewVerifier returns setup instance of auth library
@@ -189,10 +161,7 @@ func NewVerifier(
 	resolver map[string]pubsignals.StateResolver,
 	opts ...VerifierOption,
 ) (*Verifier, error) {
-	vOpts, err := newOpts()
-	if err != nil {
-		return nil, err
-	}
+	vOpts := newOpts()
 	for _, optFn := range opts {
 		optFn(&vOpts)
 	}
@@ -206,7 +175,7 @@ func NewVerifier(
 		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
-	err = v.SetupAuthV2ZKPPacker()
+	err := v.SetupAuthV2ZKPPacker()
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +230,27 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 			return verifier.VerifyStates(context.Background(), v.stateResolver)
 		},
 	)
+
+	resolvers := map[int]eth.Resolver{}
+	for prefix, stateResolver := range v.stateResolver {
+		blockchain, network, err := blockChainNetwork(prefix)
+		if err != nil {
+			return fmt.Errorf("failed get blockchain and network: %w", err)
+		}
+		chainID, err := core.GetChainID(blockchain, network)
+		if err != nil {
+			return fmt.Errorf("failed get chain id: %w", err)
+		}
+		ethResolver, err := eth.NewResolver(
+			stateResolver.GetRPCUrl(),
+			stateResolver.GetContractAddr().String(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed create eth resolver: %w", err)
+		}
+		resolvers[int(chainID)] = *ethResolver
+	}
+	v.unpacker = packers.DefaultZKPUnpacker(authV2Set, resolvers)
 
 	zkpPackerV2 := packers.NewZKPPacker(
 		provers,
@@ -561,14 +551,10 @@ func (v *Verifier) VerifyToken(
 		o(&cfg)
 	}
 	if cfg.AcceptedProofGenerationDelay > 0 {
-		authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
-		if err != nil {
-			return nil, fmt.Errorf("failed upload circuits files: %w", err)
-		}
-		unpackOpts = append(unpackOpts, packers.NewZKPPUnpackerParams(authV2Set, v.ethResolvers, cfg.AcceptedProofGenerationDelay))
+		unpackOpts = append(unpackOpts, packers.NewZKPPUnpackerParams(cfg.AcceptedProofGenerationDelay))
 	}
 
-	msg, _, err := v.packageManager.Unpack([]byte(token), unpackOpts...)
+	msg, err := v.unpacker.Unpack([]byte(token), unpackOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -720,4 +706,12 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSCl
 	}
 
 	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
+}
+
+func blockChainNetwork(id string) (blockchain core.Blockchain, network core.NetworkID, err error) {
+	s := strings.Split(id, ":")
+	if len(s) < 2 {
+		return "", "", fmt.Errorf("invalid network:blockchain <%s>", id)
+	}
+	return core.Blockchain(s[0]), core.NetworkID(s[1]), nil
 }

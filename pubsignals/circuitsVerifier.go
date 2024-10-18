@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/piprate/json-gold/ld"
@@ -14,6 +15,8 @@ import (
 type StateResolver interface {
 	Resolve(ctx context.Context, id *big.Int, state *big.Int) (*state.ResolvedState, error)
 	ResolveGlobalRoot(ctx context.Context, state *big.Int) (*state.ResolvedState, error)
+	GetRPCUrl() string
+	GetContractAddr() common.Address
 }
 
 // Verifier is interface for verification of public signals of zkp
