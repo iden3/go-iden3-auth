@@ -210,7 +210,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 
 	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
 		authV2Set,
-		func(id circuits.CircuitID, pubSignals []string) error {
+		func(id circuits.CircuitID, pubSignals []string, _ ...packers.DefaultZKPUnpackerOption) error {
 			if id != circuits.AuthV2CircuitID {
 				return errors.New("circuit id is not AuthV2CircuitID")
 			}
@@ -261,7 +261,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
@@ -312,7 +312,7 @@ func CreateContractInvokeRequest(
 
 // CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
 func CreateContractInvokeRequestWithMessage(
-	reason, message, sender string,
+	reason, _, sender string,
 	transactionData protocol.TransactionData,
 	zkRequests ...protocol.ZeroKnowledgeProofRequest,
 ) protocol.ContractInvokeRequestMessage {
