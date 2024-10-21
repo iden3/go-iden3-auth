@@ -50,3 +50,13 @@ func (r ETHResolver) ResolveGlobalRoot(ctx context.Context, state *big.Int) (*Re
 	}
 	return ResolveGlobalRoot(ctx, getter, state)
 }
+
+// GetRPCUrl returns RPC url
+func (r ETHResolver) GetRPCUrl() string {
+	return r.RPCUrl
+}
+
+// GetContractAddr returns contract address
+func (r ETHResolver) GetContractAddr() common.Address {
+	return r.ContractAddress
+}
