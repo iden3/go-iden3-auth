@@ -9,17 +9,20 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/contracts-abi/state/go/abi"
+	"github.com/iden3/driver-did-iden3/pkg/services/blockchain/eth"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-jwz/v2"
 	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
@@ -101,6 +104,7 @@ type Verifier struct {
 	documentLoader        ld.DocumentLoader
 	stateResolver         map[string]pubsignals.StateResolver
 	packageManager        iden3comm.PackageManager
+	unpacker              iden3comm.Packer
 }
 
 // VerifierOption is a function to set options for Verifier instance
@@ -147,9 +151,7 @@ type verifierOpts struct {
 }
 
 func newOpts() verifierOpts {
-	return verifierOpts{
-		didResolver: UniversalDIDResolver,
-	}
+	return verifierOpts{didResolver: UniversalDIDResolver}
 }
 
 // NewVerifier returns setup instance of auth library
@@ -208,7 +210,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 
 	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
 		authV2Set,
-		func(id circuits.CircuitID, pubSignals []string) error {
+		func(id circuits.CircuitID, pubSignals []string, _ ...packers.ZKPPUnpackerParams) error {
 			if id != circuits.AuthV2CircuitID {
 				return errors.New("circuit id is not AuthV2CircuitID")
 			}
@@ -228,6 +230,27 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 		},
 	)
 
+	resolvers := map[int]eth.Resolver{}
+	for prefix, stateResolver := range v.stateResolver {
+		blockchain, network, err := blockChainNetwork(prefix)
+		if err != nil {
+			return fmt.Errorf("failed get blockchain and network: %w", err)
+		}
+		chainID, err := core.GetChainID(blockchain, network)
+		if err != nil {
+			return fmt.Errorf("failed get chain id: %w", err)
+		}
+		ethResolver, err := eth.NewResolver(
+			stateResolver.GetRPCUrl(),
+			stateResolver.GetContractAddr().String(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed create eth resolver: %w", err)
+		}
+		resolvers[int(chainID)] = *ethResolver
+	}
+	v.unpacker = packers.DefaultZKPUnpacker(authV2Set, resolvers)
+
 	zkpPackerV2 := packers.NewZKPPacker(
 		provers,
 		verifications,
@@ -238,7 +261,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
@@ -289,7 +312,7 @@ func CreateContractInvokeRequest(
 
 // CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
 func CreateContractInvokeRequestWithMessage(
-	reason, message, sender string,
+	reason, _, sender string,
 	transactionData protocol.TransactionData,
 	zkRequests ...protocol.ZeroKnowledgeProofRequest,
 ) protocol.ContractInvokeRequestMessage {
@@ -302,7 +325,6 @@ func CreateContractInvokeRequestWithMessage(
 		From:     sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
 			Reason:          reason,
-			Message:         message,
 			TransactionData: transactionData,
 			Scope:           zkRequests,
 		},
@@ -516,7 +538,40 @@ func verifyGroupIDMathch(linkID *big.Int, groupID int, requestID uint32, groupID
 	return nil
 }
 
+// VerifyToken performs verification of jws/jwz token using the registered packers in package manager
+func (v *Verifier) VerifyToken(
+	token string,
+	opts ...pubsignals.VerifyOpt,
+) (*protocol.AuthorizationResponseMessage, error) {
+
+	var unpackOpts []iden3comm.PackerParams
+	cfg := pubsignals.VerifyConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	if cfg.AcceptedProofGenerationDelay > 0 {
+		unpackOpts = append(unpackOpts, packers.NewZKPPUnpackerParams(cfg.AcceptedProofGenerationDelay))
+	}
+
+	msg, err := v.unpacker.Unpack([]byte(token), unpackOpts...)
+	if err != nil {
+		return nil, err
+	}
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	var authMsgResponse protocol.AuthorizationResponseMessage
+	err = json.Unmarshal(msgBytes, &authMsgResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &authMsgResponse, err
+}
+
 // VerifyJWZ performs verification of jwz token
+// Deprecated: Use VerifyToken instead
 func (v *Verifier) VerifyJWZ(
 	ctx context.Context,
 	token string,
@@ -650,4 +705,12 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSCl
 	}
 
 	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
+}
+
+func blockChainNetwork(id string) (blockchain core.Blockchain, network core.NetworkID, err error) {
+	s := strings.Split(id, ":")
+	if len(s) < 2 {
+		return "", "", fmt.Errorf("invalid network:blockchain <%s>", id)
+	}
+	return core.Blockchain(s[0]), core.NetworkID(s[1]), nil
 }
