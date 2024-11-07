@@ -210,7 +210,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 
 	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
 		authV2Set,
-		func(id circuits.CircuitID, pubSignals []string, _ ...packers.DefaultZKPUnpackerOption) error {
+		func(id circuits.CircuitID, pubSignals []string, _ ...packers.ZKPPUnpackerParams) error {
 			if id != circuits.AuthV2CircuitID {
 				return errors.New("circuit id is not AuthV2CircuitID")
 			}

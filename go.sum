@@ -144,6 +144,8 @@ github.com/iden3/iden3comm/v2 v2.7.1-0.20241021094855-d51f162a3c4d h1:3aLsG+ME3s
 github.com/iden3/iden3comm/v2 v2.7.1-0.20241021094855-d51f162a3c4d/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
 github.com/iden3/iden3comm/v2 v2.7.1-0.20241021103250-6f0b28947c20 h1:miY+VLGaWfFd9TH05nYoC4g9K7VUk3uuiBEoNYMhPxY=
 github.com/iden3/iden3comm/v2 v2.7.1-0.20241021103250-6f0b28947c20/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
+github.com/iden3/iden3comm/v2 v2.7.1-0.20241106171905-d7f61e7479da h1:/gj1OlVOL+1JwxaGvFBOKIVVVHWVkZM1ExSLWvtajHs=
+github.com/iden3/iden3comm/v2 v2.7.1-0.20241106171905-d7f61e7479da/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
