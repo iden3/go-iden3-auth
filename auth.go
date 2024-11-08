@@ -284,12 +284,12 @@ func CreateContractInvokeRequest(
 	transactionData protocol.TransactionData,
 	zkRequests ...protocol.ZeroKnowledgeProofRequest,
 ) protocol.ContractInvokeRequestMessage {
-	return CreateContractInvokeRequestWithMessage(reason, "", sender, transactionData, zkRequests...)
+	return CreateContractInvokeRequestWithMessage(reason, sender, transactionData, zkRequests...)
 }
 
 // CreateContractInvokeRequestWithMessage creates new contract invoke request message with message
 func CreateContractInvokeRequestWithMessage(
-	reason, message, sender string,
+	reason, sender string,
 	transactionData protocol.TransactionData,
 	zkRequests ...protocol.ZeroKnowledgeProofRequest,
 ) protocol.ContractInvokeRequestMessage {
@@ -302,7 +302,6 @@ func CreateContractInvokeRequestWithMessage(
 		From:     sender,
 		Body: protocol.ContractInvokeRequestMessageBody{
 			Reason:          reason,
-			Message:         message,
 			TransactionData: transactionData,
 			Scope:           zkRequests,
 		},
