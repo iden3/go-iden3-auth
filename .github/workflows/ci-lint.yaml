@@ -9,13 +9,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install go
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
           cache: true
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: install golangci-lint
         run:
           curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.52.2
