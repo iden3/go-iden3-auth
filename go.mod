@@ -1,6 +1,6 @@
 module github.com/iden3/go-iden3-auth/v2
 
-go 1.22.6
+go 1.22.1
 
 require (
 	github.com/btcsuite/btcd/btcutil v1.1.6
