@@ -18,7 +18,7 @@ jobs:
           cache: true
       - name: install golangci-lint
         run:
-          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.52.2
+          curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GITHUB_WORKSPACE v1.60.3
       - name: lint
         run: |
           go version

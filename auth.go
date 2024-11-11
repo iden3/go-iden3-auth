@@ -238,7 +238,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
-	signerFnStub := packers.SignerResolverHandlerFunc(func(kid string) (crypto.Signer, error) {
+	signerFnStub := packers.SignerResolverHandlerFunc(func(_ string) (crypto.Signer, error) {
 		return nil, nil
 	})
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)

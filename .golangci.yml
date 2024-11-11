@@ -1,10 +1,8 @@
 service:
-  golangci-lint-version: 1.50.x
+  golangci-lint-version: 1.60.3
 
 run:
   timeout: 2m
-  skip-dirs:
-    - vendor
 
 linters-settings:
   govet:
@@ -29,7 +27,6 @@ linters-settings:
 linters:
   enable:
     - bodyclose
-    - megacheck
     - revive
     - govet
     - unconvert
@@ -42,7 +39,7 @@ linters:
     - ineffassign
     - stylecheck
     - gochecknoinits
-    - exportloopref
+    - copyloopvar
     - gocritic
     - nakedret
     - gosimple
