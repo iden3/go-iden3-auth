@@ -270,6 +270,10 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
 	}
 	request.From = sender
+	createTime := time.Now().Unix()
+	expiresTime := time.Now().Add(time.Hour).Unix()
+	request.CreatedTime = &createTime
+	request.ExpiresTime = &expiresTime
 
 	return request
 }
@@ -392,7 +396,9 @@ func (v *Verifier) VerifyAuthResponse(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt,
 ) error {
-
+	if response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
+		return errors.New("Authorization response message is expired")
+	}
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
@@ -559,7 +565,9 @@ func (v *Verifier) FullVerify(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
 ) (*protocol.AuthorizationResponseMessage, error) {
-
+	if request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
+		return nil, errors.New("Authorization request message is expired")
+	}
 	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
