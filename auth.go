@@ -246,17 +246,36 @@ func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) er
 	return v.packageManager.RegisterPackers(jwsPacker)
 }
 
+// WithExpiresTime sets the expires time message option.
+func WithExpiresTime(expiresTime *time.Time) AuthorizationRequestMessageOpts {
+	return func(v *AuthorizationRequestMessageConfig) {
+		v.ExpiresTime = expiresTime
+	}
+}
+
+// AuthorizationRequestMessageOpts sets options.
+type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
+
+// AuthorizationRequestMessageConfig.
+type AuthorizationRequestMessageConfig struct {
+	ExpiresTime *time.Time
+}
+
 // CreateAuthorizationRequest creates new authorization request message
 // sender - client identifier
 // reason - describes purpose of request
 // callbackURL - url for authorization response
-func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
-	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
+func CreateAuthorizationRequest(reason, sender, callbackURL string, opts ...AuthorizationRequestMessageOpts) protocol.AuthorizationRequestMessage {
+	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL, opts...)
 }
 
 // CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
 func CreateAuthorizationRequestWithMessage(reason, message, sender,
-	callbackURL string) protocol.AuthorizationRequestMessage {
+	callbackURL string, opts ...AuthorizationRequestMessageOpts) protocol.AuthorizationRequestMessage {
+	cfg := AuthorizationRequestMessageConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
@@ -271,10 +290,13 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 	}
 	request.From = sender
 	createTime := time.Now().Unix()
-	expiresTime := time.Now().Add(time.Hour).Unix()
 	request.CreatedTime = &createTime
-	request.ExpiresTime = &expiresTime
-
+	var expiresTime *int64 = nil
+	if cfg.ExpiresTime != nil {
+		expiresTimeUnix := cfg.ExpiresTime.Unix()
+		expiresTime = &expiresTimeUnix
+	}
+	request.ExpiresTime = expiresTime
 	return request
 }
 
