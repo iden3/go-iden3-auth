@@ -400,7 +400,7 @@ func (v *Verifier) VerifyAuthResponse(
 	for _, o := range opts {
 		o(&cfg)
 	}
-	if (cfg.AllowExpiredMessages == nil || *cfg.AllowExpiredMessages == false) &&
+	if (cfg.AllowExpiredMessages == nil || !*cfg.AllowExpiredMessages) &&
 		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
@@ -574,7 +574,7 @@ func (v *Verifier) FullVerify(
 	for _, o := range opts {
 		o(&cfg)
 	}
-	if (cfg.AllowExpiredMessages == nil || *cfg.AllowExpiredMessages == false) &&
+	if (cfg.AllowExpiredMessages == nil || !*cfg.AllowExpiredMessages) &&
 		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return nil, errors.New("Authorization request message is expired")
 	}
