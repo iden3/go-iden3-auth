@@ -256,7 +256,7 @@ func WithExpiresTime(expiresTime *time.Time) AuthorizationRequestMessageOpts {
 // AuthorizationRequestMessageOpts sets options.
 type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
 
-// AuthorizationRequestMessageConfig.
+// AuthorizationRequestMessageConfig - configuration for CreateAuthorizationRequest.
 type AuthorizationRequestMessageConfig struct {
 	ExpiresTime *time.Time
 }
@@ -291,7 +291,7 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 	request.From = sender
 	createTime := time.Now().Unix()
 	request.CreatedTime = &createTime
-	var expiresTime *int64 = nil
+	var expiresTime *int64
 	if cfg.ExpiresTime != nil {
 		expiresTimeUnix := cfg.ExpiresTime.Unix()
 		expiresTime = &expiresTimeUnix
