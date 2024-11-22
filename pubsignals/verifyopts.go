@@ -24,6 +24,13 @@ func WithAcceptedProofGenerationDelay(duration time.Duration) VerifyOpt {
 	}
 }
 
+// WithAllowExpiredMessages sets the allow expired messages option.
+func WithAllowExpiredMessages(allowExpiredMessages bool) VerifyOpt {
+	return func(v *VerifyConfig) {
+		v.AllowExpiredMessages = &allowExpiredMessages
+	}
+}
+
 // VerifyOpt sets options.
 type VerifyOpt func(v *VerifyConfig)
 
@@ -32,6 +39,7 @@ type VerifyConfig struct {
 	// is the period of time that a revoked state remains valid.
 	AcceptedStateTransitionDelay time.Duration
 	AcceptedProofGenerationDelay time.Duration
+	AllowExpiredMessages         *bool
 }
 
 // ParamNameVerifierDID is a verifier did - specific  circuit param for V3, but can be utilized by other circuits

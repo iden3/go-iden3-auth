@@ -167,8 +167,8 @@ github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e
 github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e/go.mod h1:UEBifEzw62T6VzIHJeHuUgeLg2U/J9ttf7hOwQEqnYk=
 github.com/iden3/go-schema-processor/v2 v2.5.0 h1:MX84oFb9kYq0ntKiU4DrPPaRgCDUCKlurtHB6nvPPAs=
 github.com/iden3/go-schema-processor/v2 v2.5.0/go.mod h1:hMqYi4lKOzEGkmCRks/r4Crj8H4G8YaTt8H4jZHzX9Y=
-github.com/iden3/iden3comm/v2 v2.8.2-0.20241120160916-7779cec44549 h1:S3V2NvvaYBaprn5JURhmTE3Eo8kCsLsdhoZijLhrUy0=
-github.com/iden3/iden3comm/v2 v2.8.2-0.20241120160916-7779cec44549/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
+github.com/iden3/iden3comm/v2 v2.8.2 h1:hDlu/T7PWTiMtoliMTHpMv5F5nyxE3p3JWbo1c3XjvY=
+github.com/iden3/iden3comm/v2 v2.8.2/go.mod h1:l8t+BkbHU3ri7kiExZYc4CTY6erkzkcBbYXw416nwhA=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=

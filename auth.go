@@ -396,7 +396,12 @@ func (v *Verifier) VerifyAuthResponse(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt,
 ) error {
-	if response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
+	cfg := pubsignals.VerifyConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	if (cfg.AllowExpiredMessages == nil || *cfg.AllowExpiredMessages == false) &&
+		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
 	if request.Body.Message != response.Body.Message {
@@ -565,7 +570,12 @@ func (v *Verifier) FullVerify(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
 ) (*protocol.AuthorizationResponseMessage, error) {
-	if request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
+	cfg := pubsignals.VerifyConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	if (cfg.AllowExpiredMessages == nil || *cfg.AllowExpiredMessages == false) &&
+		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return nil, errors.New("Authorization request message is expired")
 	}
 	msg, _, err := v.packageManager.Unpack([]byte(token))
