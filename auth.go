@@ -423,7 +423,7 @@ func (v *Verifier) VerifyAuthResponse(
 		o(&cfg)
 	}
 	if (cfg.AllowExpiredMessages == nil || !*cfg.AllowExpiredMessages) &&
-		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
+		response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
 	if request.Body.Message != response.Body.Message {
