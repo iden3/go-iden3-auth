@@ -246,17 +246,36 @@ func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) er
 	return v.packageManager.RegisterPackers(jwsPacker)
 }
 
+// WithExpiresTime sets the expires time message option.
+func WithExpiresTime(expiresTime *time.Time) AuthorizationRequestMessageOpts {
+	return func(v *AuthorizationRequestMessageConfig) {
+		v.ExpiresTime = expiresTime
+	}
+}
+
+// AuthorizationRequestMessageOpts sets options.
+type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
+
+// AuthorizationRequestMessageConfig - configuration for CreateAuthorizationRequest.
+type AuthorizationRequestMessageConfig struct {
+	ExpiresTime *time.Time
+}
+
 // CreateAuthorizationRequest creates new authorization request message
 // sender - client identifier
 // reason - describes purpose of request
 // callbackURL - url for authorization response
-func CreateAuthorizationRequest(reason, sender, callbackURL string) protocol.AuthorizationRequestMessage {
-	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL)
+func CreateAuthorizationRequest(reason, sender, callbackURL string, opts ...AuthorizationRequestMessageOpts) protocol.AuthorizationRequestMessage {
+	return CreateAuthorizationRequestWithMessage(reason, "", sender, callbackURL, opts...)
 }
 
 // CreateAuthorizationRequestWithMessage creates new authorization request with message for signing with jwz
 func CreateAuthorizationRequestWithMessage(reason, message, sender,
-	callbackURL string) protocol.AuthorizationRequestMessage {
+	callbackURL string, opts ...AuthorizationRequestMessageOpts) protocol.AuthorizationRequestMessage {
+	cfg := AuthorizationRequestMessageConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
 	var request protocol.AuthorizationRequestMessage
 
 	request.Typ = packers.MediaTypePlainMessage
@@ -270,7 +289,14 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
 	}
 	request.From = sender
-
+	createTime := time.Now().Unix()
+	request.CreatedTime = &createTime
+	var expiresTime *int64
+	if cfg.ExpiresTime != nil {
+		expiresTimeUnix := cfg.ExpiresTime.Unix()
+		expiresTime = &expiresTimeUnix
+	}
+	request.ExpiresTime = expiresTime
 	return request
 }
 
@@ -392,7 +418,14 @@ func (v *Verifier) VerifyAuthResponse(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt,
 ) error {
-
+	cfg := pubsignals.VerifyConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	if (cfg.AllowExpiredMessages == nil || !*cfg.AllowExpiredMessages) &&
+		response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
+		return errors.New("Authorization response message is expired")
+	}
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
@@ -559,7 +592,14 @@ func (v *Verifier) FullVerify(
 	request protocol.AuthorizationRequestMessage,
 	opts ...pubsignals.VerifyOpt, // TODO(illia-korotia): is ok have common option for VerifyJWZ and VerifyAuthResponse?
 ) (*protocol.AuthorizationResponseMessage, error) {
-
+	cfg := pubsignals.VerifyConfig{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+	if (cfg.AllowExpiredMessages == nil || !*cfg.AllowExpiredMessages) &&
+		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
+		return nil, errors.New("Authorization request message is expired")
+	}
 	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
