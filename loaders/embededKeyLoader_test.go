@@ -166,6 +166,27 @@ func TestDefaultEmbeddedKeys(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, key)
 	})
+
+	t.Run("AtomicQueryV3CircuitID - beta.1", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		key, err := loader.Load(circuits.AtomicQueryV3CircuitID)
+		require.NoError(t, err)
+		assert.NotNil(t, key)
+	})
+
+	t.Run("AtomicQueryV3OnChainCircuitID - beta.1", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		key, err := loader.Load(circuits.AtomicQueryV3OnChainCircuitID)
+		require.NoError(t, err)
+		assert.NotNil(t, key)
+	})
+
+	t.Run("LinkedMultiQuery10CircuitID - beta.1", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		key, err := loader.Load(circuits.LinkedMultiQuery10CircuitID)
+		require.NoError(t, err)
+		assert.NotNil(t, key)
+	})
 }
 
 func TestEmbeddedKeyLoader_CacheConcurrency(t *testing.T) {
