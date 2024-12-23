@@ -3,6 +3,7 @@ package loaders
 import (
 	"embed"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/iden3/go-circuits/v2"
@@ -92,7 +93,7 @@ func (e *EmbeddedKeyLoader) Load(id circuits.CircuitID) ([]byte, error) {
 			}
 			return key, nil
 		}
-		// TODO: maybe log error here?
+		slog.Warn("failed to load key from custom loader", "circuit_id", id, "error", err)
 	}
 
 	//  Embedded keys
