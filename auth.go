@@ -253,12 +253,20 @@ func WithExpiresTime(expiresTime *time.Time) AuthorizationRequestMessageOpts {
 	}
 }
 
+// WithAccept sets the accept prifile option.
+func WithAccept(accept []string) AuthorizationRequestMessageOpts {
+	return func(v *AuthorizationRequestMessageConfig) {
+		v.Accept = accept
+	}
+}
+
 // AuthorizationRequestMessageOpts sets options.
 type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
 
 // AuthorizationRequestMessageConfig - configuration for CreateAuthorizationRequest.
 type AuthorizationRequestMessageConfig struct {
 	ExpiresTime *time.Time
+	Accept      []string
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -287,6 +295,7 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 		Reason:      reason,
 		Message:     message,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
+		Accept:      cfg.Accept,
 	}
 	request.From = sender
 	createTime := time.Now().Unix()
@@ -426,6 +435,10 @@ func (v *Verifier) VerifyAuthResponse(
 		response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
+	err := v.verifyAccept(request.Body.Accept)
+	if err != nil {
+		return err
+	}
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
@@ -437,8 +450,7 @@ func (v *Verifier) VerifyAuthResponse(
 	if response.From == "" {
 		return errors.Errorf("proof response doesn't contain from field")
 	}
-
-	err := ValidateAuthRequest(request)
+	err = ValidateAuthRequest(request)
 	if err != nil {
 		return err
 	}
@@ -600,6 +612,10 @@ func (v *Verifier) FullVerify(
 		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return nil, errors.New("Authorization request message is expired")
 	}
+	err := v.verifyAccept(request.Body.Accept)
+	if err != nil {
+		return nil, err
+	}
 	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
@@ -648,6 +664,19 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 
 	return nil
 
+}
+
+func (v *Verifier) verifyAccept(accept []string) error {
+	if len(accept) == 0 {
+		return nil
+	}
+
+	for _, profile := range accept {
+		if v.packageManager.IsProfileSupported(profile) {
+			return nil
+		}
+	}
+	return errors.New("no packer with profile which meets `accept` header requirements")
 }
 
 func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
