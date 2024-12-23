@@ -73,7 +73,7 @@ func WithoutCache() Option {
 
 // Load attempts to load keys in the following order:
 // 1. From cache if enabled and available
-// 2. From primary loader if provided
+// 2. From keyLoader loader if provided
 // 3. From embedded default keys
 func (e *EmbeddedKeyLoader) Load(id circuits.CircuitID) ([]byte, error) {
 	// Try cache if enabled
