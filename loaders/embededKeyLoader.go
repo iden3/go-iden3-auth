@@ -24,7 +24,7 @@ type EmbeddedKeyLoader struct {
 // By default, it uses embedded keys with caching enabled
 // Use options to customize behavior:
 //   - WithKeyLoader to set custom loader
-//   - WithoutCache to disable caching
+//   - WithCacheDisabled to disable caching
 //
 // Example:
 // Default configuration (embedded keys and enabled cache):
@@ -38,7 +38,7 @@ type EmbeddedKeyLoader struct {
 //
 // Disabled cache:
 //
-//	loader := NewEmbeddedKeyLoader(WithoutCache())
+//	loader := NewEmbeddedKeyLoader(WithCacheDisabled())
 func NewEmbeddedKeyLoader(opts ...Option) *EmbeddedKeyLoader {
 	loader := &EmbeddedKeyLoader{
 		useCache: true, // enabled by default
@@ -63,8 +63,8 @@ func WithKeyLoader(loader VerificationKeyLoader) Option {
 	}
 }
 
-// WithoutCache disables caching of loaded keys
-func WithoutCache() Option {
+// WithCacheDisabled disables caching of loaded keys
+func WithCacheDisabled() Option {
 	return func(e *EmbeddedKeyLoader) {
 		e.useCache = false
 		e.cache = nil
