@@ -2,6 +2,8 @@ package loaders
 
 import (
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/iden3/go-circuits/v2"
@@ -42,7 +44,7 @@ func TestNewEmbeddedKeyLoader(t *testing.T) {
 	})
 
 	t.Run("without cache", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader(WithoutCache())
+		loader := NewEmbeddedKeyLoader(WithCacheDisabled())
 		assert.False(t, loader.useCache)
 		assert.Nil(t, loader.cache)
 	})
@@ -51,7 +53,7 @@ func TestNewEmbeddedKeyLoader(t *testing.T) {
 		mockLoader := &MockKeyLoader{}
 		loader := NewEmbeddedKeyLoader(
 			WithKeyLoader(mockLoader),
-			WithoutCache(),
+			WithCacheDisabled(),
 		)
 		assert.False(t, loader.useCache)
 		assert.Nil(t, loader.cache)
@@ -108,7 +110,7 @@ func TestEmbeddedKeyLoader_Load(t *testing.T) {
 		}
 		loader := NewEmbeddedKeyLoader(
 			WithKeyLoader(mockLoader),
-			WithoutCache(),
+			WithCacheDisabled(),
 		)
 
 		key, err := loader.Load(testID)
@@ -163,5 +165,71 @@ func TestDefaultEmbeddedKeys(t *testing.T) {
 		key, err := loader.Load(circuits.AtomicQuerySigV2OnChainCircuitID)
 		require.NoError(t, err)
 		assert.NotNil(t, key)
+	})
+}
+
+func TestEmbeddedKeyLoader_CacheConcurrency(t *testing.T) {
+	loader := NewEmbeddedKeyLoader()
+	testID := circuits.CircuitID("test-circuit")
+	testKey := []byte("test-key-data")
+
+	// Test concurrent reads
+	t.Run("concurrent reads", func(t *testing.T) {
+		loader.storeInCache(testID, testKey)
+
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				key := loader.getFromCache(testID)
+				assert.Equal(t, testKey, key)
+			}()
+		}
+		wg.Wait()
+	})
+
+	// Test concurrent writes
+	t.Run("concurrent writes", func(t *testing.T) {
+		var wg sync.WaitGroup
+		for i := 0; i < 100; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				id := circuits.CircuitID(fmt.Sprintf("circuit-%d", i))
+				key := []byte(fmt.Sprintf("key-%d", i))
+				loader.storeInCache(id, key)
+			}(i)
+		}
+		wg.Wait()
+
+		// Verify all writes succeeded
+		for i := 0; i < 100; i++ {
+			id := circuits.CircuitID(fmt.Sprintf("circuit-%d", i))
+			expected := []byte(fmt.Sprintf("key-%d", i))
+			actual := loader.getFromCache(id)
+			assert.Equal(t, expected, actual)
+		}
+	})
+}
+
+// Benchmark cache operations
+func BenchmarkEmbeddedKeyLoader_Cache(b *testing.B) {
+	loader := NewEmbeddedKeyLoader()
+	testID := circuits.CircuitID("test-circuit")
+	testKey := []byte("test-key-data")
+
+	b.Run("cache write", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			loader.storeInCache(testID, testKey)
+		}
+	})
+
+	b.Run("cache read", func(b *testing.B) {
+		loader.storeInCache(testID, testKey)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = loader.getFromCache(testID)
+		}
 	})
 }
