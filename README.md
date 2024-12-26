@@ -35,7 +35,7 @@ Auth verification procedure:
 > Groth16 proof are supported by auth library
 >
 
-Verification keys can be provided using `KeyLoader` interface or `NewEmbeddedKeyLoader` can be used to load keys embedded in the library `loaders/keys`.
+Verification keys can be provided using `KeyLoader` interface or `EmbeddedKeyLoader` can be used to load keys embedded in the library `loaders/keys`.
 
 ### Query verification 
 
