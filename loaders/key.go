@@ -1,6 +1,7 @@
 package loaders
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -19,5 +20,9 @@ type FSKeyLoader struct {
 
 // Load keys from embedded FS
 func (m FSKeyLoader) Load(id circuits.CircuitID) ([]byte, error) {
-	return os.ReadFile(fmt.Sprintf("%s/%v.json", m.Dir, id))
+	file, err := os.ReadFile(fmt.Sprintf("%s/%v.json", m.Dir, id))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrKeyNotFound
+	}
+	return file, err
 }
