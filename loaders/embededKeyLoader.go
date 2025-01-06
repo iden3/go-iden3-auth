@@ -3,14 +3,17 @@ package loaders
 import (
 	"embed"
 	"fmt"
-	"log/slog"
 	"sync"
 
 	"github.com/iden3/go-circuits/v2"
+	"github.com/pkg/errors"
 )
 
-//go:embed keys/*.json
+//go:embed verification_keys/*.json
 var defaultKeys embed.FS
+
+// ErrKeyNotFound is returned when key is not found
+var ErrKeyNotFound = errors.New("key not found")
 
 // EmbeddedKeyLoader load keys from embedded FS or filesystem.
 // Filesystem has priority if keyLoader specified.
@@ -76,6 +79,7 @@ func WithCacheDisabled() Option {
 // 1. From cache if enabled and available
 // 2. From keyLoader loader if provided
 // 3. From embedded default keys
+// IMPORTANT: If keyLoader is provided, embedded keys are used only if error `ErrKeyNotFound` return by keyLoader
 func (e *EmbeddedKeyLoader) Load(id circuits.CircuitID) ([]byte, error) {
 	// Try cache if enabled
 	if e.useCache {
@@ -93,11 +97,14 @@ func (e *EmbeddedKeyLoader) Load(id circuits.CircuitID) ([]byte, error) {
 			}
 			return key, nil
 		}
-		slog.Warn("failed to load key from custom loader", "circuit_id", id, "error", err)
+		if !errors.Is(err, ErrKeyNotFound) {
+			return nil, err
+		}
+		// continue to embedded keys if key not found
 	}
 
 	//  Embedded keys
-	key, err := defaultKeys.ReadFile(fmt.Sprintf("keys/%v.json", id))
+	key, err := defaultKeys.ReadFile(fmt.Sprintf("verification_keys/%v.json", id))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default key: %w", err)
 	}

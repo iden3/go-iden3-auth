@@ -97,9 +97,8 @@ func TestEmbeddedKeyLoader_Load(t *testing.T) {
 		}
 		loader := NewEmbeddedKeyLoader(WithKeyLoader(mockLoader))
 
-		key, err := loader.Load(circuits.AuthV2CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
+		_, err := loader.Load(circuits.AuthV2CircuitID)
+		require.Error(t, err)
 	})
 
 	t.Run("no cache", func(t *testing.T) {
@@ -187,6 +186,65 @@ func TestDefaultEmbeddedKeys(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, key)
 	})
+}
+
+func TestEmbeddedKeyLoader_Load_EmbeddedKeys(t *testing.T) {
+	t.Run("load embedded key", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		key, err := loader.Load(circuits.AuthV2CircuitID)
+		require.NoError(t, err)
+		assert.NotNil(t, key)
+	})
+
+	t.Run("embedded key not found", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		_, err := loader.Load("non-existent-circuit")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to load default key")
+	})
+}
+
+func TestEmbeddedKeyLoader_Load_CustomLoaderError(t *testing.T) {
+	t.Run("custom loader error", func(t *testing.T) {
+		mockLoader := &MockKeyLoader{
+			err: errors.New("mock error"),
+		}
+		loader := NewEmbeddedKeyLoader(WithKeyLoader(mockLoader))
+
+		_, err := loader.Load(circuits.CircuitID("any-circuit"))
+		assert.Error(t, err)
+		assert.Equal(t, "mock error", err.Error())
+	})
+}
+
+func TestEmbeddedKeyLoader_Cache(t *testing.T) {
+	t.Run("cache enabled", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader()
+		testID := circuits.CircuitID("test-circuit")
+		testKey := []byte("test-key-data")
+
+		loader.storeInCache(testID, testKey)
+		cachedKey := loader.getFromCache(testID)
+		assert.Equal(t, testKey, cachedKey)
+	})
+
+	t.Run("cache disabled", func(t *testing.T) {
+		loader := NewEmbeddedKeyLoader(WithCacheDisabled())
+		testID := circuits.CircuitID("test-circuit")
+		testKey := []byte("test-key-data")
+
+		loader.storeInCache(testID, testKey)
+		cachedKey := loader.getFromCache(testID)
+		assert.Nil(t, cachedKey)
+	})
+}
+
+func TestFSKeyLoader_Load_KeyNotFound(t *testing.T) {
+	loader := FSKeyLoader{Dir: "/non/existent/path"}
+
+	_, err := loader.Load(circuits.CircuitID("non-existent-circuit"))
+	assert.Error(t, err)
+	assert.Equal(t, ErrKeyNotFound, err)
 }
 
 func TestEmbeddedKeyLoader_CacheConcurrency(t *testing.T) {
