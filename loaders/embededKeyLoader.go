@@ -124,6 +124,9 @@ func (e *EmbeddedKeyLoader) getFromCache(id circuits.CircuitID) []byte {
 
 // storeInCache stores key in cache
 func (e *EmbeddedKeyLoader) storeInCache(id circuits.CircuitID, key []byte) {
+	if !e.useCache {
+		return
+	}
 	e.cacheMu.Lock()
 	defer e.cacheMu.Unlock()
 	e.cache[id] = key
