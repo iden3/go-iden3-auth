@@ -129,62 +129,28 @@ func TestEmbeddedKeyLoader_Load(t *testing.T) {
 }
 
 func TestDefaultEmbeddedKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		id   circuits.CircuitID
+	}{
+		{"authV2", circuits.AuthV2CircuitID},
+		{"AtomicQueryMTPV2CircuitID", circuits.AtomicQueryMTPV2CircuitID},
+		{"AtomicQueryMTPV2OnChainCircuitID", circuits.AtomicQueryMTPV2OnChainCircuitID},
+		{"AtomicQuerySigV2CircuitID", circuits.AtomicQuerySigV2CircuitID},
+		{"AtomicQuerySigV2OnChainCircuitID", circuits.AtomicQuerySigV2OnChainCircuitID},
+		{"AtomicQueryV3CircuitID - beta.1", circuits.AtomicQueryV3CircuitID},
+		{"AtomicQueryV3OnChainCircuitID - beta.1", circuits.AtomicQueryV3OnChainCircuitID},
+		{"LinkedMultiQuery10CircuitID - beta.1", circuits.LinkedMultiQuery10CircuitID},
+	}
 
-	t.Run("authV2", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AuthV2CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQueryMTPV2CircuitID", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQueryMTPV2CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQueryMTPV2OnChainCircuitID", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQueryMTPV2OnChainCircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQuerySigV2CircuitID", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQuerySigV2CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQuerySigV2CircuitID", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQuerySigV2OnChainCircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQueryV3CircuitID - beta.1", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQueryV3CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("AtomicQueryV3OnChainCircuitID - beta.1", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.AtomicQueryV3OnChainCircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
-
-	t.Run("LinkedMultiQuery10CircuitID - beta.1", func(t *testing.T) {
-		loader := NewEmbeddedKeyLoader()
-		key, err := loader.Load(circuits.LinkedMultiQuery10CircuitID)
-		require.NoError(t, err)
-		assert.NotNil(t, key)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loader := NewEmbeddedKeyLoader()
+			key, err := loader.Load(tt.id)
+			require.NoError(t, err)
+			assert.NotNil(t, key)
+		})
+	}
 }
 
 func TestEmbeddedKeyLoader_Load_EmbeddedKeys(t *testing.T) {
