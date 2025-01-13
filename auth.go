@@ -9,7 +9,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -617,12 +616,13 @@ func (v *Verifier) FullVerify(
 	if err != nil {
 		return nil, err
 	}
-	err = v.isResponseTypeAccepted(request.Body.Accept, token)
+
+	msg, mediaType, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
 	}
 
-	msg, _, err := v.packageManager.Unpack([]byte(token))
+	err = isResponseTypeAccepted(request.Body.Accept, mediaType)
 	if err != nil {
 		return nil, err
 	}
@@ -726,15 +726,9 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSCl
 	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
 }
 
-func (v *Verifier) isResponseTypeAccepted(requestAccept []string, token string) error {
+func isResponseTypeAccepted(requestAccept []string, responseMediaType iden3comm.MediaType) error {
 	if len(requestAccept) == 0 {
 		return nil
-	}
-
-	safeEnvelope := strings.Trim(strings.TrimSpace(string(token)), "\"")
-	responseMediaType, err := v.packageManager.GetMediaType([]byte(safeEnvelope))
-	if err != nil {
-		return err
 	}
 
 	for _, profile := range requestAccept {
