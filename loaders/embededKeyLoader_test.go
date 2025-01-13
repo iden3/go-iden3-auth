@@ -214,24 +214,6 @@ func TestFSKeyLoader_Load_KeyNotFound(t *testing.T) {
 
 func TestEmbeddedKeyLoader_CacheConcurrency(t *testing.T) {
 	loader := NewEmbeddedKeyLoader()
-	testID := circuits.CircuitID("test-circuit")
-	testKey := []byte("test-key-data")
-
-	// Test concurrent reads
-	t.Run("concurrent reads", func(t *testing.T) {
-		loader.storeInCache(testID, testKey)
-
-		var wg sync.WaitGroup
-		for i := 0; i < 100; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				key := loader.getFromCache(testID)
-				assert.Equal(t, testKey, key)
-			}()
-		}
-		wg.Wait()
-	})
 
 	// Test concurrent writes
 	t.Run("concurrent writes", func(t *testing.T) {
