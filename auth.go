@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -28,6 +29,7 @@ import (
 	"github.com/iden3/iden3comm/v2"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
+	"github.com/iden3/iden3comm/v2/utils"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -181,7 +183,6 @@ func NewVerifier(
 	if err != nil {
 		return nil, err
 	}
-
 	return v, nil
 }
 
@@ -616,6 +617,11 @@ func (v *Verifier) FullVerify(
 	if err != nil {
 		return nil, err
 	}
+	err = v.isResponseTypeAccepted(request.Body.Accept, token)
+	if err != nil {
+		return nil, err
+	}
+
 	msg, _, err := v.packageManager.Unpack([]byte(token))
 	if err != nil {
 		return nil, err
@@ -718,4 +724,29 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSCl
 	}
 
 	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
+}
+
+func (v *Verifier) isResponseTypeAccepted(requestAccept []string, token string) error {
+	if len(requestAccept) == 0 {
+		return nil
+	}
+
+	safeEnvelope := strings.Trim(strings.TrimSpace(string(token)), "\"")
+	responseMediaType, err := v.packageManager.GetMediaType([]byte(safeEnvelope))
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range requestAccept {
+		profileParsed, err := utils.ParseAcceptProfile(profile)
+		if err != nil {
+			return fmt.Errorf("failed to parse accept profile: %w", err)
+		}
+
+		if profileParsed.Env == responseMediaType {
+			return nil
+		}
+	}
+
+	return errors.New("response type is not in accept profiles of the request")
 }
