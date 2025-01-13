@@ -20,7 +20,7 @@ var ErrKeyNotFound = errors.New("key not found")
 type EmbeddedKeyLoader struct {
 	keyLoader VerificationKeyLoader
 	cache     map[circuits.CircuitID][]byte
-	cacheMu   sync.RWMutex
+	cacheMu   *sync.RWMutex
 	useCache  bool
 }
 
@@ -47,6 +47,7 @@ func NewEmbeddedKeyLoader(opts ...Option) *EmbeddedKeyLoader {
 	loader := &EmbeddedKeyLoader{
 		useCache: true, // enabled by default
 		cache:    make(map[circuits.CircuitID][]byte),
+		cacheMu:  &sync.RWMutex{},
 	}
 
 	// Apply options
