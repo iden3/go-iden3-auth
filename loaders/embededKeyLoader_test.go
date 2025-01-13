@@ -124,8 +124,7 @@ func TestEmbeddedKeyLoader_Load(t *testing.T) {
 		loader := NewEmbeddedKeyLoader()
 
 		_, err := loader.Load("non-existent-circuit")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to load default key")
+		assert.ErrorContains(t, err, "failed to load default key")
 	})
 }
 
