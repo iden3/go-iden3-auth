@@ -1285,7 +1285,7 @@ func TestVerifier_FullVerify_AcceptHeader(t *testing.T) {
 	acceptProfile := protocol.AcceptProfile{
 		AcceptedVersion:     protocol.Iden3CommVersion1,
 		Env:                 packers.MediaTypeZKPMessage,
-		AcceptCircuits:      []protocol.AuthCircuits{protocol.AuthCircuitsAuthV2},
+		AcceptCircuits:      []circuits.CircuitID{circuits.AuthV2CircuitID},
 		AcceptJwzAlgorithms: []protocol.JwzAlgorithms{protocol.JwzAlgorithmsGroth16},
 	}
 
@@ -1308,7 +1308,7 @@ func TestVerifier_FullVerify_AcceptHeader_NotSupported(t *testing.T) {
 	acceptProfile := protocol.AcceptProfile{
 		AcceptedVersion:     protocol.Iden3CommVersion1,
 		Env:                 packers.MediaTypeZKPMessage,
-		AcceptCircuits:      []protocol.AuthCircuits{protocol.AuthCircuitsAuthV3},
+		AcceptCircuits:      []circuits.CircuitID{circuits.AuthCircuitID},
 		AcceptJwzAlgorithms: []protocol.JwzAlgorithms{protocol.JwzAlgorithmsGroth16},
 	}
 
