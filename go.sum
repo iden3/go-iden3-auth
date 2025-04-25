@@ -147,8 +147,8 @@ github.com/iden3/driver-did-iden3 v0.0.5 h1:N3B9S3CBZHqWIZWspAiq2JFaLyq0eLZf26sN
 github.com/iden3/driver-did-iden3 v0.0.5/go.mod h1:TcEG6fkExW6hgafjrU4ObOQ/HZqIRPQoL3TMU+URbS0=
 github.com/iden3/go-circuits/v2 v2.4.0 h1:m+7uYtrvJKuc+gVhbXDXl1BJQyK7sWdW7OWttM3R/8I=
 github.com/iden3/go-circuits/v2 v2.4.0/go.mod h1:k0uYx/ZdZPiDEIy7kI3MAixnREKcc7NdCKDRw8Q+iFA=
-github.com/iden3/go-iden3-core/v2 v2.3.1 h1:ytQqiclnVAIWyRKR2LF31hfz4DGRBD6nMjiPILXGSKk=
-github.com/iden3/go-iden3-core/v2 v2.3.1/go.mod h1:8vmG6y8k9VS7iNoxuiKukKbRQFsMyabCc+i8er07zOs=
+github.com/iden3/go-iden3-core/v2 v2.3.2 h1:kZq/TiSUmBKO/mvPUucfFE45ugTW+hXXlGT+Jf6CQTg=
+github.com/iden3/go-iden3-core/v2 v2.3.2/go.mod h1:8vmG6y8k9VS7iNoxuiKukKbRQFsMyabCc+i8er07zOs=
 github.com/iden3/go-iden3-crypto v0.0.17 h1:NdkceRLJo/pI4UpcjVah4lN/a3yzxRUGXqxbWcYh9mY=
 github.com/iden3/go-iden3-crypto v0.0.17/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
 github.com/iden3/go-jwz/v2 v2.2.0 h1:YUefhlOJ4KkI5uLdfcYO2wTqNH1kuHUlRGXtC/l3Sn0=
