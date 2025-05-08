@@ -62,7 +62,12 @@ The blockchain verification algorithm is used
    1. A non-empty GIST is returned, equal to the GIST is provided by the user, it means the user is using the latest state.
    2. The non-empty GIST is returned and it’s not equal to the GIST is provided by a user. Gets the transition time of the GIST. The verification party can make a decision if it can accept this state based on that time frame.
 ## How to use:
-1. `go get https://github.com/iden3/go-iden3-auth/v2`
+1. Get dependencies:
+```sh  
+go get github.com/iden3/go-iden3-auth/v2 && \
+go get github.com/iden3/iden3comm/v2 && \
+go get github.com/iden3/go-circuits/v2
+```
 2. Request generation:
 
    basic auth:
