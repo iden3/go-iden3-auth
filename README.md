@@ -166,6 +166,11 @@ resolvers := map[string]pubsignals.StateResolver{
    "zkevm:test": state.NewETHResolver("<RPC URL Polygon zkEVM net>", COMMON_STATE_ADDRESS),
    // Linea-Sepolia
    "linea:sepolia": state.NewETHResolver("RPC URL Linea sepolia"), COMMON_STATE_ADDRESS),
+   // Billions main
+   "billions:main": state.NewETHResolver("https://rpc-mainnet.billions.network"), COMMON_STATE_ADDRESS),
+   // Billions test
+   "billions:test": state.NewETHResolver("http://billions-testnet-rpc.eu-north-2.gateway.fm/"), COMMON_STATE_ADDRESS),
+   
 }
 
 ```
