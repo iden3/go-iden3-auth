@@ -58,7 +58,7 @@ func (c *inMemoryCache[T]) Clear() {
 	c.cache.Clear()
 }
 
-// // Len returns the number of items currently in the cache.
+// Len returns the number of items currently in the cache.
 func (c *inMemoryCache[T]) Len() int {
 	return c.cache.ItemCount()
 }
