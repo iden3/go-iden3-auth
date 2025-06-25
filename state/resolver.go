@@ -37,6 +37,8 @@ type ResolverOptions struct {
 type ETHResolver struct {
 	RPCUrl            string
 	ContractAddress   common.Address
+	ethClient         *ethclient.Client
+	stateCaller       *abi.StateCaller
 	opts              ResolverOptions
 	stateResolveCache cache.ICache[ResolvedState]
 	rootResolveCache  cache.ICache[ResolvedState]
@@ -44,6 +46,16 @@ type ETHResolver struct {
 
 // NewETHResolver create ETH resolver for state.
 func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
+	ethClient, err := ethclient.Dial(url)
+	if err != nil {
+		panic(fmt.Sprintf("failed to connect to RPC: %v", err))
+	}
+
+	stateCaller, err := abi.NewStateCaller(common.HexToAddress(contract), ethClient)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create state caller: %v", err))
+	}
+
 	if opts == nil {
 		opts = &ResolverOptions{}
 	}
@@ -97,6 +109,8 @@ func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
 	return &ETHResolver{
 		RPCUrl:            url,
 		ContractAddress:   common.HexToAddress(contract),
+		stateCaller:       stateCaller,
+		ethClient:         ethClient,
 		opts:              *opts,
 		stateResolveCache: stateCache,
 		rootResolveCache:  rootCache,
@@ -109,17 +123,7 @@ func (r ETHResolver) Resolve(ctx context.Context, id, state *big.Int) (*Resolved
 	if cached, ok := r.stateResolveCache.Get(cacheKey); ok {
 		return &cached, nil
 	}
-
-	client, err := ethclient.Dial(r.RPCUrl)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-	getter, err := abi.NewStateCaller(r.ContractAddress, client)
-	if err != nil {
-		return nil, err
-	}
-	resolved, err := Resolve(ctx, getter, id, state)
+	resolved, err := Resolve(ctx, r.stateCaller, id, state)
 	if err != nil {
 		return nil, err
 	}
@@ -140,16 +144,7 @@ func (r ETHResolver) ResolveGlobalRoot(ctx context.Context, state *big.Int) (*Re
 		return &cached, nil
 	}
 
-	client, err := ethclient.Dial(r.RPCUrl)
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-	getter, err := abi.NewStateCaller(r.ContractAddress, client)
-	if err != nil {
-		return nil, err
-	}
-	resolved, err := ResolveGlobalRoot(ctx, getter, state)
+	resolved, err := ResolveGlobalRoot(ctx, r.stateCaller, state)
 	if err != nil {
 		return nil, err
 	}
@@ -168,4 +163,12 @@ func (r ETHResolver) getCacheKey(id, state *big.Int) string {
 
 func (r ETHResolver) getRootCacheKey(root *big.Int) string {
 	return root.String()
+}
+
+// Close closes the ETHResolver and its underlying client.
+func (r *ETHResolver) Close() error {
+	if r.ethClient != nil {
+		r.ethClient.Close()
+	}
+	return nil
 }
