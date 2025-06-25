@@ -91,6 +91,9 @@ func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
 		rootCache = cache.NewInMemoryCache[ResolvedState](rootOpts.MaxSize, rootOpts.ReplacedTTL)
 	}
 
+	opts.StateCacheOptions = stateOpts
+	opts.RootCacheOptions = rootOpts
+
 	return &ETHResolver{
 		RPCUrl:            url,
 		ContractAddress:   common.HexToAddress(contract),

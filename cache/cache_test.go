@@ -1,13 +1,15 @@
-package cache
+package cache_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/iden3/go-iden3-auth/v2/cache"
 )
 
 func TestSetAndGetWithDefaultTTL(t *testing.T) {
-	c := NewInMemoryCache[string](10, 2*time.Second)
+	c := cache.NewInMemoryCache[string](10, 2*time.Second)
 
 	c.Set("foo", "bar")
 
@@ -18,7 +20,7 @@ func TestSetAndGetWithDefaultTTL(t *testing.T) {
 }
 
 func TestSetAndGetWithCustomTTL(t *testing.T) {
-	c := NewInMemoryCache[string](10, 10*time.Second)
+	c := cache.NewInMemoryCache[string](10, 10*time.Second)
 
 	c.Set("short", "life", 100*time.Millisecond)
 
@@ -31,7 +33,7 @@ func TestSetAndGetWithCustomTTL(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	c := NewInMemoryCache[string](10, 10*time.Second)
+	c := cache.NewInMemoryCache[string](10, 10*time.Second)
 
 	c.Set("foo", "bar")
 	c.Delete("foo")
@@ -43,7 +45,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	c := NewInMemoryCache[string](10, 10*time.Second)
+	c := cache.NewInMemoryCache[string](10, 10*time.Second)
 
 	c.Set("a", "1")
 	c.Set("b", "2")
@@ -58,7 +60,7 @@ func TestClear(t *testing.T) {
 }
 
 func TestMultipleKeys(t *testing.T) {
-	c := NewInMemoryCache[string](10, 5*time.Second)
+	c := cache.NewInMemoryCache[string](10, 5*time.Second)
 
 	c.Set("key1", "val1")
 	c.Set("key2", "val2")
@@ -82,7 +84,7 @@ func TestMultipleKeys(t *testing.T) {
 }
 
 func TestOverwriteValue(t *testing.T) {
-	c := NewInMemoryCache[string](10, 5*time.Second)
+	c := cache.NewInMemoryCache[string](10, 5*time.Second)
 
 	c.Set("key1", "initial")
 	val, ok := c.Get("key1")
@@ -98,7 +100,7 @@ func TestOverwriteValue(t *testing.T) {
 }
 
 func TestExpiredEntriesAreCleanedUp(t *testing.T) {
-	c := NewInMemoryCache[string](10, 100*time.Millisecond)
+	c := cache.NewInMemoryCache[string](10, 100*time.Millisecond)
 
 	// Insert many short-lived entries
 	for i := 0; i < 20; i++ {
@@ -113,7 +115,7 @@ func TestExpiredEntriesAreCleanedUp(t *testing.T) {
 	}
 
 	// After lazy cleanup, internal size should be less than or equal to 10
-	if size := c.(*inMemoryCache[string]).cache.ItemCount(); size > 10 {
+	if size := c.Len(); size > 10 {
 		t.Errorf("expected cache to have <= 10 active items, got %d", size)
 	}
 }

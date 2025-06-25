@@ -12,6 +12,7 @@ type ICache[T any] interface {
 	Set(key string, value T, ttl ...time.Duration)
 	Delete(key string)
 	Clear()
+	Len() int
 }
 
 type inMemoryCache[T any] struct {
@@ -55,4 +56,9 @@ func (c *inMemoryCache[T]) Delete(key string) {
 // Clear removes all items from the cache.
 func (c *inMemoryCache[T]) Clear() {
 	c.cache.Clear()
+}
+
+// // Len returns the number of items currently in the cache.
+func (c *inMemoryCache[T]) Len() int {
+	return c.cache.ItemCount()
 }
