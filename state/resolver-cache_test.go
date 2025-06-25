@@ -1,4 +1,4 @@
-package state_test
+package state
 
 import (
 	"context"
@@ -7,20 +7,30 @@ import (
 	"time"
 
 	"github.com/iden3/go-iden3-auth/v2/cache"
-	"github.com/iden3/go-iden3-auth/v2/state"
 )
 
+func newTestResolverWithCache(stateCache, rootCache cache.ICache[ResolvedState]) *ETHResolver {
+	return &ETHResolver{
+		stateResolveCache: stateCache,
+		rootResolveCache:  rootCache,
+		opts: ResolverOptions{
+			StateCacheOptions: &CacheOptions{
+				Cache: stateCache,
+			},
+			RootCacheOptions: &CacheOptions{
+				Cache: rootCache,
+			},
+		},
+	}
+}
+
 func TestResolve_UsesCacheIfPresent(t *testing.T) {
-	mock := cache.NewInMemoryCache[state.ResolvedState](10, time.Minute)
+	mock := cache.NewInMemoryCache[ResolvedState](10, time.Minute)
 	key := "1-2"
-	expected := state.ResolvedState{Latest: true}
+	expected := ResolvedState{Latest: true}
 	mock.Set(key, expected)
 
-	resolver := state.NewETHResolver("", "", &state.ResolverOptions{
-		StateCacheOptions: &state.CacheOptions{
-			Cache: mock,
-		},
-	})
+	resolver := newTestResolverWithCache(mock, nil)
 
 	result, err := resolver.Resolve(context.Background(), big.NewInt(1), big.NewInt(2))
 	if err != nil {
@@ -32,16 +42,12 @@ func TestResolve_UsesCacheIfPresent(t *testing.T) {
 }
 
 func TestGistResolve_UsesCacheIfPresent(t *testing.T) {
-	mock := cache.NewInMemoryCache[state.ResolvedState](10, time.Minute)
+	mock := cache.NewInMemoryCache[ResolvedState](10, time.Minute)
 	key := "123"
-	expected := state.ResolvedState{Latest: true}
+	expected := ResolvedState{Latest: true}
 	mock.Set(key, expected)
 
-	resolver := state.NewETHResolver("", "", &state.ResolverOptions{
-		RootCacheOptions: &state.CacheOptions{
-			Cache: mock,
-		},
-	})
+	resolver := newTestResolverWithCache(nil, mock)
 
 	result, err := resolver.ResolveGlobalRoot(context.Background(), big.NewInt(123))
 	if err != nil {

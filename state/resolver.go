@@ -44,16 +44,16 @@ type ETHResolver struct {
 	rootResolveCache  cache.ICache[ResolvedState]
 }
 
-// NewETHResolver create ETH resolver for state.
-func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
+// NewETHResolverWithErr create ETH resolver for state or return error.
+func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHResolver, error) {
 	ethClient, err := ethclient.Dial(url)
 	if err != nil {
-		panic(fmt.Sprintf("failed to connect to RPC: %v", err))
+		return nil, fmt.Errorf("failed to connect to Ethereum client: %w", err)
 	}
 
 	stateCaller, err := abi.NewStateCaller(common.HexToAddress(contract), ethClient)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create state caller: %v", err))
+		return nil, fmt.Errorf("failed to create state caller: %w", err)
 	}
 
 	if opts == nil {
@@ -114,7 +114,16 @@ func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
 		opts:              *opts,
 		stateResolveCache: stateCache,
 		rootResolveCache:  rootCache,
+	}, nil
+}
+
+// NewETHResolver creates ETH resolver for state or panics if error occurs.
+func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
+	resolver, err := NewETHResolverWithErr(url, contract, opts)
+	if err != nil {
+		panic(fmt.Sprintf("NewETHResolver: %v", err))
 	}
+	return resolver
 }
 
 // Resolve returns Resolved state from blockchain
