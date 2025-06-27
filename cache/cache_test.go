@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/iden3/go-iden3-auth/v2/cache"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetAndGetWithDefaultTTL(t *testing.T) {
@@ -14,22 +15,19 @@ func TestSetAndGetWithDefaultTTL(t *testing.T) {
 	c.Set("foo", "bar")
 
 	val, ok := c.Get("foo")
-	if !ok || val != "bar" {
-		t.Errorf("expected 'bar', got '%v', ok: %v", val, ok)
-	}
+	assert.True(t, ok, "expected 'foo' to be set")
+	assert.Equal(t, "bar", val, "expected value for 'foo' to be 'bar'")
 }
 
 func TestSetAndGetWithCustomTTL(t *testing.T) {
 	c := cache.NewInMemoryCache[string](10, 10*time.Second)
 
-	c.Set("short", "life", 100*time.Millisecond)
+	c.Set("short", "life", cache.WithTTL(100*time.Millisecond))
 
 	time.Sleep(200 * time.Millisecond)
 
 	_, ok := c.Get("short")
-	if ok {
-		t.Errorf("expected 'short' to be expired")
-	}
+	assert.False(t, ok, "expected 'short' to be expired")
 }
 
 func TestDelete(t *testing.T) {
@@ -39,9 +37,7 @@ func TestDelete(t *testing.T) {
 	c.Delete("foo")
 
 	_, ok := c.Get("foo")
-	if ok {
-		t.Errorf("expected 'foo' to be deleted")
-	}
+	assert.False(t, ok, "expected 'foo' to be deleted")
 }
 
 func TestClear(t *testing.T) {
@@ -51,12 +47,13 @@ func TestClear(t *testing.T) {
 	c.Set("b", "2")
 	c.Clear()
 
-	if _, ok := c.Get("a"); ok {
-		t.Errorf("expected 'a' to be cleared")
-	}
-	if _, ok := c.Get("b"); ok {
-		t.Errorf("expected 'b' to be cleared")
-	}
+	assert.Equal(t, 0, c.Len(), "expected cache to be empty after Clear")
+
+	_, ok := c.Get("a")
+	assert.False(t, ok, "expected 'a' to be cleared")
+
+	_, ok = c.Get("b")
+	assert.False(t, ok, "expected 'b' to be cleared")
 }
 
 func TestMultipleKeys(t *testing.T) {
@@ -74,12 +71,8 @@ func TestMultipleKeys(t *testing.T) {
 
 	for key, expected := range tests {
 		val, ok := c.Get(key)
-		if !ok {
-			t.Errorf("expected key %s to exist", key)
-		}
-		if val != expected {
-			t.Errorf("expected value %s for key %s, got %s", expected, key, val)
-		}
+		assert.True(t, ok, "expected key %s to exist", key)
+		assert.Equal(t, expected, val, "expected value %s for key %s, got %s", expected, key, val)
 	}
 }
 
@@ -88,15 +81,13 @@ func TestOverwriteValue(t *testing.T) {
 
 	c.Set("key1", "initial")
 	val, ok := c.Get("key1")
-	if !ok || val != "initial" {
-		t.Fatalf("expected 'initial', got '%v', ok: %v", val, ok)
-	}
+	assert.True(t, ok, "expected 'key1' to be set")
+	assert.Equal(t, "initial", val, "expected value for 'key1' to be 'initial'")
 
 	c.Set("key1", "updated")
 	val, ok = c.Get("key1")
-	if !ok || val != "updated" {
-		t.Errorf("expected 'updated', got '%v', ok: %v", val, ok)
-	}
+	assert.True(t, ok, "expected 'key1' to be updated")
+	assert.Equal(t, "updated", val, "expected value for 'key1' to be 'updated'")
 }
 
 func TestExpiredEntriesAreCleanedUp(t *testing.T) {
@@ -104,7 +95,7 @@ func TestExpiredEntriesAreCleanedUp(t *testing.T) {
 
 	// Insert many short-lived entries
 	for i := 0; i < 20; i++ {
-		c.Set(fmt.Sprintf("key-%d", i), "value", 50*time.Millisecond)
+		c.Set(fmt.Sprintf("key-%d", i), "value", cache.WithTTL(50*time.Millisecond))
 	}
 
 	time.Sleep(200 * time.Millisecond) // Wait for expiration
@@ -114,8 +105,5 @@ func TestExpiredEntriesAreCleanedUp(t *testing.T) {
 		c.Get(fmt.Sprintf("key-%d", i))
 	}
 
-	// After lazy cleanup, internal size should be less than or equal to 10
-	if size := c.Len(); size > 10 {
-		t.Errorf("expected cache to have <= 10 active items, got %d", size)
-	}
+	assert.LessOrEqual(t, c.Len(), 10, "expected cache to have <= 10 active items")
 }

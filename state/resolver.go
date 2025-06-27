@@ -22,15 +22,32 @@ type CacheOptions struct {
 	// Maximum number of entries in the cache
 	MaxSize int64
 	// Optional custom cache implementation
-	Cache cache.ICache[ResolvedState]
+	Cache cache.Cache[ResolvedState]
 }
 
-// ResolverOptions is the full config for ETHResolver
-type ResolverOptions struct {
+// ResolverOptions is a function that modifies the ResolverConfig.
+type ResolverOptions func(*ResolverConfig)
+
+// ResolverConfig is the full config for ETHResolver
+type ResolverConfig struct {
 	// Caching options for state resolution
 	StateCacheOptions *CacheOptions
 	// Caching options for GIST root resolution
 	RootCacheOptions *CacheOptions
+}
+
+// WithStateCacheOptions creates a new ResolverConfig with default values for state cache options.
+func WithStateCacheOptions(opts *CacheOptions) ResolverOptions {
+	return func(cfg *ResolverConfig) {
+		cfg.StateCacheOptions = opts
+	}
+}
+
+// WithRootCacheOptions creates a new ResolverConfig with default values for root cache options.
+func WithRootCacheOptions(opts *CacheOptions) ResolverOptions {
+	return func(cfg *ResolverConfig) {
+		cfg.RootCacheOptions = opts
+	}
 }
 
 // ETHResolver resolver for eth blockchains
@@ -39,13 +56,13 @@ type ETHResolver struct {
 	ContractAddress   common.Address
 	ethClient         *ethclient.Client
 	stateCaller       *abi.StateCaller
-	opts              ResolverOptions
-	stateResolveCache cache.ICache[ResolvedState]
-	rootResolveCache  cache.ICache[ResolvedState]
+	cfg               ResolverConfig
+	stateResolveCache cache.Cache[ResolvedState]
+	rootResolveCache  cache.Cache[ResolvedState]
 }
 
-// NewETHResolverWithErr create ETH resolver for state or return error.
-func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHResolver, error) {
+// NewETHResolverWithOpts create ETH resolver for state or return error.
+func NewETHResolverWithOpts(url, contract string, opts ...ResolverOptions) (*ETHResolver, error) {
 	ethClient, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client: %w", err)
@@ -56,14 +73,15 @@ func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHRes
 		return nil, fmt.Errorf("failed to create state caller: %w", err)
 	}
 
-	if opts == nil {
-		opts = &ResolverOptions{}
+	cfg := ResolverConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
 	}
 
 	// ---- State Cache Options ----
 	stateOpts := &CacheOptions{}
-	if opts.StateCacheOptions != nil {
-		stateOpts = opts.StateCacheOptions
+	if cfg.StateCacheOptions != nil {
+		stateOpts = cfg.StateCacheOptions
 	}
 	if stateOpts.NotReplacedTTL == 0 {
 		stateOpts.NotReplacedTTL = constants.StateCacheOptions.NotReplacedTTL
@@ -74,7 +92,7 @@ func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHRes
 	if stateOpts.MaxSize == 0 {
 		stateOpts.MaxSize = constants.DefaultCacheMaxSize
 	}
-	var stateCache cache.ICache[ResolvedState]
+	var stateCache cache.Cache[ResolvedState]
 	if stateOpts.Cache != nil {
 		stateCache = stateOpts.Cache
 	} else {
@@ -83,8 +101,8 @@ func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHRes
 
 	// ---- Root Cache Options ----
 	rootOpts := &CacheOptions{}
-	if opts.RootCacheOptions != nil {
-		rootOpts = opts.RootCacheOptions
+	if cfg.RootCacheOptions != nil {
+		rootOpts = cfg.RootCacheOptions
 	}
 	if rootOpts.NotReplacedTTL == 0 {
 		rootOpts.NotReplacedTTL = constants.GistRootCacheOptions.NotReplacedTTL
@@ -96,30 +114,30 @@ func NewETHResolverWithErr(url, contract string, opts *ResolverOptions) (*ETHRes
 		rootOpts.MaxSize = constants.DefaultCacheMaxSize
 	}
 
-	var rootCache cache.ICache[ResolvedState]
+	var rootCache cache.Cache[ResolvedState]
 	if rootOpts.Cache != nil {
 		rootCache = rootOpts.Cache
 	} else {
 		rootCache = cache.NewInMemoryCache[ResolvedState](rootOpts.MaxSize, rootOpts.ReplacedTTL)
 	}
 
-	opts.StateCacheOptions = stateOpts
-	opts.RootCacheOptions = rootOpts
+	cfg.StateCacheOptions = stateOpts
+	cfg.RootCacheOptions = rootOpts
 
 	return &ETHResolver{
 		RPCUrl:            url,
 		ContractAddress:   common.HexToAddress(contract),
 		stateCaller:       stateCaller,
 		ethClient:         ethClient,
-		opts:              *opts,
+		cfg:               cfg,
 		stateResolveCache: stateCache,
 		rootResolveCache:  rootCache,
 	}, nil
 }
 
 // NewETHResolver creates ETH resolver for state or panics if error occurs.
-func NewETHResolver(url, contract string, opts *ResolverOptions) *ETHResolver {
-	resolver, err := NewETHResolverWithErr(url, contract, opts)
+func NewETHResolver(url, contract string, opts ...ResolverOptions) *ETHResolver {
+	resolver, err := NewETHResolverWithOpts(url, contract, opts...)
 	if err != nil {
 		panic(fmt.Sprintf("NewETHResolver: %v", err))
 	}
@@ -137,11 +155,11 @@ func (r ETHResolver) Resolve(ctx context.Context, id, state *big.Int) (*Resolved
 		return nil, err
 	}
 	// Store resolved state in cache
-	ttl := r.opts.StateCacheOptions.ReplacedTTL
+	ttl := r.cfg.StateCacheOptions.ReplacedTTL
 	if resolved.TransitionTimestamp == 0 {
-		ttl = r.opts.StateCacheOptions.NotReplacedTTL
+		ttl = r.cfg.StateCacheOptions.NotReplacedTTL
 	}
-	r.stateResolveCache.Set(cacheKey, *resolved, ttl)
+	r.stateResolveCache.Set(cacheKey, *resolved, cache.WithTTL(ttl))
 
 	return resolved, nil
 }
@@ -158,11 +176,11 @@ func (r ETHResolver) ResolveGlobalRoot(ctx context.Context, state *big.Int) (*Re
 		return nil, err
 	}
 	// Store resolved state in cache
-	ttl := r.opts.RootCacheOptions.ReplacedTTL
+	ttl := r.cfg.RootCacheOptions.ReplacedTTL
 	if resolved.TransitionTimestamp == 0 {
-		ttl = r.opts.RootCacheOptions.NotReplacedTTL
+		ttl = r.cfg.RootCacheOptions.NotReplacedTTL
 	}
-	r.rootResolveCache.Set(cacheKey, *resolved, ttl)
+	r.rootResolveCache.Set(cacheKey, *resolved, cache.WithTTL(ttl))
 	return resolved, nil
 }
 
