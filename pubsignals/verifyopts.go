@@ -2,12 +2,14 @@ package pubsignals
 
 import (
 	"time"
+
+	"github.com/iden3/go-iden3-auth/v2/constants"
 )
 
 var (
-	defaultAuthVerifyOpts  = VerifyConfig{AcceptedStateTransitionDelay: time.Minute * 5}
-	defaultProofVerifyOpts = VerifyConfig{AcceptedStateTransitionDelay: time.Hour,
-		AcceptedProofGenerationDelay: time.Hour * 24}
+	defaultAuthVerifyOpts  = VerifyConfig{AcceptedStateTransitionDelay: constants.AuthAcceptedStateTransitionDelay}
+	defaultProofVerifyOpts = VerifyConfig{AcceptedStateTransitionDelay: constants.AcceptedStateTransitionDelay,
+		AcceptedProofGenerationDelay: constants.AcceptedProofGenerationDelay}
 )
 
 // WithAcceptedStateTransitionDelay sets the delay of the revoked state.
