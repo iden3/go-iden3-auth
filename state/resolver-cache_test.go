@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/iden3/go-iden3-auth/v2/cache"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestResolverWithCache(stateCache, rootCache cache.Cache[ResolvedState]) *ETHResolver {
 	return &ETHResolver{
 		stateResolveCache: stateCache,
 		rootResolveCache:  rootCache,
-		cfg: ResolverConfig{
+		cfg: Config{
 			StateCacheOptions: &CacheOptions{
 				Cache: stateCache,
 			},
@@ -34,8 +34,8 @@ func TestResolve_UsesCacheIfPresent(t *testing.T) {
 	resolver := newTestResolverWithCache(mock, nil)
 
 	result, err := resolver.Resolve(context.Background(), big.NewInt(1), big.NewInt(2))
-	assert.NoError(t, err, "expected no error")
-	assert.True(t, result.Latest, "expected result to be marked as latest")
+	require.NoError(t, err, "expected no error")
+	require.True(t, result.Latest, "expected result to be marked as latest")
 }
 
 func TestGistResolve_UsesCacheIfPresent(t *testing.T) {
@@ -47,6 +47,6 @@ func TestGistResolve_UsesCacheIfPresent(t *testing.T) {
 	resolver := newTestResolverWithCache(nil, mock)
 
 	result, err := resolver.ResolveGlobalRoot(context.Background(), big.NewInt(123))
-	assert.NoError(t, err, "expected no error")
-	assert.True(t, result.Latest, "expected result to be marked as latest")
+	require.NoError(t, err, "expected no error")
+	require.True(t, result.Latest, "expected result to be marked as latest")
 }

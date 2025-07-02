@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/iden3/go-iden3-auth/v2/cache"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetAndGetWithDefaultTTL(t *testing.T) {
@@ -15,8 +15,8 @@ func TestSetAndGetWithDefaultTTL(t *testing.T) {
 	c.Set("foo", "bar")
 
 	val, ok := c.Get("foo")
-	assert.True(t, ok, "expected 'foo' to be set")
-	assert.Equal(t, "bar", val, "expected value for 'foo' to be 'bar'")
+	require.True(t, ok, "expected 'foo' to be set")
+	require.Equal(t, "bar", val, "expected value for 'foo' to be 'bar'")
 }
 
 func TestSetAndGetWithCustomTTL(t *testing.T) {
@@ -27,7 +27,7 @@ func TestSetAndGetWithCustomTTL(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 
 	_, ok := c.Get("short")
-	assert.False(t, ok, "expected 'short' to be expired")
+	require.False(t, ok, "expected 'short' to be expired")
 }
 
 func TestDelete(t *testing.T) {
@@ -37,7 +37,7 @@ func TestDelete(t *testing.T) {
 	c.Delete("foo")
 
 	_, ok := c.Get("foo")
-	assert.False(t, ok, "expected 'foo' to be deleted")
+	require.False(t, ok, "expected 'foo' to be deleted")
 }
 
 func TestClear(t *testing.T) {
@@ -47,13 +47,13 @@ func TestClear(t *testing.T) {
 	c.Set("b", "2")
 	c.Clear()
 
-	assert.Equal(t, 0, c.Len(), "expected cache to be empty after Clear")
+	require.Equal(t, 0, c.Len(), "expected cache to be empty after Clear")
 
 	_, ok := c.Get("a")
-	assert.False(t, ok, "expected 'a' to be cleared")
+	require.False(t, ok, "expected 'a' to be cleared")
 
 	_, ok = c.Get("b")
-	assert.False(t, ok, "expected 'b' to be cleared")
+	require.False(t, ok, "expected 'b' to be cleared")
 }
 
 func TestMultipleKeys(t *testing.T) {
@@ -71,8 +71,8 @@ func TestMultipleKeys(t *testing.T) {
 
 	for key, expected := range tests {
 		val, ok := c.Get(key)
-		assert.True(t, ok, "expected key %s to exist", key)
-		assert.Equal(t, expected, val, "expected value %s for key %s, got %s", expected, key, val)
+		require.True(t, ok, "expected key %s to exist", key)
+		require.Equal(t, expected, val, "expected value %s for key %s, got %s", expected, key, val)
 	}
 }
 
@@ -81,13 +81,13 @@ func TestOverwriteValue(t *testing.T) {
 
 	c.Set("key1", "initial")
 	val, ok := c.Get("key1")
-	assert.True(t, ok, "expected 'key1' to be set")
-	assert.Equal(t, "initial", val, "expected value for 'key1' to be 'initial'")
+	require.True(t, ok, "expected 'key1' to be set")
+	require.Equal(t, "initial", val, "expected value for 'key1' to be 'initial'")
 
 	c.Set("key1", "updated")
 	val, ok = c.Get("key1")
-	assert.True(t, ok, "expected 'key1' to be updated")
-	assert.Equal(t, "updated", val, "expected value for 'key1' to be 'updated'")
+	require.True(t, ok, "expected 'key1' to be updated")
+	require.Equal(t, "updated", val, "expected value for 'key1' to be 'updated'")
 }
 
 func TestExpiredEntriesAreCleanedUp(t *testing.T) {
@@ -105,5 +105,5 @@ func TestExpiredEntriesAreCleanedUp(t *testing.T) {
 		c.Get(fmt.Sprintf("key-%d", i))
 	}
 
-	assert.LessOrEqual(t, c.Len(), 10, "expected cache to have <= 10 active items")
+	require.LessOrEqual(t, c.Len(), 10, "expected cache to have <= 10 active items")
 }

@@ -25,11 +25,11 @@ type CacheOptions struct {
 	Cache cache.Cache[ResolvedState]
 }
 
-// ResolverOptions is a function that modifies the ResolverConfig.
-type ResolverOptions func(*ResolverConfig)
+// Options is a function that modifies the Config.
+type Options func(*Config)
 
-// ResolverConfig is the full config for ETHResolver
-type ResolverConfig struct {
+// Config is the full config for ETHResolver
+type Config struct {
 	// Caching options for state resolution
 	StateCacheOptions *CacheOptions
 	// Caching options for GIST root resolution
@@ -37,15 +37,15 @@ type ResolverConfig struct {
 }
 
 // WithStateCacheOptions creates a new ResolverConfig with default values for state cache options.
-func WithStateCacheOptions(opts *CacheOptions) ResolverOptions {
-	return func(cfg *ResolverConfig) {
+func WithStateCacheOptions(opts *CacheOptions) Options {
+	return func(cfg *Config) {
 		cfg.StateCacheOptions = opts
 	}
 }
 
 // WithRootCacheOptions creates a new ResolverConfig with default values for root cache options.
-func WithRootCacheOptions(opts *CacheOptions) ResolverOptions {
-	return func(cfg *ResolverConfig) {
+func WithRootCacheOptions(opts *CacheOptions) Options {
+	return func(cfg *Config) {
 		cfg.RootCacheOptions = opts
 	}
 }
@@ -56,13 +56,13 @@ type ETHResolver struct {
 	ContractAddress   common.Address
 	ethClient         *ethclient.Client
 	stateCaller       *abi.StateCaller
-	cfg               ResolverConfig
+	cfg               Config
 	stateResolveCache cache.Cache[ResolvedState]
 	rootResolveCache  cache.Cache[ResolvedState]
 }
 
 // NewETHResolverWithOpts create ETH resolver for state or return error.
-func NewETHResolverWithOpts(url, contract string, opts ...ResolverOptions) (*ETHResolver, error) {
+func NewETHResolverWithOpts(url, contract string, opts ...Options) (*ETHResolver, error) {
 	ethClient, err := ethclient.Dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client: %w", err)
@@ -73,7 +73,7 @@ func NewETHResolverWithOpts(url, contract string, opts ...ResolverOptions) (*ETH
 		return nil, fmt.Errorf("failed to create state caller: %w", err)
 	}
 
-	cfg := ResolverConfig{}
+	cfg := Config{}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -136,7 +136,7 @@ func NewETHResolverWithOpts(url, contract string, opts ...ResolverOptions) (*ETH
 }
 
 // NewETHResolver creates ETH resolver for state or panics if error occurs.
-func NewETHResolver(url, contract string, opts ...ResolverOptions) *ETHResolver {
+func NewETHResolver(url, contract string, opts ...Options) *ETHResolver {
 	resolver, err := NewETHResolverWithOpts(url, contract, opts...)
 	if err != nil {
 		panic(fmt.Sprintf("NewETHResolver: %v", err))
