@@ -62,6 +62,7 @@ mock for state resolver
 */
 var stateResolvers = map[string]pubsignals.StateResolver{
 	"polygon:mumbai": &mockStateResolver{},
+	"polygon:amoy":   &mockStateResolver{},
 }
 
 const proofGenerationDelay = time.Hour * 100000
@@ -1322,4 +1323,93 @@ func TestVerifier_FullVerify_AcceptHeader_NotSupported(t *testing.T) {
 	require.NoError(t, err)
 	_, err = authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.Error(t, err, errors.New("no packer with profile which meets `accept` header requirements"))
+}
+
+func TestFullVerifier_OptionalFlags(t *testing.T) {
+	verifierID := "did:iden3:polygon:amoy:xCRp75DgAdS63W65fmXHz6p9DwdonuRU9e46DifhX"
+	callbackURL := "http://localhost:8080/callback?id=1234442-123123-123123"
+	reason := "reason"
+	message := "message"
+
+	request := CreateAuthorizationRequestWithMessage(reason, message, verifierID, callbackURL)
+
+	optTrue := true
+	optFalse := false
+
+	var mtpProofRequest1 protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest1.ID = 1
+	mtpProofRequest1.CircuitID = "credentialAtomicQueryV3-beta.1"
+	mtpProofRequest1.Optional = &optTrue
+	mtpProofRequest1.Query = map[string]interface{}{
+		"proofType":      "BJJSignature2021",
+		"allowedIssuers": []string{"*"},
+		"type":           "KYCAgeCredential",
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-nonmerklized.jsonld",
+		"credentialSubject": map[string]interface{}{
+			"documentType": map[string]interface{}{
+				"$eq": 99,
+			},
+		},
+	}
+
+	// Second proof request (linked multi query with optional = false)
+	var mtpProofRequest2 protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest2.ID = 2
+	mtpProofRequest2.CircuitID = "linkedMultiQuery10-beta.1"
+	mtpProofRequest2.Optional = &optFalse
+	mtpProofRequest2.Query = map[string]interface{}{
+		"groupId":        1,
+		"proofType":      "Iden3SparseMerkleTreeProof",
+		"allowedIssuers": []string{"*"},
+		"type":           "KYCEmployee",
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
+		"credentialSubject": map[string]interface{}{
+			"documentType": map[string]interface{}{
+				"$eq": 1,
+			},
+			"position": map[string]interface{}{
+				"$eq": "boss",
+				"$ne": "employee",
+			},
+		},
+	}
+
+	var mtpProofRequest3 protocol.ZeroKnowledgeProofRequest
+	mtpProofRequest3.ID = 3
+	mtpProofRequest3.CircuitID = "credentialAtomicQueryV3-beta.1"
+	mtpProofRequest3.Optional = &optFalse
+	mtpProofRequest3.Params = map[string]interface{}{
+		"nullifierSessionId": "12345",
+	}
+	mtpProofRequest3.Query = map[string]interface{}{
+		"groupId":        1,
+		"proofType":      "BJJSignature2021",
+		"allowedIssuers": []string{"*"},
+		"type":           "KYCEmployee",
+		"context":        "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld",
+		"credentialSubject": map[string]interface{}{
+			"hireDate": map[string]interface{}{
+				"$eq": "2023-12-11",
+			},
+		},
+	}
+
+	request.Body.Scope = append(request.Body.Scope, mtpProofRequest1, mtpProofRequest2, mtpProofRequest3)
+
+	schemaLoader := &mockJSONLDSchemaLoader{
+		schemas: map[string]string{
+			"https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v101.json-ld": loadSchema("kyc-v101.json-ld"),
+		},
+	}
+
+	authInstance, err := NewVerifier(verificationKeyloader, stateResolvers,
+		WithDocumentLoader(schemaLoader))
+	require.NoError(t, err)
+
+	tokenString := "eyJhbGciOiJncm90aDE2IiwiY2lyY3VpdElkIjoiYXV0aFYyIiwiY3JpdCI6WyJjaXJjdWl0SWQiXSwidHlwIjoiYXBwbGljYXRpb24vaWRlbjMtemtwLWpzb24ifQ.eyJpZCI6ImIyZGY2MjYyLTM2ZTktNDgzYi1iZjNjLTRkZjUwYmRjZDE5MyIsInR5cCI6ImFwcGxpY2F0aW9uL2lkZW4zLXprcC1qc29uIiwidHlwZSI6Imh0dHBzOi8vaWRlbjMtY29tbXVuaWNhdGlvbi5pby9hdXRob3JpemF0aW9uLzEuMC9yZXNwb25zZSIsInRoaWQiOiIwOTRiM2ZjNS00YmNiLTQ2OTEtYWY3OS1jNWVmMDE5YTI1YWIiLCJib2R5Ijp7Im1lc3NhZ2UiOiJtZXNzYWdlIiwic2NvcGUiOlt7ImlkIjoyLCJjaXJjdWl0SWQiOiJsaW5rZWRNdWx0aVF1ZXJ5MTAtYmV0YS4xIiwicHJvb2YiOnsicGlfYSI6WyIxNTUxMDY1ODgzNDY0Njk3NDQyMzE3NTYzMTY0OTQ3MTg3ODU0NTIzMTYxNDUzMDA3NTYwOTI4NTU2MTczNDI5NDg1MDUzMzY1Njc0NCIsIjc0NTc2NTYyODQxODI1Mzk3MzgzNDQ2MDU3NjczMTkxNjc1NjA1NTk3MDg5NjUyMDI2MDk5MjkxNTE4MDA0MDkyNTQ3NDE1Njk0ODciLCIxIl0sInBpX2IiOltbIjEyNzQ2NTA4NDE0MzE2ODE0ODQyMDI3MDg2OTAyOTA4NTk4NTY3NTE2NTQ5NjE3MjM0NDMyOTA2OTE1NDM5MzEzMzk4MzM4NjQyODQwIiwiMTg2MDA5MDIyMjY5OTI0ODU0NTE5ODUxNzc3MDAxODQ4MDc3ODM5NTIwMzQwNTU0MzA2Njc0MDI5MzgxNjgyOTQyNDQwNzA4MjUzMjkiXSxbIjEyNzQ0MzgxNTg2OTkxMzQwNzIxNjAyODM5MjA2MTAzMzg4NjgxMjU1ODI4NzQyNzEzMDQyNTA2Mzc5MTA0MzA0MjA0OTA2NTQzOTAiLCIzMTA4ODQyNTgxOTYxOTA4MTk4MTYyMjE1MTE1MjQxOTcwMjU1MDI4NzM1NjQ5MjYyMDk4NDIyNTI4NDA5NDk1MjY1MjQ1MjE0ODEyIl0sWyIxIiwiMCJdXSwicGlfYyI6WyI4MjQ5ODYxNzkwNTEyNzg0NDQyMTA2ODg1OTA2NDc4NDI2NjY5MTU2NjU1OTcxNDc2MzIzMzcwNTMzNTEyNzcxMTA4ODE3MTU5NjA0IiwiMTMyODM4NDMzMTExOTcxNzg5NDc2MDQ1NzQ1NTQzODE4NTUzOTUzNTg1NzcxMjYyMzAyODg0NTk5NDUxMjkwNTY5OTcwNzMxOTgxOTgiLCIxIl0sInByb3RvY29sIjoiZ3JvdGgxNiIsImN1cnZlIjoiYm4xMjgifSwicHViX3NpZ25hbHMiOlsiNTAwOTg5MTMxMjg0MDA2NzI0ODkwOTk4NjUzOTYxODg4NzAwNjQ0Njg2MzE2NTY2MzI5ODE3NDQ0NTQ3ODQ4OTUwNDgwNzQ2NjgxNiIsIjEiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMTU1NzcxMTQ3OTkwNTY5Mzk2MzM1NTI4NDU1MzEwMTEwMjQ2NzI5Mzk0OTM0OTI3Njk2MjgyODU2NjEzNTk3MTE2NTUyMTQ1NjExNjIiLCIxNjk5ODc2Mjk2NTM5Njk0NDc4MjY2NzU1Nzc0MTE4NTgyODEzNjQ2Nzc0Nzc2MjgzMDAyODIxNzAyNzk3MzYxNzM3Mzg2MjMwMTk1OCIsIjkzMDI1MjYyMDg1MDc3NTM3OTk1MDExMzAxMjg5MDg0OTQ2NzM0MTI0NDM2MzE1NDE0MjQ0MDk1NTEyMDUyNzc1Mjk5NDk2NjIzOTQiLCIxNDYxMjUxODAwNjQ5Mzk5ODAzNzE0OTI5OTY0Nzk3NDIzNzc3MTU1MTA3MDMxMjA5Njg4MjQwNzQ0MDY1MTA1Mjc1MjI1OTAzODQwMyIsIjE0NjEyNTE4MDA2NDkzOTk4MDM3MTQ5Mjk5NjQ3OTc0MjM3NzcxNTUxMDcwMzEyMDk2ODgyNDA3NDQwNjUxMDUyNzUyMjU5MDM4NDAzIiwiMTQ2MTI1MTgwMDY0OTM5OTgwMzcxNDkyOTk2NDc5NzQyMzc3NzE1NTEwNzAzMTIwOTY4ODI0MDc0NDA2NTEwNTI3NTIyNTkwMzg0MDMiLCIxNDYxMjUxODAwNjQ5Mzk5ODAzNzE0OTI5OTY0Nzk3NDIzNzc3MTU1MTA3MDMxMjA5Njg4MjQwNzQ0MDY1MTA1Mjc1MjI1OTAzODQwMyIsIjE0NjEyNTE4MDA2NDkzOTk4MDM3MTQ5Mjk5NjQ3OTc0MjM3NzcxNTUxMDcwMzEyMDk2ODgyNDA3NDQwNjUxMDUyNzUyMjU5MDM4NDAzIiwiMTQ2MTI1MTgwMDY0OTM5OTgwMzcxNDkyOTk2NDc5NzQyMzc3NzE1NTEwNzAzMTIwOTY4ODI0MDc0NDA2NTEwNTI3NTIyNTkwMzg0MDMiLCIxNDYxMjUxODAwNjQ5Mzk5ODAzNzE0OTI5OTY0Nzk3NDIzNzc3MTU1MTA3MDMxMjA5Njg4MjQwNzQ0MDY1MTA1Mjc1MjI1OTAzODQwMyJdfSx7ImlkIjozLCJjaXJjdWl0SWQiOiJjcmVkZW50aWFsQXRvbWljUXVlcnlWMy1iZXRhLjEiLCJwcm9vZiI6eyJwaV9hIjpbIjEyMjAwOTE0OTY1NjE3Mjk4NDUwMTI3MzY0OTA3Njk5MjE1NzM1MjYzMDAxMTE4MzY4MDUzMzQ0OTg1MzQ4NDU5NTg5OTkwMDQ0MDE3IiwiMTk0MzI4MDMzNzk4MDg4NDgxOTk4MjE2OTEwNDgzNzE4NDEyMzMyMzc4OTA2ODMyNzM3ODgyNjc0OTY2NTg0NDI1ODg1OTk0NjMxNzYiLCIxIl0sInBpX2IiOltbIjk0MzA2ODQxMDY5NTMwMzQ4OTk0ODQ3ODQzNDE5NDcyMTc4OTU2ODk2NjQwMDQ2MTI5MzU1MTIxMTY0NzQwNTUxMDI3MTc3MzAyMTUiLCIxMDI4NDQxNTM2MDg3NDQzMjgxNjM4MjEyNjk0MDA0MjYxNjIxNTkzMzMwMjg2OTI1NDk5OTcyMDA1NTg0NDk0ODkwNDMyMTc5NDIwIl0sWyIyNTk3NDE5OTg5MTk3NDA2NTQ5NDQ1ODY1MTg3MTg0MjE2ODE1OTU5MDE4ODYxMzUyMDQ2MzAxNzAzMTYzNjAwODYxNTI3NjYzMjc4IiwiMTYzODU5MDk5MjcyOTUwODEwMjY4NjYyNjI0Nzk3NzQ0NTg4MDEzMTU1NzYxNTI1MTgzOTQzNzk0NjExODAxODg3MzQyODQyNjM4NjkiXSxbIjEiLCIwIl1dLCJwaV9jIjpbIjU3NTY2Nzc5MzE2ODU2NTY1ODUwNzA5OTg3MjM3NTIzNTY5OTEzNjQyMzAxODA0Nzg5NDU0NzQ5ODIyNjg5NTM0Nzk4MDA1MjQyMDciLCIyMDMwNzY5NTk1MTcwODc3MTk2MjIxNzYxMjc2MjM2NzY3ODgzNjg1OTg0OTYwNTY2OTgzODUxMDUxMTg5MjM5MDQ3NTkyMzk4OTk2OSIsIjEiXSwicHJvdG9jb2wiOiJncm90aDE2IiwiY3VydmUiOiJibjEyOCJ9LCJwdWJfc2lnbmFscyI6WyIxIiwiMjE1NzUxMjcyMTYyMzYyNDg4Njk3MDIyNzYyNDYwMzc1NTcxMTkwMDc0NjYxODAzMDE5NTc3NjIxOTY1OTM3ODY3MzMwMDc2MTciLCI0NDg3Mzg2MzMyNDc5NDg5MTU4MDAzNTk3ODQ0OTkwNDg3OTg0OTI1NDcxODEzOTA3NDYyNDgzOTA3MDU0NDI1NzU5NTY0MTc1MzQxIiwiNTAwOTg5MTMxMjg0MDA2NzI0ODkwOTk4NjUzOTYxODg4NzAwNjQ0Njg2MzE2NTY2MzI5ODE3NDQ0NTQ3ODQ4OTUwNDgwNzQ2NjgxNiIsIjUxMTMxMTA3NDIxNjM1NjExNjE2ODExMTA2MDA4NTgwMTg4ODY0NDAyOTEyODg5NjI2ODEyMzM0Mjk5NzUxMzM5MTYzNDg2MDY1MjEiLCIwIiwiMSIsIjMiLCIyNTE5ODU0MzM4MTIwMDY2NTc3MDgwNTgxNjA0NjI3MTU5NDg4NTYwNDAwMjQ0NTEwNTc2NzY1MzYxNjg3ODE2NzgyNjg5NTYxNyIsIjEiLCI0NDg3Mzg2MzMyNDc5NDg5MTU4MDAzNTk3ODQ0OTkwNDg3OTg0OTI1NDcxODEzOTA3NDYyNDgzOTA3MDU0NDI1NzU5NTY0MTc1MzQxIiwiMTc1MzM1NTM5NyIsIjIxOTU3ODYxNzA2NDU0MDAxNjIzNDE2MTY0MDM3NTc1NTg2NTQxMiIsIjEyOTYzNTE3NTgyNjkwNjExNzMzMTcxMDUwNDE5NjgwNjcwNzc0NTE5MTQzODYwODYyMjI5MzE1MTYxOTkxOTQ5NTk4Njk0NjM4ODIiLCIwIiwiMSIsIjE3MDIyNTI4MDAwMDAwMDAwMDAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIwIiwiMCIsIjAiLCIxIiwiMjUxOTg1NDMzODEyMDA2NjU3NzA4MDU4MTYwNDYyNzE1OTQ4ODU2MDQwMDI0NDUxMDU3Njc2NTM2MTY4NzgxNjc4MjY4OTU2MTciLCIxMjM0NSJdfV19LCJmcm9tIjoiZGlkOmlkZW4zOnBvbHlnb246YW1veTp4N1o5NVZrVXV5bzZtcXJhSncyVkd3Q2ZxVHpkcWhNMVJWalJIemNwSyIsInRvIjoiZGlkOmlkZW4zOnBvbHlnb246YW1veTp4Q1JwNzVEZ0FkUzYzVzY1Zm1YSHo2cDlEd2RvbnVSVTllNDZEaWZoWCJ9.eyJwcm9vZiI6eyJwaV9hIjpbIjE0ODA1MzI2NDU2MzIzOTAzOTA1MDk1NjczMDk0NDMzMzQzMTEzNTE1NDY0OTkxMzU4OTk1ODY5MjY2MDI1MTg1NTMyNjEzMTQ3NDA1IiwiMTIwNzkwNTA2MjM0MzM0NTMyODE5MzI3MjMyMTExNjc0NjM2MDQwNDMzMzE5NTMxMDcwNDY1NDM3NTkxMDg4MDIyNjQ4NjY4NTc1ODAiLCIxIl0sInBpX2IiOltbIjM1NjIyODQ1MjI3MDUzNTA1OTA3Mzk2OTI2MzI3MTM3NjY2MjAzNjc3MzAxMDQzMzM0ODMzNzIzMjYxNjQwMjM0NDQyNTE2MTkwMzMiLCIyMDU1MTU4MDg5NTQyMTgyODQ0NjQ2MzczODU2Nzk1MTE5NDkxNTgyNzM3NjEzNjczNDE1MDQwMTkzNjMxMzQxNjIwMzAwOTYwMTA4MyJdLFsiMTYyMjEyMzExMjgxNTg1MzQ5NDY2MDQ4NDAxMDI4Njg2OTYxNzIwNDY3NTk4OTkyNTczNDE1MjIzMjMzNjcwMTEwNTIxOTIzOTEzNjkiLCIyMTQ5NzI5NDAyNzE2OTc1MDY5NzA2Njk4MTcyMzczNDc1ODk0MzczNzY1NDA4MDMyODQ3NzAzNDQ1OTQ4NjYwNzYxNTY1MzY2Njk5OSJdLFsiMSIsIjAiXV0sInBpX2MiOlsiODYyMzEzMjQxNzI4MjE3NzUwNTY1MDg4MDYzMTE0OTg4Nzc0Mzg1ODkyMzkyMjI5NzY1NDExMTAxMzEyMDM0MTg4ODUwMzE0MDU3MCIsIjU1NzAzMzk0NjgzNjk3Njg4MjkxMjMzNTAzNTA2ODE5OTEyMTkxMzk3MjMxMDY3MTYwODQwODMzNDIzMTc3Mzg5NzUzOTMwNzM2NzciLCIxIl0sInByb3RvY29sIjoiZ3JvdGgxNiIsImN1cnZlIjoiYm4xMjgifSwicHViX3NpZ25hbHMiOlsiMjE1NzUxMjcyMTYyMzYyNDg4Njk3MDIyNzYyNDYwMzc1NTcxMTkwMDc0NjYxODAzMDE5NTc3NjIxOTY1OTM3ODY3MzMwMDc2MTciLCIyMTU1OTkxMjE3NjQ3NjY0NTQ4MjQ3MjE4Mjc0ODgyMDY4MzcwOTM5NTk3Nzc0NDU3MzY3MTIzNDg2NjM1ODIxOTE3NDUxODQyNDQyMCIsIjE3ODQ5OTgxNzIwNjM0MjEyODAyNjY0MTg5OTI5NjcxMTQwNzYyNTU3NDgzMjM2NzA4MDk3NzIzODg0MTcyNjQxMTI0NjkxMjIyMjk4Il19"
+
+	returnMsg, err := authInstance.FullVerify(context.Background(), tokenString, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
+	require.NoError(t, err)
+	require.NotNil(t, returnMsg)
+	schemaLoader.assert(t)
 }
