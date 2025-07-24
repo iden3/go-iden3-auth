@@ -464,10 +464,10 @@ func (v *Verifier) VerifyAuthResponse(
 		}
 
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
-		if proofResponse == nil && proofRequest.Optional != nil && *proofRequest.Optional {
-			continue
-		}
 		if proofResponse == nil {
+			if proofRequest.Optional != nil && *proofRequest.Optional {
+				continue
+			}
 			return errors.Errorf("proof for zk request id %v is presented not found", proofRequest.ID)
 		}
 		if proofRequest.CircuitID != proofResponse.CircuitID {
