@@ -50,7 +50,8 @@ func WithRootCacheOptions(opts *CacheOptions) Options {
 	}
 }
 
-// ETHResolver resolver for eth blockchains
+// ETHResolver must be created using NewETHResolverWithOpts or NewETHResolver.
+// Direct struct creation (e.g. ETHResolver{}) will result in uninitialized caches and undefined behavior.
 type ETHResolver struct {
 	RPCUrl            string
 	ContractAddress   common.Address
