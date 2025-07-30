@@ -145,6 +145,8 @@ github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-
 github.com/iden3/contracts-abi/onchain-credential-status-resolver/go/abi v0.0.0-20230911113809-c58b7e7a69b0/go.mod h1:8fkd2xyUG/V7ovpvZRyD2LyK2zZ4ALbgf5vJGyhzKdg=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1 h1:FsaLJSy3NSyJl5k1yfDxc5DhUHRY7Z/UCj0/1YueMrY=
 github.com/iden3/contracts-abi/state/go/abi v1.0.1/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
+github.com/iden3/contracts-abi/state/go/abi v1.1.0 h1:5JC3Q5UU3Ir7H+0vgSvvR79EPoUnQUhdgF5zPRBaZhE=
+github.com/iden3/contracts-abi/state/go/abi v1.1.0/go.mod h1:TxgIrXCvxms3sbOdsy8kTvffUCIpEEifNy0fSXdkU4w=
 github.com/iden3/driver-did-iden3 v0.0.9 h1:QWBPb7snanyAywbCpgyekPt3QIAyBOlHxiJp0qnublo=
 github.com/iden3/driver-did-iden3 v0.0.9/go.mod h1:QdPbo6muLYdnFNaGEmjdqKkATYuZ0SZuqKyW70K/BUw=
 github.com/iden3/go-circuits/v2 v2.4.1 h1:lBglM94KvkEdkmn5XrmqHjqSlDrksBcQipr9DZ540/Q=

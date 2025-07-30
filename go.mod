@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
-	github.com/iden3/contracts-abi/state/go/abi v1.0.1
+	github.com/iden3/contracts-abi/state/go/abi v1.1.0
 	github.com/iden3/go-circuits/v2 v2.4.1
 	github.com/iden3/go-iden3-core/v2 v2.3.2
 	github.com/iden3/go-iden3-crypto v0.0.17
