@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -680,10 +681,8 @@ func (v *Verifier) verifyAccept(accept []string) error {
 		return nil
 	}
 
-	for _, profile := range accept {
-		if v.packageManager.IsProfileSupported(profile) {
-			return nil
-		}
+	if slices.ContainsFunc(accept, v.packageManager.IsProfileSupported) {
+		return nil
 	}
 	return errors.New("no packer with profile which meets `accept` header requirements")
 }
