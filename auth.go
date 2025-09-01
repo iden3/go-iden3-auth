@@ -322,11 +322,11 @@ func WithAccept(accept []string) AuthorizationRequestMessageOpts {
 }
 
 // WithAcceptedCircuits sets the accepted circuits option.
-func WithAcceptedCircuits(circuitIds ...circuits.CircuitID) AuthorizationRequestMessageOpts {
+func WithAcceptedCircuits(circuitIDs ...circuits.CircuitID) AuthorizationRequestMessageOpts {
 	acceptProfile := protocol.AcceptProfile{
 		AcceptedVersion:     protocol.Iden3CommVersion1,
 		Env:                 packers.MediaTypeZKPMessage,
-		AcceptCircuits:      circuitIds,
+		AcceptCircuits:      circuitIDs,
 		AcceptJwzAlgorithms: []protocol.JwzAlgorithms{protocol.JwzAlgorithmsGroth16},
 	}
 	accept, _ := utils.BuildAcceptProfile([]protocol.AcceptProfile{acceptProfile})
