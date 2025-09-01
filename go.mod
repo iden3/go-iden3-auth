@@ -8,14 +8,14 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/iden3/contracts-abi/state/go/abi v1.1.0
-	github.com/iden3/go-circuits/v2 v2.4.1
+	github.com/iden3/go-circuits/v2 v2.4.2
 	github.com/iden3/go-iden3-core/v2 v2.3.2
 	github.com/iden3/go-iden3-crypto v0.0.17
-	github.com/iden3/go-jwz/v2 v2.2.1
+	github.com/iden3/go-jwz/v2 v2.2.2
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
 	github.com/iden3/go-schema-processor/v2 v2.6.2
-	github.com/iden3/iden3comm/v2 v2.11.1
+	github.com/iden3/iden3comm/v2 v2.11.3-0.20250901112346-7024c7f7e297
 	github.com/karlseguin/ccache/v3 v3.0.6
 	github.com/piprate/json-gold v0.5.1-0.20241210232033-19254b3ec65b
 	github.com/pkg/errors v0.9.1

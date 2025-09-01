@@ -173,7 +173,7 @@ func NewVerifier(
 		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
-	err := v.SetupAuthV2ZKPPacker()
+	err := v.SetupAuthZKPPacker()
 	if err != nil {
 		return nil, err
 	}
@@ -233,6 +233,67 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 		verifications,
 	)
 	return v.packageManager.RegisterPackers(zkpPackerV2)
+}
+
+// SetupAuthZKPPacker sets the custom packer manager for the VerifierBuilder (with authV2/authV3/authV3-8-32 support).
+func (v *Verifier) SetupAuthZKPPacker() error {
+	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3Set, err := v.verificationKeyLoader.Load(circuits.AuthV3CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3_8_32Set, err := v.verificationKeyLoader.Load(circuits.AuthV3_8_32CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	provers := make(map[jwz.ProvingMethodAlg]packers.ProvingParams)
+
+	verifications := make(map[jwz.ProvingMethodAlg]packers.VerificationParams)
+
+	verifierFn := func(id circuits.CircuitID, pubSignals []string) error {
+		if id != circuits.AuthV2CircuitID && id != circuits.AuthV3CircuitID && id != circuits.AuthV3_8_32CircuitID {
+			return errors.New("circuit id is not Auth circuit")
+		}
+		verifier, err := pubsignals.GetVerifier(id)
+		if err != nil {
+			return err
+		}
+		pubSignalBytes, err := json.Marshal(pubSignals)
+		if err != nil {
+			return err
+		}
+		err = verifier.PubSignalsUnmarshal(pubSignalBytes)
+		if err != nil {
+			return err
+		}
+		return verifier.VerifyStates(context.Background(), v.stateResolver)
+	}
+
+	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
+		authV2Set,
+		verifierFn,
+	)
+	verifications[jwz.AuthV3Groth16Alg] = packers.NewVerificationParams(
+		authV3Set,
+		verifierFn,
+	)
+	verifications[jwz.AuthV3_8_32Groth16Alg] = packers.NewVerificationParams(
+		authV3_8_32Set,
+		verifierFn,
+	)
+
+	zkpPackerV3 := packers.NewZKPPacker(
+		provers,
+		verifications,
+	)
+
+	return v.packageManager.RegisterPackers(zkpPackerV3)
 }
 
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.

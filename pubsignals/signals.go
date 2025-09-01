@@ -36,6 +36,8 @@ func RegisterVerifier(id circuits.CircuitID, t reflect.Type) {
 // nolint // register supported circuit
 func init() {
 	RegisterVerifier(circuits.AuthV2CircuitID, reflect.TypeOf(AuthV2{}))
+	RegisterVerifier(circuits.AuthV3CircuitID, reflect.TypeOf(AuthV3{}))
+	RegisterVerifier(circuits.AuthV3_8_32CircuitID, reflect.TypeOf(AuthV3{}))
 	RegisterVerifier(circuits.AtomicQuerySigV2CircuitID, reflect.TypeOf(AtomicQuerySigV2{}))
 	RegisterVerifier(circuits.AtomicQueryMTPV2CircuitID, reflect.TypeOf(AtomicQueryMTPV2{}))
 	RegisterVerifier(circuits.AtomicQueryV3CircuitID, reflect.TypeOf(AtomicQueryV3{}))
