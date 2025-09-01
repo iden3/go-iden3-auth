@@ -30,7 +30,7 @@ import (
 	_ "github.com/btcsuite/btcd/btcutil"
 )
 
-var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./testdata"}
+var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./loaders/verification_keys"}
 
 type mockJSONLDSchemaLoader struct {
 	schemas map[string]string
