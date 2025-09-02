@@ -258,7 +258,7 @@ func (v *Verifier) SetupAuthZKPPacker() error {
 
 	verifierFn := func(id circuits.CircuitID, pubSignals []string) error {
 		if id != circuits.AuthV2CircuitID && id != circuits.AuthV3CircuitID && id != circuits.AuthV3_8_32CircuitID {
-			return errors.New("circuit id is not Auth circuit")
+			return fmt.Errorf("circuit with id %s is not supported", id)
 		}
 		verifier, err := pubsignals.GetVerifier(id)
 		if err != nil {
