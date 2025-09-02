@@ -124,7 +124,7 @@ func TestVerifyProof(t *testing.T) {
 	}
 	proofMessage.CircuitID = string(circuits.AtomicQueryMTPV2CircuitID)
 
-	verificationKey, err := os.ReadFile("../testdata/credentialAtomicQueryMTPV2.json")
+	verificationKey, err := os.ReadFile("../loaders/verification_keys/credentialAtomicQueryMTPV2.json")
 	assert.NoError(t, err)
 
 	proofMessage.ID = 1

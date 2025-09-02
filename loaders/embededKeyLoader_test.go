@@ -134,6 +134,8 @@ func TestDefaultEmbeddedKeys(t *testing.T) {
 		id   circuits.CircuitID
 	}{
 		{"authV2", circuits.AuthV2CircuitID},
+		{"authV3", circuits.AuthV3CircuitID},
+		{"authV3-8-32", circuits.AuthV3_8_32CircuitID},
 		{"AtomicQueryMTPV2CircuitID", circuits.AtomicQueryMTPV2CircuitID},
 		{"AtomicQueryMTPV2OnChainCircuitID", circuits.AtomicQueryMTPV2OnChainCircuitID},
 		{"AtomicQuerySigV2CircuitID", circuits.AtomicQuerySigV2CircuitID},
