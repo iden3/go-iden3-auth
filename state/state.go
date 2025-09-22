@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -13,11 +12,6 @@ import (
 )
 
 var zero = big.NewInt(0)
-
-const (
-	gistNotFoundException  = "execution reverted: Root does not exist"
-	stateNotFoundException = "execution reverted: State does not exist"
-)
 
 // VerificationOptions is options for state verification
 type VerificationOptions struct {
@@ -64,7 +58,7 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 	}
 
 	stateInfo, err := getter.GetStateInfoByIdAndState(&bind.CallOpts{Context: ctx}, id, state)
-	if err != nil && strings.Contains(err.Error(), stateNotFoundException) {
+	if abi.IsErrStateDoesNotExist(err) {
 		if isGenesis {
 			return &ResolvedState{Latest: true, Genesis: isGenesis, State: state.String()}, nil
 		}
@@ -92,7 +86,7 @@ func Resolve(ctx context.Context, getter StateGetter, id, state *big.Int) (*Reso
 // ResolveGlobalRoot is used to resolve global root.
 func ResolveGlobalRoot(ctx context.Context, getter GISTGetter, state *big.Int) (*ResolvedState, error) {
 	globalStateInfo, err := getter.GetGISTRootInfo(&bind.CallOpts{Context: ctx}, state)
-	if err != nil && strings.Contains(err.Error(), gistNotFoundException) {
+	if abi.IsErrRootDoesNotExist(err) {
 		return nil, errors.New("gist state doesn't exist on smart contract")
 	} else if err != nil {
 		return nil, err

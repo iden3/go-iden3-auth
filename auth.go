@@ -28,6 +28,7 @@ import (
 	"github.com/iden3/iden3comm/v2"
 	"github.com/iden3/iden3comm/v2/packers"
 	"github.com/iden3/iden3comm/v2/protocol"
+	"github.com/iden3/iden3comm/v2/utils"
 	"github.com/piprate/json-gold/ld"
 	"github.com/pkg/errors"
 )
@@ -172,7 +173,7 @@ func NewVerifier(
 		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
-	err := v.SetupAuthV2ZKPPacker()
+	err := v.SetupAuthZKPPacker()
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +182,6 @@ func NewVerifier(
 	if err != nil {
 		return nil, err
 	}
-
 	return v, nil
 }
 
@@ -235,6 +235,67 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 	return v.packageManager.RegisterPackers(zkpPackerV2)
 }
 
+// SetupAuthZKPPacker sets the custom packer manager for the VerifierBuilder (with authV2/authV3/authV3-8-32 support).
+func (v *Verifier) SetupAuthZKPPacker() error {
+	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3Set, err := v.verificationKeyLoader.Load(circuits.AuthV3CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3_8_32Set, err := v.verificationKeyLoader.Load(circuits.AuthV3_8_32CircuitID)
+	if err != nil {
+		return fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	provers := make(map[jwz.ProvingMethodAlg]packers.ProvingParams)
+
+	verifications := make(map[jwz.ProvingMethodAlg]packers.VerificationParams)
+
+	verifierFn := func(id circuits.CircuitID, pubSignals []string) error {
+		if id != circuits.AuthV2CircuitID && id != circuits.AuthV3CircuitID && id != circuits.AuthV3_8_32CircuitID {
+			return fmt.Errorf("circuit with id %s is not supported", id)
+		}
+		verifier, err := pubsignals.GetVerifier(id)
+		if err != nil {
+			return err
+		}
+		pubSignalBytes, err := json.Marshal(pubSignals)
+		if err != nil {
+			return err
+		}
+		err = verifier.PubSignalsUnmarshal(pubSignalBytes)
+		if err != nil {
+			return err
+		}
+		return verifier.VerifyStates(context.Background(), v.stateResolver)
+	}
+
+	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
+		authV2Set,
+		verifierFn,
+	)
+	verifications[jwz.AuthV3Groth16Alg] = packers.NewVerificationParams(
+		authV3Set,
+		verifierFn,
+	)
+	verifications[jwz.AuthV3_8_32Groth16Alg] = packers.NewVerificationParams(
+		authV3_8_32Set,
+		verifierFn,
+	)
+
+	zkpPackerV3 := packers.NewZKPPacker(
+		provers,
+		verifications,
+	)
+
+	return v.packageManager.RegisterPackers(zkpPackerV3)
+}
+
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
 func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) error {
 
@@ -260,12 +321,32 @@ func WithAttachments(attachment []iden3comm.Attachment) AuthorizationRequestMess
 	}
 }
 
+// WithAccept sets the accept prifile option.
+func WithAccept(accept []string) AuthorizationRequestMessageOpts {
+	return func(v *AuthorizationRequestMessageConfig) {
+		v.Accept = accept
+	}
+}
+
+// WithAcceptedCircuits sets the accepted circuits option.
+func WithAcceptedCircuits(circuitIDs ...circuits.CircuitID) AuthorizationRequestMessageOpts {
+	acceptProfile := protocol.AcceptProfile{
+		AcceptedVersion:     protocol.Iden3CommVersion1,
+		Env:                 packers.MediaTypeZKPMessage,
+		AcceptCircuits:      circuitIDs,
+		AcceptJwzAlgorithms: []protocol.JwzAlgorithms{protocol.JwzAlgorithmsGroth16},
+	}
+	accept, _ := utils.BuildAcceptProfile([]protocol.AcceptProfile{acceptProfile})
+	return WithAccept(accept)
+}
+
 // AuthorizationRequestMessageOpts sets options.
 type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
 
 // AuthorizationRequestMessageConfig - configuration for CreateAuthorizationRequest.
 type AuthorizationRequestMessageConfig struct {
 	ExpiresTime *time.Time
+	Accept      []string
 	Attachments []iden3comm.Attachment
 }
 
@@ -295,6 +376,7 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 		Reason:      reason,
 		Message:     message,
 		Scope:       []protocol.ZeroKnowledgeProofRequest{},
+		Accept:      cfg.Accept,
 	}
 	request.From = sender
 	createTime := time.Now().Unix()
@@ -437,6 +519,10 @@ func (v *Verifier) VerifyAuthResponse(
 		response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
+	err := v.verifyAccept(request.Body.Accept)
+	if err != nil {
+		return err
+	}
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
@@ -448,8 +534,7 @@ func (v *Verifier) VerifyAuthResponse(
 	if response.From == "" {
 		return errors.Errorf("proof response doesn't contain from field")
 	}
-
-	err := ValidateAuthRequest(request)
+	err = ValidateAuthRequest(request)
 	if err != nil {
 		return err
 	}
@@ -464,6 +549,9 @@ func (v *Verifier) VerifyAuthResponse(
 
 		proofResponse := findProofByRequestID(response.Body.Scope, proofRequest.ID)
 		if proofResponse == nil {
+			if proofRequest.Optional != nil && *proofRequest.Optional {
+				continue
+			}
 			return errors.Errorf("proof for zk request id %v is presented not found", proofRequest.ID)
 		}
 		if proofRequest.CircuitID != proofResponse.CircuitID {
@@ -611,7 +699,17 @@ func (v *Verifier) FullVerify(
 		request.ExpiresTime != nil && time.Now().After(time.Unix(*request.ExpiresTime, 0)) {
 		return nil, errors.New("Authorization request message is expired")
 	}
-	msg, _, err := v.packageManager.Unpack([]byte(token))
+	err := v.verifyAccept(request.Body.Accept)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, mediaType, err := v.packageManager.Unpack([]byte(token))
+	if err != nil {
+		return nil, err
+	}
+
+	err = isResponseTypeAccepted(request.Body.Accept, mediaType)
 	if err != nil {
 		return nil, err
 	}
@@ -661,6 +759,19 @@ func VerifyState(ctx context.Context, id, s *big.Int, opts state.ExtendedVerific
 
 }
 
+func (v *Verifier) verifyAccept(accept []string) error {
+	if len(accept) == 0 {
+		return nil
+	}
+
+	for _, profile := range accept {
+		if v.packageManager.IsProfileSupported(profile) {
+			return nil
+		}
+	}
+	return errors.New("no packer with profile which meets `accept` header requirements")
+}
+
 func getPublicSignalsVerifier(circuitID circuits.CircuitID, signals []string) (pubsignals.Verifier, error) {
 	pubSignalBytes, err := json.Marshal(signals)
 	if err != nil {
@@ -700,4 +811,23 @@ func getDocumentLoader(docLoader ld.DocumentLoader, ipfsCli schemaloaders.IPFSCl
 	}
 
 	return schemaloaders.NewDocumentLoader(ipfsCli, ipfsGW)
+}
+
+func isResponseTypeAccepted(requestAccept []string, responseMediaType iden3comm.MediaType) error {
+	if len(requestAccept) == 0 {
+		return nil
+	}
+
+	for _, profile := range requestAccept {
+		profileParsed, err := utils.ParseAcceptProfile(profile)
+		if err != nil {
+			return fmt.Errorf("failed to parse accept profile: %w", err)
+		}
+
+		if profileParsed.Env == responseMediaType {
+			return nil
+		}
+	}
+
+	return errors.New("response type is not in accept profiles of the request")
 }

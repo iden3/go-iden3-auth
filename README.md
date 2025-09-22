@@ -96,10 +96,7 @@ The blockchain verification algorithm is used
    
     ```go
     resolvers := map[string]pubsignals.StateResolver{
-      "privado:main": state.ETHResolver{
-         RPCUrl:          "https://rpc-mainnet.privado.id",
-         ContractAddress: common.HexToAddress("0x3C9acB2205Aa72A05F6D77d708b5Cf85FCa3a896"),
-      },
+      "privado:main": state.NewETHResolver("https://rpc-mainnet.privado.id", "0x3C9acB2205Aa72A05F6D77d708b5Cf85FCa3a896"),
     }
     verifier, err := auth.NewVerifier(loaders.NewEmbeddedKeyLoader(), resolvers)
    
@@ -108,10 +105,7 @@ The blockchain verification algorithm is used
    
    ```go
      var verificationKeyloader = &loaders.FSKeyLoader{Dir: keyDIR}
-     resolver := state.ETHResolver{
-        RPCUrl:          <polygon_node_http>,
-        ContractAddress: <state_contract_address>,
-     }
+     resolver := state.NewETHResolver(<polygon_node_http>, <state_contract_address>)
 
      resolvers := map[string]pubsignals.StateResolver{
        "polygon:amoy": resolver,
