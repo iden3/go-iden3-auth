@@ -314,6 +314,13 @@ func WithExpiresTime(expiresTime *time.Time) AuthorizationRequestMessageOpts {
 	}
 }
 
+// WithAttachments sets the attachment for the AuthorizationRequestMessage.
+func WithAttachments(attachment []iden3comm.Attachment) AuthorizationRequestMessageOpts {
+	return func(v *AuthorizationRequestMessageConfig) {
+		v.Attachments = attachment
+	}
+}
+
 // WithAccept sets the accept prifile option.
 func WithAccept(accept []string) AuthorizationRequestMessageOpts {
 	return func(v *AuthorizationRequestMessageConfig) {
@@ -340,6 +347,7 @@ type AuthorizationRequestMessageOpts func(v *AuthorizationRequestMessageConfig)
 type AuthorizationRequestMessageConfig struct {
 	ExpiresTime *time.Time
 	Accept      []string
+	Attachments []iden3comm.Attachment
 }
 
 // CreateAuthorizationRequest creates new authorization request message
@@ -379,6 +387,9 @@ func CreateAuthorizationRequestWithMessage(reason, message, sender,
 		expiresTime = &expiresTimeUnix
 	}
 	request.ExpiresTime = expiresTime
+	if cfg.Attachments != nil {
+		request.Attachments = cfg.Attachments
+	}
 	return request
 }
 

@@ -169,8 +169,8 @@ github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e
 github.com/iden3/go-rapidsnark/witness/wazero v0.0.0-20230524142950-0986cf057d4e/go.mod h1:UEBifEzw62T6VzIHJeHuUgeLg2U/J9ttf7hOwQEqnYk=
 github.com/iden3/go-schema-processor/v2 v2.6.2 h1:rVozuQSmsSA/AQ/BZhJYxDDdKfvza14pzYox29/X0PU=
 github.com/iden3/go-schema-processor/v2 v2.6.2/go.mod h1:OxNV97oEShKpSIE7KSEqFFktBkPJDLDW/oNbT+ky8KU=
-github.com/iden3/iden3comm/v2 v2.11.3 h1:fOz5xA5XHWN1SQB4kvgO3ps3w5/mNd5p5ulivkiwHaY=
-github.com/iden3/iden3comm/v2 v2.11.3/go.mod h1:fNs3NBS48GUDc1AvKmmQmA+941XZk998/1aaRt+9jvw=
+github.com/iden3/iden3comm/v2 v2.11.4 h1:GpSh+X9l+v6WEd5zqkEqXzCXWtEJtjevtrCMKf3XV1I=
+github.com/iden3/iden3comm/v2 v2.11.4/go.mod h1:fNs3NBS48GUDc1AvKmmQmA+941XZk998/1aaRt+9jvw=
 github.com/iden3/merkletree-proof v1.0.1 h1:4Srfjm4rsFwjEhhvFDC8/VzK1eYs1jYzEOmwS962s2A=
 github.com/iden3/merkletree-proof v1.0.1/go.mod h1:5tveyOd7+QNRZZEXSqHASDIoQEqKwj66Vy/Vml74rtQ=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
