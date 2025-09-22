@@ -15,7 +15,7 @@ require (
 	github.com/iden3/go-rapidsnark/types v0.0.3
 	github.com/iden3/go-rapidsnark/verifier v0.0.5
 	github.com/iden3/go-schema-processor/v2 v2.6.2
-	github.com/iden3/iden3comm/v2 v2.11.3
+	github.com/iden3/iden3comm/v2 v2.11.4
 	github.com/karlseguin/ccache/v3 v3.0.6
 	github.com/piprate/json-gold v0.5.1-0.20241210232033-19254b3ec65b
 	github.com/pkg/errors v0.9.1
