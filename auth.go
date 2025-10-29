@@ -140,11 +140,20 @@ func WithDIDResolver(resolver packers.DIDResolverHandlerFunc) VerifierOption {
 	}
 }
 
+// WithStateVerificationOpts sets the state verification options for Verifier instance.
+// These options will be passed to the VerifyStates method during ZKP packer setup.
+func WithStateVerificationOpts(stateOpts ...pubsignals.VerifyOpt) VerifierOption {
+	return func(opts *verifierOpts) {
+		opts.zkpPackerOpts = append(opts.zkpPackerOpts, WithVerifyStateOpts(stateOpts...))
+	}
+}
+
 type verifierOpts struct {
-	docLoader   ld.DocumentLoader
-	ipfsCli     schemaloaders.IPFSClient
-	ipfsGW      string
-	didResolver packers.DIDResolverHandlerFunc
+	docLoader     ld.DocumentLoader
+	ipfsCli       schemaloaders.IPFSClient
+	ipfsGW        string
+	didResolver   packers.DIDResolverHandlerFunc
+	zkpPackerOpts []AuthZKPPackerOpt
 }
 
 func newOpts() verifierOpts {
@@ -173,7 +182,7 @@ func NewVerifier(
 		packageManager:        *iden3comm.NewPackageManager(),
 	}
 
-	err := v.SetupAuthZKPPacker()
+	err := v.SetupAuthZKPPacker(vOpts.zkpPackerOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -195,8 +204,27 @@ func (v *Verifier) SetPacker(packer iden3comm.Packer) error {
 	return v.packageManager.RegisterPackers(packer)
 }
 
+// AuthZKPPackerOpt is a function to set options for ZKP Packer setup
+type AuthZKPPackerOpt func(opts *authZKPPackerOpts)
+
+// WithVerifyStateOpts sets the verify state options for ZKP Packer setup
+func WithVerifyStateOpts(verifyOpts ...pubsignals.VerifyOpt) AuthZKPPackerOpt {
+	return func(opts *authZKPPackerOpts) {
+		opts.verifyStateOpts = verifyOpts
+	}
+}
+
+type authZKPPackerOpts struct {
+	verifyStateOpts []pubsignals.VerifyOpt
+}
+
 // SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
-func (v *Verifier) SetupAuthV2ZKPPacker() error {
+func (v *Verifier) SetupAuthV2ZKPPacker(opts ...AuthZKPPackerOpt) error {
+	cfg := authZKPPackerOpts{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
 	if err != nil {
 		return fmt.Errorf("failed upload circuits files: %w", err)
@@ -224,7 +252,7 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 			if err != nil {
 				return err
 			}
-			return verifier.VerifyStates(context.Background(), v.stateResolver)
+			return verifier.VerifyStates(context.Background(), v.stateResolver, cfg.verifyStateOpts...)
 		},
 	)
 
@@ -236,7 +264,12 @@ func (v *Verifier) SetupAuthV2ZKPPacker() error {
 }
 
 // SetupAuthZKPPacker sets the custom packer manager for the VerifierBuilder (with authV2/authV3/authV3-8-32 support).
-func (v *Verifier) SetupAuthZKPPacker() error {
+func (v *Verifier) SetupAuthZKPPacker(opts ...AuthZKPPackerOpt) error {
+	cfg := authZKPPackerOpts{}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
 	if err != nil {
 		return fmt.Errorf("failed upload circuits files: %w", err)
@@ -272,7 +305,7 @@ func (v *Verifier) SetupAuthZKPPacker() error {
 		if err != nil {
 			return err
 		}
-		return verifier.VerifyStates(context.Background(), v.stateResolver)
+		return verifier.VerifyStates(context.Background(), v.stateResolver, cfg.verifyStateOpts...)
 	}
 
 	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
