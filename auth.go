@@ -153,7 +153,7 @@ type verifierOpts struct {
 	ipfsCli       schemaloaders.IPFSClient
 	ipfsGW        string
 	didResolver   packers.DIDResolverHandlerFunc
-	zkpPackerOpts []AuthZKPPackerOpt
+	zkpPackerOpts []ZKPPackerOpt
 }
 
 func newOpts() verifierOpts {
@@ -204,23 +204,23 @@ func (v *Verifier) SetPacker(packer iden3comm.Packer) error {
 	return v.packageManager.RegisterPackers(packer)
 }
 
-// AuthZKPPackerOpt is a function to set options for ZKP Packer setup
-type AuthZKPPackerOpt func(opts *authZKPPackerOpts)
+// ZKPPackerOpt is a function to set options for ZKP Packer setup
+type ZKPPackerOpt func(opts *zkpPackerOpts)
 
 // WithVerifyStateOpts sets the verify state options for ZKP Packer setup
-func WithVerifyStateOpts(verifyOpts ...pubsignals.VerifyOpt) AuthZKPPackerOpt {
-	return func(opts *authZKPPackerOpts) {
+func WithVerifyStateOpts(verifyOpts ...pubsignals.VerifyOpt) ZKPPackerOpt {
+	return func(opts *zkpPackerOpts) {
 		opts.verifyStateOpts = verifyOpts
 	}
 }
 
-type authZKPPackerOpts struct {
+type zkpPackerOpts struct {
 	verifyStateOpts []pubsignals.VerifyOpt
 }
 
 // SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
-func (v *Verifier) SetupAuthV2ZKPPacker(opts ...AuthZKPPackerOpt) error {
-	cfg := authZKPPackerOpts{}
+func (v *Verifier) SetupAuthV2ZKPPacker(opts ...ZKPPackerOpt) error {
+	cfg := zkpPackerOpts{}
 	for _, o := range opts {
 		o(&cfg)
 	}
@@ -264,8 +264,8 @@ func (v *Verifier) SetupAuthV2ZKPPacker(opts ...AuthZKPPackerOpt) error {
 }
 
 // SetupAuthZKPPacker sets the custom packer manager for the VerifierBuilder (with authV2/authV3/authV3-8-32 support).
-func (v *Verifier) SetupAuthZKPPacker(opts ...AuthZKPPackerOpt) error {
-	cfg := authZKPPackerOpts{}
+func (v *Verifier) SetupAuthZKPPacker(opts ...ZKPPackerOpt) error {
+	cfg := zkpPackerOpts{}
 	for _, o := range opts {
 		o(&cfg)
 	}
