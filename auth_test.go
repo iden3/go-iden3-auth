@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	// we have multiimport since two different libraries use the same package
+	// with different versions
+	// Same issue https://github.com/flashbots/mev-boost-relay/pull/227/files
+	_ "github.com/btcsuite/btcd/btcutil"
 	"github.com/google/uuid"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
@@ -24,11 +28,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	// we have multiimport since two different libraries use the same package
-	// with different versions
-	// Same issue https://github.com/flashbots/mev-boost-relay/pull/227/files
-	_ "github.com/btcsuite/btcd/btcutil"
 )
 
 var verificationKeyloader = &loaders.FSKeyLoader{Dir: "./loaders/verification_keys"}

@@ -998,6 +998,7 @@ func TestVerifyQuery_Error(t *testing.T) {
 }
 
 func loadSchema(name string) string {
+	//nolint:gosec // we trust test data path
 	bs, err := os.ReadFile("../testdata/" + name)
 	if err != nil {
 		panic(err)
