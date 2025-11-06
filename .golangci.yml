@@ -1,73 +1,80 @@
-service:
-  golangci-lint-version: 1.60.3
-
 run:
-  timeout: 2m
+  timeout: 5m
 
-linters-settings:
-  govet:
-    check-shadowing: true
-  maligned:
-    suggest-new: true
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  misspell:
-    locale: US
-  lll:
-    line-length: 140
-  gocritic:
-    enabled-tags:
-      - performance
-      - style
-      - experimental
-    disabled-checks:
-      - hugeParam
-
+version: "2"
 linters:
+  default: none
   enable:
     - bodyclose
-    - revive
-    - govet
-    - unconvert
-    - megacheck
-    - gas
-    - gocyclo
-    - misspell
-    - unparam
-    - typecheck
-    - ineffassign
-    - stylecheck
-    - gochecknoinits
-    - copyloopvar
-    - gocritic
-    - nakedret
-    - gosimple
-    - prealloc
-    - goimports
-
-    ## format - fill free to fix
-#    - errcheck
-#    - gofmt
-  fast: false
-  disable:
     - dupl
-
-issues:
-  exclude-rules:
-#    - Fix and remove
-    - text: "at least one file in a package should have a package comment"
-      linters:
-        - stylecheck
-  #    - Fix and remove
-    - text: "package-comments: should have a package comment"
-      linters:
-        - revive
-    - text: "shadow: declaration of \"err\" shadows declaration"
-      linters:
-        - govet
-    - path: _test\.go
-      linters:
-        - gosec
-        - dupl
-  exclude-use-default: false
+    - gocritic
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - gochecknoinits
+    - errcheck
+    - copyloopvar
+  settings:
+    govet:
+      enable:
+        - shadow
+    revive:
+      confidence: 0.1
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    gocritic:
+      disabled-checks:
+        - hugeParam
+      enabled-tags:
+        - performance
+        - style
+        - experimental
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    staticcheck:
+      checks: 
+        - "all"
+        - "-QF1007"
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - staticcheck
+        text: at least one file in a package should have a package comment
+      - linters:
+          - revive
+        text: 'package-comments: should have a package comment'
+      - linters:
+          - govet
+        text: 'shadow: declaration of "err"'
+      - linters:
+          - dupl
+        path: _test\.go
+      - linters:
+          - dupl
+        path: 'atomic.*\.go'
+      - linters:
+          - gosec
+        path: auth_test\.go
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
