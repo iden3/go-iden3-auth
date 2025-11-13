@@ -167,10 +167,12 @@ github.com/iden3/go-iden3-crypto v0.0.17 h1:NdkceRLJo/pI4UpcjVah4lN/a3yzxRUGXqxb
 github.com/iden3/go-iden3-crypto v0.0.17/go.mod h1:dLpM4vEPJ3nDHzhWFXDjzkn1qHoBeOT/3UEhXsEsP3E=
 github.com/iden3/go-jwz/v2 v2.2.3 h1:Cu0FP8eum6gwMfZC2Lm8la50mQWmq3Q3ZaNYNnnUSZw=
 github.com/iden3/go-jwz/v2 v2.2.3/go.mod h1:RgM/cecJpt7s3NEn8eh2RvwhjH/FVeZ1o39UUFtM3hQ=
+github.com/iden3/go-jwz/v2 v2.2.4-0.20251113103632-03b208dce068/go.mod h1:B4FsZgEEhNRrMGb0huNs0N6X7hEAI5H491nEk8FIW5U=
 github.com/iden3/go-merkletree-sql/v2 v2.0.6 h1:vsVDImnvnHf7Ggr45ptFOXJyWNA/8IwVQO1jzRLUlY8=
 github.com/iden3/go-merkletree-sql/v2 v2.0.6/go.mod h1:kRhHKYpui5DUsry5RpveP6IC4XMe6iApdV9VChRYuEk=
 github.com/iden3/go-rapidsnark/prover v0.0.14 h1:W4UqUQ3pC7/BSIj0km20cRfCzDxd8LbDNDXdsGHpf2Q=
 github.com/iden3/go-rapidsnark/prover v0.0.14/go.mod h1:mUNLeDXYOW2igiPuhHZHD7kzSp/GjHSWND03aYyECvQ=
+github.com/iden3/go-rapidsnark/prover v0.0.15-0.20251113102832-4a52129c3d66/go.mod h1:mUNLeDXYOW2igiPuhHZHD7kzSp/GjHSWND03aYyECvQ=
 github.com/iden3/go-rapidsnark/types v0.0.3 h1:f0s1Qdut1qHe1O67+m+xUVRBPwSXnq5j0xSrBi0jqM4=
 github.com/iden3/go-rapidsnark/types v0.0.3/go.mod h1:ApgcaUxKIgSRA6fAeFxK7p+lgXXfG4oA2HN5DhFlfF4=
 github.com/iden3/go-rapidsnark/verifier v0.0.5 h1:J7y0ovrEjDQoWtZmlrp4tgGng1A9faMeYsQH4igAEqA=
@@ -183,6 +185,8 @@ github.com/iden3/go-schema-processor/v2 v2.6.5 h1:kaVzLpDlXArrm8j2GgdOtUDEVdkrs+
 github.com/iden3/go-schema-processor/v2 v2.6.5/go.mod h1:OxNV97oEShKpSIE7KSEqFFktBkPJDLDW/oNbT+ky8KU=
 github.com/iden3/iden3comm/v2 v2.11.11 h1:Sti8T2rJe3FvIonL2vDG3fgI4Kr2GfEpAOLO5OouSZk=
 github.com/iden3/iden3comm/v2 v2.11.11/go.mod h1:gaEzNVgxYwntsfjecT/Rz/+2WBPpiUthNbrVmnShgVc=
+github.com/iden3/iden3comm/v2 v2.11.12-0.20251113103916-82779f866528 h1:vihABtL5UqNs08Wv70xZk3Y0B2HVLBkAiq5P5mMJHAk=
+github.com/iden3/iden3comm/v2 v2.11.12-0.20251113103916-82779f866528/go.mod h1:liwX7RgY9TJl1OMwjWcyLMAALgVWKaB61FFh9VwST2A=
 github.com/iden3/jose-primitives v0.0.5 h1:jj7EAXrKBFmuj8LdHTC47MBMQwtKm0d6Uc9k8HrIZ1c=
 github.com/iden3/jose-primitives v0.0.5/go.mod h1:KhDi+Mt/Z43PK4xLmXPy+C3tFCypRcdj6kM6h0IOx0U=
 github.com/iden3/merkletree-proof v1.0.1 h1:4Srfjm4rsFwjEhhvFDC8/VzK1eYs1jYzEOmwS962s2A=
