@@ -9,17 +9,20 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/iden3/contracts-abi/state/go/abi"
+	"github.com/iden3/driver-did-iden3/pkg/services"
 	"github.com/iden3/go-circuits/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/proofs"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
 	"github.com/iden3/go-iden3-auth/v2/state"
+	core "github.com/iden3/go-iden3-core/v2"
 	"github.com/iden3/go-iden3-core/v2/w3c"
 	"github.com/iden3/go-jwz/v2"
 	schemaloaders "github.com/iden3/go-schema-processor/v2/loaders"
@@ -101,6 +104,7 @@ type Verifier struct {
 	verificationKeyLoader loaders.VerificationKeyLoader
 	documentLoader        ld.DocumentLoader
 	stateResolver         map[string]pubsignals.StateResolver
+	driverResolver        map[int]services.Resolver
 	packageManager        iden3comm.PackageManager
 }
 
@@ -162,6 +166,60 @@ func newOpts() verifierOpts {
 	}
 }
 
+func NewVerifierWithDefaults(
+	keyLoader loaders.VerificationKeyLoader,
+	resolver map[int]services.Resolver,
+	opts ...VerifierOption,
+) (*Verifier, error) {
+	vOpts := newOpts()
+	for _, optFn := range opts {
+		optFn(&vOpts)
+	}
+
+	docLoader := getDocumentLoader(vOpts.docLoader, vOpts.ipfsCli,
+		vOpts.ipfsGW)
+	v := &Verifier{
+		verificationKeyLoader: keyLoader,
+		documentLoader:        docLoader,
+		driverResolver:        resolver,
+		packageManager:        *iden3comm.NewPackageManager(),
+	}
+
+	authV2Set, err := v.verificationKeyLoader.Load(circuits.AuthV2CircuitID)
+	if err != nil {
+		return nil, fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3Set, err := v.verificationKeyLoader.Load(circuits.AuthV3CircuitID)
+	if err != nil {
+		return nil, fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	authV3_8_32Set, err := v.verificationKeyLoader.Load(circuits.AuthV3_8_32CircuitID)
+	if err != nil {
+		return nil, fmt.Errorf("failed upload circuits files: %w", err)
+	}
+
+	verificationKeys := map[jwz.ProvingMethodAlg][]byte{
+		jwz.AuthV2Groth16Alg:      authV2Set,
+		jwz.AuthV3Groth16Alg:      authV3Set,
+		jwz.AuthV3_8_32Groth16Alg: authV3_8_32Set,
+	}
+
+	zkpPk := packers.NewDefaultZKPUnpacker(verificationKeys, resolver /*pass options and remove*/)
+
+	if err = v.packageManager.RegisterPackers(zkpPk); err != nil {
+		return nil, err
+	}
+
+	err = v.SetupJWSPacker(vOpts.didResolver)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
 // NewVerifier returns setup instance of auth library
 func NewVerifier(
 	keyLoader loaders.VerificationKeyLoader,
@@ -218,6 +276,7 @@ type zkpPackerOpts struct {
 	verifyStateOpts []pubsignals.VerifyOpt
 }
 
+// Deprecated: SetupAuthV2ZKPPacker is deprecated, use SetupAuthZKPPacker instead.
 // SetupAuthV2ZKPPacker sets the custom packer manager for the VerifierBuilder.
 func (v *Verifier) SetupAuthV2ZKPPacker(opts ...ZKPPackerOpt) error {
 	cfg := zkpPackerOpts{}
@@ -230,37 +289,18 @@ func (v *Verifier) SetupAuthV2ZKPPacker(opts ...ZKPPackerOpt) error {
 		return fmt.Errorf("failed upload circuits files: %w", err)
 	}
 
-	provers := make(map[jwz.ProvingMethodAlg]packers.ProvingParams)
+	verificationKeys := map[jwz.ProvingMethodAlg][]byte{
+		jwz.AuthV2Groth16Alg: authV2Set,
+	}
 
-	verifications := make(map[jwz.ProvingMethodAlg]packers.VerificationParams)
+	resolvers, err := convertResolver(v.stateResolver)
+	if err != nil {
+		return fmt.Errorf("failed to convert state resolvers: %w", err)
+	}
 
-	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
-		authV2Set,
-		func(id circuits.CircuitID, pubSignals []string) error {
-			if id != circuits.AuthV2CircuitID {
-				return errors.New("circuit id is not AuthV2CircuitID")
-			}
-			verifier, err := pubsignals.GetVerifier(circuits.AuthV2CircuitID)
-			if err != nil {
-				return err
-			}
-			pubSignalBytes, err := json.Marshal(pubSignals)
-			if err != nil {
-				return err
-			}
-			err = verifier.PubSignalsUnmarshal(pubSignalBytes)
-			if err != nil {
-				return err
-			}
-			return verifier.VerifyStates(context.Background(), v.stateResolver, cfg.verifyStateOpts...)
-		},
-	)
+	zkpPacker := packers.NewDefaultZKPUnpacker(verificationKeys, resolvers)
 
-	zkpPackerV2 := packers.NewZKPPacker(
-		provers,
-		verifications,
-	)
-	return v.packageManager.RegisterPackers(zkpPackerV2)
+	return v.packageManager.RegisterPackers(zkpPacker)
 }
 
 // SetupAuthZKPPacker sets the custom packer manager for the VerifierBuilder (with authV2/authV3/authV3-8-32 support).
@@ -285,48 +325,20 @@ func (v *Verifier) SetupAuthZKPPacker(opts ...ZKPPackerOpt) error {
 		return fmt.Errorf("failed upload circuits files: %w", err)
 	}
 
-	provers := make(map[jwz.ProvingMethodAlg]packers.ProvingParams)
-
-	verifications := make(map[jwz.ProvingMethodAlg]packers.VerificationParams)
-
-	verifierFn := func(id circuits.CircuitID, pubSignals []string) error {
-		if id != circuits.AuthV2CircuitID && id != circuits.AuthV3CircuitID && id != circuits.AuthV3_8_32CircuitID {
-			return fmt.Errorf("circuit with id %s is not supported", id)
-		}
-		verifier, err := pubsignals.GetVerifier(id)
-		if err != nil {
-			return err
-		}
-		pubSignalBytes, err := json.Marshal(pubSignals)
-		if err != nil {
-			return err
-		}
-		err = verifier.PubSignalsUnmarshal(pubSignalBytes)
-		if err != nil {
-			return err
-		}
-		return verifier.VerifyStates(context.Background(), v.stateResolver, cfg.verifyStateOpts...)
+	verificationKeys := map[jwz.ProvingMethodAlg][]byte{
+		jwz.AuthV2Groth16Alg:      authV2Set,
+		jwz.AuthV3Groth16Alg:      authV3Set,
+		jwz.AuthV3_8_32Groth16Alg: authV3_8_32Set,
 	}
 
-	verifications[jwz.AuthV2Groth16Alg] = packers.NewVerificationParams(
-		authV2Set,
-		verifierFn,
-	)
-	verifications[jwz.AuthV3Groth16Alg] = packers.NewVerificationParams(
-		authV3Set,
-		verifierFn,
-	)
-	verifications[jwz.AuthV3_8_32Groth16Alg] = packers.NewVerificationParams(
-		authV3_8_32Set,
-		verifierFn,
-	)
+	resolvers, err := convertResolver(v.stateResolver)
+	if err != nil {
+		return fmt.Errorf("failed to convert state resolvers: %w", err)
+	}
 
-	zkpPackerV3 := packers.NewZKPPacker(
-		provers,
-		verifications,
-	)
+	zkpPacker := packers.NewDefaultZKPUnpacker(verificationKeys, resolvers)
 
-	return v.packageManager.RegisterPackers(zkpPackerV3)
+	return v.packageManager.RegisterPackers(zkpPacker)
 }
 
 // SetupJWSPacker sets the JWS packer for the VerifierBuilder.
@@ -338,6 +350,23 @@ func (v *Verifier) SetupJWSPacker(didResolver packers.DIDResolverHandlerFunc) er
 	jwsPacker := packers.NewJWSPacker(didResolver, signerFnStub)
 
 	return v.packageManager.RegisterPackers(jwsPacker)
+}
+
+func convertResolver(source map[string]pubsignals.StateResolver) (map[int]services.Resolver, error) {
+	resolvers := make(map[int]services.Resolver, len(source))
+	for k, v := range source {
+		parts := strings.Split(k, ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid chainID format: %s", k)
+		}
+
+		chainID, err := core.GetChainID(core.Blockchain(parts[0]), core.NetworkID(parts[1]))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get chainID: %w", err)
+		}
+		resolvers[int(chainID)] = &publicSignralResolverWrapper{string(chainID), v}
+	}
+	return resolvers, nil
 }
 
 // WithExpiresTime sets the expires time message option.
