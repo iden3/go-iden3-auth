@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -587,8 +588,15 @@ func (v *Verifier) VerifyAuthResponse(
 			}
 			return errors.Errorf("proof for zk request id %v is presented not found", proofRequest.ID)
 		}
-		if proofRequest.CircuitID != proofResponse.CircuitID {
-			return errors.Errorf("proof response for request id %v has different circuit id than requested. requested %s - presented %s", proofRequest.ID, proofRequest.CircuitID, proofResponse.CircuitID)
+
+		allCircuitsSubversions := circuits.GetGroupedCircuitIdsWithSubVersions(circuits.CircuitID(proofRequest.CircuitID))
+
+		if !containsCircuitID(allCircuitsSubversions, circuits.CircuitID(proofResponse.CircuitID)) {
+			return fmt.Errorf(
+				"proof is not given for requested circuit expected: %s, given %s",
+				proofRequest.CircuitID,
+				strings.Join(circuitIDSliceToStrings(allCircuitsSubversions), ", "),
+			)
 		}
 
 		verificationKey, err := v.verificationKeyLoader.Load(circuits.CircuitID(proofResponse.CircuitID))
@@ -863,4 +871,21 @@ func isResponseTypeAccepted(requestAccept []string, responseMediaType iden3comm.
 	}
 
 	return errors.New("response type is not in accept profiles of the request")
+}
+
+func containsCircuitID(ids []circuits.CircuitID, needle circuits.CircuitID) bool {
+	for _, id := range ids {
+		if id == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func circuitIDSliceToStrings(ids []circuits.CircuitID) []string {
+	out := make([]string, len(ids))
+	for i, id := range ids {
+		out[i] = string(id)
+	}
+	return out
 }

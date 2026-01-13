@@ -42,6 +42,12 @@ func init() {
 	RegisterVerifier(circuits.AtomicQueryMTPV2CircuitID, reflect.TypeOf(AtomicQueryMTPV2{}))
 	RegisterVerifier(circuits.AtomicQueryV3CircuitID, reflect.TypeOf(AtomicQueryV3{}))
 	RegisterVerifier(circuits.LinkedMultiQuery10CircuitID, reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.AtomicQueryV3StableCircuitID, reflect.TypeOf(AtomicQueryV3{}))
+	RegisterVerifier(circuits.CircuitID("credentialAtomicQueryV3-16-16-64"), reflect.TypeOf(AtomicQueryV3{}))
+	RegisterVerifier(circuits.LinkedMultiQuery10StableCircuitID, reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.CircuitID("linkedMultiQuery3"), reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.CircuitID("linkedMultiQuery5"), reflect.TypeOf(LinkedMultiQuery{}))
+
 }
 
 // GetVerifier return specific public signals verifier
@@ -51,5 +57,32 @@ func GetVerifier(id circuits.CircuitID) (Verifier, error) {
 		return nil, errors.New("public signals verifier for circuit is not registered")
 	}
 
-	return reflect.New(verifierType).Interface().(Verifier), nil
+	v := reflect.New(verifierType).Interface().(Verifier)
+
+	// per-circuit parameter injection
+	if s, ok := v.(QueryLengthSetter); ok {
+		switch id {
+		case circuits.LinkedMultiQuery10StableCircuitID:
+			s.SetQueryLength(10)
+		case circuits.CircuitID("linkedMultiQuery3"):
+			s.SetQueryLength(3)
+		case circuits.CircuitID("linkedMultiQuery5"):
+			s.SetQueryLength(5)
+		}
+	}
+
+	if v, ok := v.(BaseConfigSetter); ok {
+		switch id {
+		case circuits.CircuitID("credentialAtomicQueryV3-16-16-64"):
+			config := circuits.BaseConfig{
+				MTLevel:        16,
+				MTLevelClaim:   16,
+				ValueArraySize: 64,
+				MTLevelOnChain: 0,
+			}
+			v.SetBaseConfig(config)
+		}
+	}
+
+	return v, nil
 }

@@ -14,12 +14,21 @@ import (
 	"github.com/pkg/errors"
 )
 
+// QueryLengthSetter sets query length in the public signals.
+type QueryLengthSetter interface {
+	SetQueryLength(int)
+}
+
 // LinkedMultiQuery is a wrapper for circuits.LinkedMultiQueryPubSignals.
 type LinkedMultiQuery struct {
 	circuits.LinkedMultiQueryPubSignals
 }
 
-// VerifyQuery verifies query for linked multi query 10 circuit.
+func (l *LinkedMultiQuery) SetQueryLength(n int) {
+	l.QueryLength = n
+}
+
+// VerifyQuery verifies query for linked multi query circuit.
 func (c *LinkedMultiQuery) VerifyQuery(
 	ctx context.Context,
 	query Query,
@@ -71,7 +80,7 @@ func (c *LinkedMultiQuery) VerifyQuery(
 	if len(queriesMetadata) > 0 && queriesMetadata[0].MerklizedSchema {
 		merklized = true
 	}
-	for i := 0; i < circuits.LinkedMultiQueryLength; i++ {
+	for i := 0; i < c.QueryLength; i++ {
 		if i >= len(queriesMetadata) {
 			queryHash, err := CalculateQueryHash(
 				[]*big.Int{},
