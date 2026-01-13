@@ -24,6 +24,12 @@ var (
 	ErrWronProofType = errors.New("invalid proof type")
 )
 
+const (
+	linkedMultiQuery3                = "linkedMultiQuery3"
+	linkedMultiQuery5                = "linkedMultiQuery5"
+	credentialAtomicQueryV3_16_16_64 = "credentialAtomicQueryV3-16-16-64" // #nosec G101 -- this is a circuit ID, not a credential
+)
+
 // RegisterVerifier is factory for public signals init.
 // This is done during init() in the method's implementation
 func RegisterVerifier(id circuits.CircuitID, t reflect.Type) {
@@ -43,10 +49,10 @@ func init() {
 	RegisterVerifier(circuits.AtomicQueryV3CircuitID, reflect.TypeOf(AtomicQueryV3{}))
 	RegisterVerifier(circuits.LinkedMultiQuery10CircuitID, reflect.TypeOf(LinkedMultiQuery{}))
 	RegisterVerifier(circuits.AtomicQueryV3StableCircuitID, reflect.TypeOf(AtomicQueryV3{}))
-	RegisterVerifier(circuits.CircuitID("credentialAtomicQueryV3-16-16-64"), reflect.TypeOf(AtomicQueryV3{}))
+	RegisterVerifier(circuits.CircuitID(credentialAtomicQueryV3_16_16_64), reflect.TypeOf(AtomicQueryV3{}))
 	RegisterVerifier(circuits.LinkedMultiQuery10StableCircuitID, reflect.TypeOf(LinkedMultiQuery{}))
-	RegisterVerifier(circuits.CircuitID("linkedMultiQuery3"), reflect.TypeOf(LinkedMultiQuery{}))
-	RegisterVerifier(circuits.CircuitID("linkedMultiQuery5"), reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.CircuitID(linkedMultiQuery3), reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.CircuitID(linkedMultiQuery5), reflect.TypeOf(LinkedMultiQuery{}))
 
 }
 
@@ -64,15 +70,15 @@ func GetVerifier(id circuits.CircuitID) (Verifier, error) {
 		switch id {
 		case circuits.LinkedMultiQuery10StableCircuitID:
 			s.SetQueryLength(10)
-		case circuits.CircuitID("linkedMultiQuery3"):
+		case circuits.CircuitID(linkedMultiQuery3):
 			s.SetQueryLength(3)
-		case circuits.CircuitID("linkedMultiQuery5"):
+		case circuits.CircuitID(linkedMultiQuery5):
 			s.SetQueryLength(5)
 		}
 	}
 
 	if bc, ok := v.(BaseConfigSetter); ok {
-		if id == circuits.CircuitID("credentialAtomicQueryV3-16-16-64") {
+		if id == circuits.CircuitID(credentialAtomicQueryV3_16_16_64) {
 			bc.SetBaseConfig(circuits.BaseConfig{
 				MTLevel:        16,
 				MTLevelClaim:   16,
