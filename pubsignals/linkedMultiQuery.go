@@ -24,8 +24,8 @@ type LinkedMultiQuery struct {
 	circuits.LinkedMultiQueryPubSignals
 }
 
-func (l *LinkedMultiQuery) SetQueryLength(n int) {
-	l.QueryLength = n
+func (c *LinkedMultiQuery) SetQueryLength(n int) {
+	c.QueryLength = n
 }
 
 // VerifyQuery verifies query for linked multi query circuit.

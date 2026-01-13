@@ -72,15 +72,13 @@ func GetVerifier(id circuits.CircuitID) (Verifier, error) {
 	}
 
 	if v, ok := v.(BaseConfigSetter); ok {
-		switch id {
-		case circuits.CircuitID("credentialAtomicQueryV3-16-16-64"):
-			config := circuits.BaseConfig{
+		if id == circuits.CircuitID("credentialAtomicQueryV3-16-16-64") {
+			v.SetBaseConfig(circuits.BaseConfig{
 				MTLevel:        16,
 				MTLevelClaim:   16,
 				ValueArraySize: 64,
 				MTLevelOnChain: 0,
-			}
-			v.SetBaseConfig(config)
+			})
 		}
 	}
 

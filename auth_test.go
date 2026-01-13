@@ -536,9 +536,7 @@ func TestVerifier_FullVerify_StableV3(t *testing.T) {
 	}
 
 	request := CreateAuthorizationRequestWithMessage(reason, "message", verifierID, callbackURL)
-	request.Body.Scope = append(request.Body.Scope, proofRequestAge)
-	request.Body.Scope = append(request.Body.Scope, proofRequestEmployeeLinked)
-	request.Body.Scope = append(request.Body.Scope, proofRequestEmployee)
+	request.Body.Scope = append(request.Body.Scope, proofRequestAge, proofRequestEmployeeLinked, proofRequestEmployee)
 	request.ID = "28494007-9c49-4f1a-9694-7700c08865bf"
 	request.ThreadID = "ee92ab12-2671-457e-aa5e-8158c205a985" // because it's used in the response
 
@@ -556,7 +554,7 @@ func TestVerifier_FullVerify_StableV3(t *testing.T) {
 	response, err := authInstance.FullVerify(context.Background(), token, request, pubsignals.WithAcceptedProofGenerationDelay(proofGenerationDelay))
 	require.NoError(t, err)
 	schemaLoader.assert(t)
-	var responseCircuits []string
+	responseCircuits := make([]string, 0, len(response.Body.Scope))
 	for _, scope := range response.Body.Scope {
 		responseCircuits = append(responseCircuits, scope.CircuitID)
 	}
