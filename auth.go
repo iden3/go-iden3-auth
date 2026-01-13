@@ -593,7 +593,8 @@ func (v *Verifier) VerifyAuthResponse(
 
 		if !containsCircuitID(allCircuitsSubversions, circuits.CircuitID(proofResponse.CircuitID)) {
 			return fmt.Errorf(
-				"proof is not given for requested circuit expected: %s, given %s",
+				"proof circuit '%s' does not match requested circuit '%s' or its allowed subversions: %s",
+				proofResponse.CircuitID,
 				proofRequest.CircuitID,
 				strings.Join(circuitIDSliceToStrings(allCircuitsSubversions), ", "),
 			)
@@ -873,6 +874,7 @@ func isResponseTypeAccepted(requestAccept []string, responseMediaType iden3comm.
 	return errors.New("response type is not in accept profiles of the request")
 }
 
+// containsCircuitID checks if a slice of CircuitIDs contains a specific CircuitID
 func containsCircuitID(ids []circuits.CircuitID, needle circuits.CircuitID) bool {
 	for _, id := range ids {
 		if id == needle {
@@ -882,6 +884,7 @@ func containsCircuitID(ids []circuits.CircuitID, needle circuits.CircuitID) bool
 	return false
 }
 
+// circuitIDSliceToStrings converts a slice of CircuitIDs to a slice of strings
 func circuitIDSliceToStrings(ids []circuits.CircuitID) []string {
 	out := make([]string, len(ids))
 	for i, id := range ids {

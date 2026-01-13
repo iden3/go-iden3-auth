@@ -15,7 +15,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// BaseConfigSetter is an interface for setting base config in public signals.
+// BaseConfigSetter is used by circuits that support custom configurations to set
+// their base parameters (such as Merkle tree levels, value array size etc).
 type BaseConfigSetter interface {
 	SetBaseConfig(circuits.BaseConfig)
 }

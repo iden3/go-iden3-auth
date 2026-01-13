@@ -71,9 +71,9 @@ func GetVerifier(id circuits.CircuitID) (Verifier, error) {
 		}
 	}
 
-	if v, ok := v.(BaseConfigSetter); ok {
+	if bc, ok := v.(BaseConfigSetter); ok {
 		if id == circuits.CircuitID("credentialAtomicQueryV3-16-16-64") {
-			v.SetBaseConfig(circuits.BaseConfig{
+			bc.SetBaseConfig(circuits.BaseConfig{
 				MTLevel:        16,
 				MTLevelClaim:   16,
 				ValueArraySize: 64,

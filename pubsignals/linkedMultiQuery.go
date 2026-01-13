@@ -14,7 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// QueryLengthSetter sets query length in the public signals.
+// QueryLengthSetter configures the query length for LinkedMultiQuery circuits,
+// which support different query counts (3, 5, or 10 queries) in different circuits.
 type QueryLengthSetter interface {
 	SetQueryLength(int)
 }
