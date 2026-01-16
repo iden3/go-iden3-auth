@@ -495,7 +495,7 @@ func TestVerifier_FullVerify_StableV3(t *testing.T) {
 
 	var proofRequestEmployeeLinked protocol.ZeroKnowledgeProofRequest
 	proofRequestEmployeeLinked.ID = 2
-	proofRequestEmployeeLinked.CircuitID = string(circuits.LinkedMultiQuery10StableCircuitID)
+	proofRequestEmployeeLinked.CircuitID = string(circuits.LinkedMultiQueryStableCircuitID)
 	proofRequestEmployeeLinked.Optional = &opt
 	proofRequestEmployeeLinked.Query = map[string]interface{}{
 		"groupId":        1,

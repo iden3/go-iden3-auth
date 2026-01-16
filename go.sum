@@ -167,6 +167,8 @@ github.com/iden3/go-circuits/v2 v2.4.4-0.20260113135740-7dbc865abefc h1:+f18aSLE
 github.com/iden3/go-circuits/v2 v2.4.4-0.20260113135740-7dbc865abefc/go.mod h1:LnbASvfhsDajwOYSdPmbQ585KuzwHF/AUS7pICol5ss=
 github.com/iden3/go-circuits/v2 v2.4.4-0.20260113150601-5691b9f3a25e h1:iK3LAUvHrpNToWZZ9kHy9ZHM2H/+V2xEF3Budffl8lw=
 github.com/iden3/go-circuits/v2 v2.4.4-0.20260113150601-5691b9f3a25e/go.mod h1:LnbASvfhsDajwOYSdPmbQ585KuzwHF/AUS7pICol5ss=
+github.com/iden3/go-circuits/v2 v2.4.4-0.20260116133922-8d8bffb120e0 h1:sAcnOHsbD6W6iusP3DDr3pdU9TRnXV7m8R+2LlW1SS4=
+github.com/iden3/go-circuits/v2 v2.4.4-0.20260116133922-8d8bffb120e0/go.mod h1:LnbASvfhsDajwOYSdPmbQ585KuzwHF/AUS7pICol5ss=
 github.com/iden3/go-iden3-core/v2 v2.4.0 h1:nIkYQJomg/3SNXmJsuSOSG1hewLBwSXaLSM+G/wHAKg=
 github.com/iden3/go-iden3-core/v2 v2.4.0/go.mod h1:8vmG6y8k9VS7iNoxuiKukKbRQFsMyabCc+i8er07zOs=
 github.com/iden3/go-iden3-crypto v0.0.17 h1:NdkceRLJo/pI4UpcjVah4lN/a3yzxRUGXqxbWcYh9mY=

@@ -50,7 +50,7 @@ func init() {
 	RegisterVerifier(circuits.LinkedMultiQuery10CircuitID, reflect.TypeOf(LinkedMultiQuery{}))
 	RegisterVerifier(circuits.AtomicQueryV3StableCircuitID, reflect.TypeOf(AtomicQueryV3{}))
 	RegisterVerifier(circuits.CircuitID(credentialAtomicQueryV3_16_16_64), reflect.TypeOf(AtomicQueryV3{}))
-	RegisterVerifier(circuits.LinkedMultiQuery10StableCircuitID, reflect.TypeOf(LinkedMultiQuery{}))
+	RegisterVerifier(circuits.LinkedMultiQueryStableCircuitID, reflect.TypeOf(LinkedMultiQuery{}))
 	RegisterVerifier(circuits.CircuitID(linkedMultiQuery3), reflect.TypeOf(LinkedMultiQuery{}))
 	RegisterVerifier(circuits.CircuitID(linkedMultiQuery5), reflect.TypeOf(LinkedMultiQuery{}))
 
@@ -68,7 +68,7 @@ func GetVerifier(id circuits.CircuitID) (Verifier, error) {
 	// per-circuit parameter injection
 	if s, ok := v.(QueryLengthSetter); ok {
 		switch id {
-		case circuits.LinkedMultiQuery10StableCircuitID:
+		case circuits.LinkedMultiQueryStableCircuitID:
 			s.SetQueryLength(10)
 		case circuits.CircuitID(linkedMultiQuery3):
 			s.SetQueryLength(3)
