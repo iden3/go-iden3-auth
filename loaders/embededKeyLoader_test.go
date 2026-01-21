@@ -143,6 +143,8 @@ func TestDefaultEmbeddedKeys(t *testing.T) {
 		{"AtomicQueryV3CircuitID - beta.1", circuits.AtomicQueryV3CircuitID},
 		{"AtomicQueryV3OnChainCircuitID - beta.1", circuits.AtomicQueryV3OnChainCircuitID},
 		{"LinkedMultiQuery10CircuitID - beta.1", circuits.LinkedMultiQuery10CircuitID},
+		{"LinkedMultiQueryStableCircuitID", circuits.LinkedMultiQueryStableCircuitID},
+		{"AtomicQueryV3OnChainStableCircuitID", circuits.AtomicQueryV3OnChainStableCircuitID},
 	}
 
 	for _, tt := range tests {
