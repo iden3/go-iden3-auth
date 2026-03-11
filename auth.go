@@ -553,10 +553,7 @@ func (v *Verifier) VerifyAuthResponse(
 		response.ExpiresTime != nil && time.Now().After(time.Unix(*response.ExpiresTime, 0)) {
 		return errors.New("Authorization response message is expired")
 	}
-	err := v.verifyAccept(request.Body.Accept)
-	if err != nil {
-		return err
-	}
+
 	if request.Body.Message != response.Body.Message {
 		return errors.Errorf("message for request id %v was not presented in the response", request.ID)
 	}
@@ -568,7 +565,7 @@ func (v *Verifier) VerifyAuthResponse(
 	if response.From == "" {
 		return errors.Errorf("proof response doesn't contain from field")
 	}
-	err = ValidateAuthRequest(request)
+	err := ValidateAuthRequest(request)
 	if err != nil {
 		return err
 	}
